@@ -710,7 +710,7 @@ function resetFormFields() {
 }
 
 function syncFormForSelectedName() {
-  const name = nameInput.value;
+  const name = nameInput.value.trim();
   if (!name) return;
   if (lastSyncedName === name) return; // 편집 중 덮어쓰기 방지
 
@@ -735,19 +735,29 @@ function syncFormForSelectedName() {
 }
 
 nameInput.addEventListener('change', () => {
-  const name = nameInput.value;
+  const name = nameInput.value.trim();
+  nameInput.value = name; // 앞뒤 공백 정규화
   if (name) localStorage.setItem('coffee_last_name', name);
   lastSyncedName = null;
   syncFormForSelectedName();
 });
 
-// datalist에서 선택하거나 직접 타이핑 시 실시간 동기화
+// 타이핑 중 버튼 상태 즉시 반영 + 유효한 이름 입력 시 debounce 동기화
 let nameDebounceTimer;
 nameInput.addEventListener('input', () => {
   clearTimeout(nameDebounceTimer);
+  const name = nameInput.value.trim();
+
+  // 부원 이름이 아닌 경우 → 버튼 즉시 초기화
+  if (!TEAM_MEMBERS.includes(name)) {
+    document.getElementById('deleteBtn').classList.add('hide');
+    document.getElementById('submitBtn').textContent = '주문하기';
+    return;
+  }
+
+  // 유효한 이름 → 250ms debounce 후 동기화 (datalist 선택은 change도 같이 발동)
   nameDebounceTimer = setTimeout(() => {
-    const name = nameInput.value.trim();
-    if (TEAM_MEMBERS.includes(name) && lastSyncedName !== name) {
+    if (lastSyncedName !== name) {
       localStorage.setItem('coffee_last_name', name);
       lastSyncedName = null;
       syncFormForSelectedName();
