@@ -205,6 +205,79 @@
     box-shadow: 0 6px 20px rgba(0,0,0,0.25);
   }
   .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast { bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
+
+  /* ── hover 상태 ── */
+  button.primary:hover { background: #00754a; }
+  button.ghost:hover { background: #fff0f0; border-color: #f0c2c2; }
+  .copy-btn:hover { background: #b8923f; }
+  .ext-link:hover { background: var(--sb-light); color: var(--sb-green-dark); }
+  .tab:not(.active):hover { background: var(--sb-light); color: var(--sb-green-dark); }
+  .chip:not(.active):hover { border-color: var(--sb-green); color: var(--sb-green); background: #f0f9f5; }
+
+  /* ── 트랜지션 ── */
+  button.primary { position: relative; transition: background 0.15s, box-shadow 0.15s; }
+  .copy-btn { transition: background 0.15s; }
+  button.ghost { transition: background 0.15s, border-color 0.15s; }
+  input[type=text] { transition: border-color 0.15s; }
+  .chip { transition: all 0.12s; }
+
+  /* ── 탭 콘텐츠 페이드인 ── */
+  @keyframes tabFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0);   }
+  }
+  .tab-content { animation: tabFadeIn 0.18s ease; }
+
+  /* ── 주문 수 배지 ── */
+  .tab-badge {
+    display: inline-block; background: var(--sb-accent); color: white;
+    border-radius: 999px; font-size: 10px; font-weight: 700;
+    padding: 1px 6px; margin-left: 3px; vertical-align: middle; line-height: 1.5;
+  }
+  .tab-badge:empty { display: none; }
+
+  /* ── 카운트다운 긴급도 ── */
+  .countdown.urgent  { background: #d97706; box-shadow: 0 4px 14px rgba(217,119,6,0.30); }
+  .countdown.critical {
+    background: #dc2626; box-shadow: 0 4px 14px rgba(220,38,38,0.35);
+    animation: urgentPulse 1.2s ease-in-out infinite;
+  }
+  @keyframes urgentPulse {
+    0%,100% { transform: scale(1); }
+    50%     { transform: scale(1.012); }
+  }
+
+  /* ── 제출 버튼 로딩 스피너 ── */
+  button.primary.loading { color: transparent !important; pointer-events: none; }
+  button.primary.loading::after {
+    content: ''; position: absolute;
+    width: 18px; height: 18px;
+    border: 2.5px solid rgba(255,255,255,0.35);
+    border-top-color: white; border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    top: 50%; left: 50%; transform: translate(-50%, -50%);
+  }
+  @keyframes spin { to { transform: translate(-50%,-50%) rotate(360deg); } }
+  button.primary:disabled { opacity: 0.65; cursor: not-allowed !important; transform: none !important; box-shadow: none; }
+
+  /* ── 마감 후 폼 잠금 ── */
+  .form-locked .chips           { pointer-events: none; opacity: 0.45; }
+  .form-locked input[type=text] { pointer-events: none; background: #f5f5f5; color: #999; }
+  .form-locked textarea         { pointer-events: none; background: #f5f5f5; color: #999; }
+  .form-locked details.addon-details { pointer-events: none; opacity: 0.45; }
+
+  /* ── 로딩 스켈레톤 ── */
+  @keyframes shimmer {
+    from { background-position: 200% 0; }
+    to   { background-position: -200% 0; }
+  }
+  .skeleton-line {
+    height: 14px; border-radius: 6px; margin: 10px 0;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e4e4e4 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
 </style>
 </head>
 <body>
@@ -223,12 +296,12 @@
 
   <div class="tabs">
     <div class="tab active" data-tab="order">주문하기</div>
-    <div class="tab" data-tab="list">전체주문 <span id="orderCount"></span></div>
+    <div class="tab" data-tab="list">전체주문 <span id="orderCount" class="tab-badge"></span></div>
     <div class="tab" data-tab="summary">요약</div>
   </div>
 
   <!-- ORDER TAB -->
-  <div id="orderTab">
+  <div id="orderTab" class="tab-content">
     <div class="card">
       <label>이름</label>
       <input type="text" id="nameInput" list="nameList" placeholder="이름 검색 또는 선택" autocomplete="off">
@@ -280,15 +353,19 @@
   </div>
 
   <!-- LIST TAB -->
-  <div id="listTab" class="hide">
+  <div id="listTab" class="hide tab-content">
     <div class="card">
       <h3>주문 목록</h3>
-      <div id="orderList"></div>
+      <div id="orderList">
+        <div class="skeleton-line" style="width:65%"></div>
+        <div class="skeleton-line" style="width:80%"></div>
+        <div class="skeleton-line" style="width:50%"></div>
+      </div>
     </div>
   </div>
 
   <!-- SUMMARY TAB -->
-  <div id="summaryTab" class="hide">
+  <div id="summaryTab" class="hide tab-content">
     <div class="card">
       <h3>메뉴별 집계</h3>
       <div id="summaryList"></div>
@@ -539,20 +616,35 @@ document.querySelectorAll('.tab').forEach(tab => {
 // 카운트다운
 // ════════════════════════════════════════════════════════════════
 function isPastDeadline() { return Date.now() > DEADLINE; }
+
+function lockFormIfDeadline() {
+  if (!isPastDeadline()) return;
+  document.querySelector('#orderTab .card').classList.add('form-locked');
+  const btn = document.getElementById('submitBtn');
+  btn.textContent = '주문이 마감되었습니다';
+  btn.disabled = true;
+}
+
 function updateCountdown() {
   const cd = document.getElementById('countdown');
   const diff = DEADLINE - Date.now();
   if (diff <= 0) {
     cd.textContent = '⏰ 주문이 마감되었습니다';
+    cd.classList.remove('urgent', 'critical');
     cd.classList.add('closed');
+    lockFormIfDeadline();
     return;
   }
+  cd.classList.toggle('urgent',   diff < 30 * 60 * 1000 && diff >= 10 * 60 * 1000);
+  cd.classList.toggle('critical', diff < 10 * 60 * 1000);
   const h = Math.floor(diff / 3600000);
   const m = Math.floor((diff % 3600000) / 60000);
   const s = Math.floor((diff % 60000) / 1000);
-  cd.textContent = `⏰ 오늘 오전 8:40 마감 · ${h}시간 ${m}분 ${s}초 남음`;
+  const urgencyPrefix = diff < 10 * 60 * 1000 ? '🚨' : diff < 30 * 60 * 1000 ? '⚠️' : '⏰';
+  cd.textContent = `${urgencyPrefix} 오늘 오전 8:40 마감 · ${h}시간 ${m}분 ${s}초 남음`;
 }
 updateCountdown();
+lockFormIfDeadline();
 setInterval(updateCountdown, 1000);
 
 // ════════════════════════════════════════════════════════════════
@@ -638,8 +730,22 @@ function syncFormForSelectedName() {
 nameInput.addEventListener('change', () => {
   const name = nameInput.value;
   if (name) localStorage.setItem('coffee_last_name', name);
-  lastSyncedName = null; // 강제 재동기화
+  lastSyncedName = null;
   syncFormForSelectedName();
+});
+
+// datalist에서 선택하거나 직접 타이핑 시 실시간 동기화
+let nameDebounceTimer;
+nameInput.addEventListener('input', () => {
+  clearTimeout(nameDebounceTimer);
+  nameDebounceTimer = setTimeout(() => {
+    const name = nameInput.value.trim();
+    if (TEAM_MEMBERS.includes(name) && lastSyncedName !== name) {
+      localStorage.setItem('coffee_last_name', name);
+      lastSyncedName = null;
+      syncFormForSelectedName();
+    }
+  }, 250);
 });
 
 // ════════════════════════════════════════════════════════════════
@@ -663,6 +769,10 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
     ts: Date.now()
   };
 
+  const submitBtn = document.getElementById('submitBtn');
+  const origText = submitBtn.textContent;
+  submitBtn.classList.add('loading');
+  submitBtn.disabled = true;
   try {
     const { ref, set, push } = window._fb;
     const existingKey = getOrderKeys()[name];
@@ -675,12 +785,16 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
       setOrderKey(name, newRef.key);
       toast('주문 완료! ☕️');
     }
-    lastSyncedName = name; // 제출 후 재필 방지
-    document.getElementById('submitBtn').textContent = '주문 수정하기';
+    lastSyncedName = name;
+    submitBtn.textContent = '주문 수정하기';
     document.getElementById('deleteBtn').classList.remove('hide');
-    renderList(); // 뱃지 즉시 갱신
+    renderList();
   } catch (e) {
+    submitBtn.textContent = origText;
     alert('오류: ' + e.message);
+  } finally {
+    submitBtn.classList.remove('loading');
+    submitBtn.disabled = false;
   }
 });
 
