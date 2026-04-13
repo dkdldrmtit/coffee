@@ -528,9 +528,16 @@ function openStarbucksMenu() {
     // 앱 설치 시 앱 오픈, 미설치 시 웹으로 폴백
     window.location = `intent://home#Intent;scheme=starbuckskorea;package=com.starbucks.co;S.browser_fallback_url=${encodeURIComponent(webUrl)};end`;
   } else if (isIOS) {
-    const timer = setTimeout(() => { window.location = webUrl; }, 1500);
-    window.addEventListener('blur', () => clearTimeout(timer), { once: true });
-    window.location = 'starbuckskorea://home';
+    // 앱이 열리면 탭이 숨겨짐(visibilitychange) → 타이머 취소
+    // 앱 미설치 시 Safari가 alert 후 그대로 → 타이머 만료 → 웹 이동
+    const timer = setTimeout(() => { window.location.href = webUrl; }, 2000);
+    document.addEventListener('visibilitychange', function onHide() {
+      if (document.hidden) {
+        clearTimeout(timer);
+        document.removeEventListener('visibilitychange', onHide);
+      }
+    });
+    window.location.href = 'starbuckskorea://';
   } else {
     window.open(webUrl, '_blank', 'noopener');
   }
