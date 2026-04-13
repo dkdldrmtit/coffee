@@ -322,7 +322,7 @@
 
       <label>
         메뉴
-        <a class="ext-link" href="#" onclick="openStarbucksMenu(); return false;">📱 스벅 메뉴 보기</a>
+        <a class="ext-link" id="sbuxMenuLink" href="https://www.starbucks.co.kr/menu/drink_list.do" target="_blank" rel="noopener">📱 스벅 메뉴 보기</a>
       </label>
       <input id="menuInput" type="text" list="menuList" placeholder="메뉴 검색 또는 직접 입력" autocomplete="off">
       <datalist id="menuList"></datalist>
@@ -521,32 +521,20 @@ TEAM_MEMBERS.forEach(name => {
 });
 
 // ════════════════════════════════════════════════════════════════
-// 스타벅스 앱 딥링크 (앱 미설치 시 웹 폴백)
+// 스타벅스 메뉴 링크
+// - iOS  : <a> 태그 직접 링크 → Universal Link로 앱 연동 (Safari가 처리)
+// - Android : Intent URL로 앱 오픈, 미설치 시 웹 폴백
+// - 기타 : 새 탭으로 웹 오픈
 // ════════════════════════════════════════════════════════════════
-function openStarbucksMenu() {
+document.getElementById('sbuxMenuLink').addEventListener('click', e => {
   const ua = navigator.userAgent.toLowerCase();
-  const isAndroid = ua.includes('android');
-  const isIOS = /iphone|ipad|ipod/.test(ua);
-  const webUrl = 'https://www.starbucks.co.kr/menu/drink_list.do';
-
-  if (isAndroid) {
-    // 앱 설치 시 앱 오픈, 미설치 시 웹으로 폴백
-    window.location = `intent://home#Intent;scheme=starbuckskorea;package=com.starbucks.co;S.browser_fallback_url=${encodeURIComponent(webUrl)};end`;
-  } else if (isIOS) {
-    // 앱이 열리면 탭이 숨겨짐(visibilitychange) → 타이머 취소
-    // 앱 미설치 시 Safari가 alert 후 그대로 → 타이머 만료 → 웹 이동
-    const timer = setTimeout(() => { window.location.href = webUrl; }, 2000);
-    document.addEventListener('visibilitychange', function onHide() {
-      if (document.hidden) {
-        clearTimeout(timer);
-        document.removeEventListener('visibilitychange', onHide);
-      }
-    });
-    window.location.href = 'starbuckskorea://';
-  } else {
-    window.open(webUrl, '_blank', 'noopener');
+  if (ua.includes('android')) {
+    e.preventDefault();
+    const webUrl = 'https://www.starbucks.co.kr/menu/drink_list.do';
+    window.location.href = `intent://home#Intent;scheme=starbuckskorea;package=com.starbucks.co;S.browser_fallback_url=${encodeURIComponent(webUrl)};end`;
   }
-}
+  // iOS/기타: 기본 동작(target="_blank") 유지 → iOS는 Universal Link로 앱 연동 시도
+});
 
 const menuInput = document.getElementById('menuInput');
 const menuList = document.getElementById('menuList');
