@@ -526,7 +526,7 @@ function openStarbucksMenu() {
 
   if (isAndroid) {
     // 앱 설치 시 앱 오픈, 미설치 시 웹으로 폴백
-    window.location = `intent://home#Intent;scheme=starbuckskorea;package=com.starbucks.co.kr;S.browser_fallback_url=${encodeURIComponent(webUrl)};end`;
+    window.location = `intent://home#Intent;scheme=starbuckskorea;package=com.starbucks.co;S.browser_fallback_url=${encodeURIComponent(webUrl)};end`;
   } else if (isIOS) {
     const timer = setTimeout(() => { window.location = webUrl; }, 1500);
     window.addEventListener('blur', () => clearTimeout(timer), { once: true });
