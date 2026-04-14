@@ -40,23 +40,29 @@
     --border: #ece5d4;
   }
   /* 카페별 브랜드 컬러 오버라이드 — data-cafe 속성으로 전환 */
+  /* 이디야: 네이비 블루 (CI 기본색, 공식 hex 미공개라 통용값 사용) */
   body[data-cafe="ediya"] {
-    --sb-green: #1F3862;  --sb-green-dark: #0A1F3E;  --sb-green-rgb: 31, 56, 98;   --sb-light: #D5DEEB;
+    --sb-green: #1A4995;  --sb-green-dark: #0E2E61;  --sb-green-rgb: 26, 73, 149;  --sb-light: #D7E0EE;
   }
+  /* 메가커피: 멕시칸 레드 (Brandfetch 기준, 로고 주색) */
   body[data-cafe="mega"] {
-    --sb-green: #EF1C22;  --sb-green-dark: #8B0C10;  --sb-green-rgb: 239, 28, 34;  --sb-light: #FDE0E1;
+    --sb-green: #98242D;  --sb-green-dark: #5C1619;  --sb-green-rgb: 152, 36, 45;  --sb-light: #F5DFE2;
   }
+  /* 컴포즈커피: 시그니처 노랑 → UI용 다크 머스타드 (흰 글씨 대비) */
   body[data-cafe="compose"] {
-    --sb-green: #6B4423;  --sb-green-dark: #3E2517;  --sb-green-rgb: 107, 68, 35;  --sb-light: #EFE4D6;
+    --sb-green: #8B6914;  --sb-green-dark: #53410C;  --sb-green-rgb: 139, 105, 20; --sb-light: #F5E8C7;
   }
+  /* 투썸플레이스: 블랙 (공식 주 컬러) */
   body[data-cafe="twosome"] {
-    --sb-green: #C8102E;  --sb-green-dark: #7A0016;  --sb-green-rgb: 200, 16, 46;  --sb-light: #FBDCE2;
+    --sb-green: #1a1a1a;  --sb-green-dark: #000000;  --sb-green-rgb: 26, 26, 26;   --sb-light: #E8E8E8;
   }
+  /* 할리스: 레드 (크라운/도어 상징, 공식 hex 미공개) */
   body[data-cafe="hollys"] {
-    --sb-green: #EE2127;  --sb-green-dark: #811014;  --sb-green-rgb: 238, 33, 39;  --sb-light: #FDDCDE;
+    --sb-green: #D7181F;  --sb-green-dark: #7F0912;  --sb-green-rgb: 215, 24, 31;  --sb-light: #FCDBDE;
   }
+  /* 빽다방: 네이비 (노랑+네이비 공식 조합 중 UI 대비용 네이비) */
   body[data-cafe="paik"] {
-    --sb-green: #D1121E;  --sb-green-dark: #6B0810;  --sb-green-rgb: 209, 18, 30;  --sb-light: #FDD9DC;
+    --sb-green: #001F60;  --sb-green-dark: #000F30;  --sb-green-rgb: 0, 31, 96;    --sb-light: #D5DBEB;
   }
   body[data-cafe="other"] {
     --sb-green: #6b4f3b;  --sb-green-dark: #4a3527;  --sb-green-rgb: 107, 79, 59;  --sb-light: #e8dcc4;
