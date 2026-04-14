@@ -197,40 +197,52 @@
     box-shadow: 0 1px 3px rgba(0,0,0,0.08);
   }
 
-  /* ── 요약: 온도/사이즈 그룹 ── */
-  .temp-group { margin-bottom: 18px; }
-  .temp-group:last-of-type { margin-bottom: 12px; }
-  .temp-group-header {
+  /* ── 요약: 메뉴별 그룹 (스타벅스 주문 흐름과 동일) ── */
+  .menu-group { margin-bottom: 16px; }
+  .menu-group:last-of-type { margin-bottom: 12px; }
+  .menu-group-header {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 10px 14px; margin-bottom: 8px;
+    padding: 11px 14px; margin-bottom: 4px;
     background: var(--sb-green-dark); color: white;
-    border-radius: 10px; font-size: 14px; font-weight: 700;
+    border-radius: 10px;
   }
-  .temp-group-header .temp-count {
-    background: rgba(255,255,255,0.2); padding: 2px 10px;
+  .menu-group-header .menu-name {
+    font-size: 14px; font-weight: 700; letter-spacing: 0.2px;
+  }
+  .menu-group-header .menu-count {
+    background: rgba(255,255,255,0.18); padding: 3px 11px;
     border-radius: 999px; font-size: 12px; font-weight: 700;
   }
-  .size-group {
-    margin: 0 4px 10px; padding: 8px 0 4px;
-    border-left: 2px solid var(--sb-light); padding-left: 12px;
+  .menu-variants { padding: 4px 4px 2px; }
+  .variant-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 8px; gap: 10px;
+    border-bottom: 1px dashed #f0f0f0;
   }
-  .size-label {
-    font-size: 12px; font-weight: 700; color: var(--sb-green);
-    margin-bottom: 6px; letter-spacing: 0.3px;
-    display: flex; align-items: center; gap: 6px;
+  .variant-row:last-child { border-bottom: none; }
+  .variant-spec {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    font-size: 13px; min-width: 0;
   }
-  .size-label .size-count {
-    font-size: 10px; color: var(--muted); font-weight: 600;
+  .variant-temp {
+    display: inline-block; padding: 2px 9px;
+    border-radius: 999px; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.4px;
   }
-  .item-row {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 6px 0; font-size: 14px;
+  .variant-temp.ice { background: #d6ecff; color: #1e5fa8; }
+  .variant-temp.hot { background: #ffe4d6; color: #b8420b; }
+  .variant-size {
+    font-weight: 700; color: var(--sb-green-dark); font-size: 13px;
   }
-  .item-row .item-name { color: var(--text); }
-  .item-row .count {
-    background: var(--sb-light); padding: 2px 9px;
+  .variant-addons {
+    font-size: 11px; color: #6b5418;
+    background: #fff8e6; padding: 2px 9px; border-radius: 999px;
+    border: 1px solid #f0d678;
+  }
+  .variant-row .count {
+    background: var(--sb-light); padding: 3px 11px;
     border-radius: 999px; font-weight: 700; color: var(--sb-green-dark);
-    font-size: 12px;
+    font-size: 12px; flex-shrink: 0;
   }
 
   /* ── 특이사항 섹션 ── */
@@ -1516,30 +1528,39 @@ const checkedOrders = new Set(); // 체크리스트 상태 (in-memory)
 
 const TEMP_ORDER = ['ICE', 'HOT'];
 const SIZE_ORDER = ['Tall', 'Grande', 'Venti'];
-const TEMP_ICON  = { 'ICE': '🧊', 'HOT': '☕️' };
 
-// 주문 목록 → temp/size/item별 그룹
+// 주문 목록 → 메뉴별로 묶고, 각 메뉴 내부에서 (온도/사이즈/옵션) 변형별로 카운트
+// 스타벅스 주문 흐름(메뉴 → 온도 → 사이즈 → 옵션)에 맞춰 정렬
 function buildGroupedOrders(orders) {
-  const groups = {};
+  const groups = {}; // menu → { count, variants: { variantKey → {temp,size,addons,count} } }
   orders.forEach(o => {
-    const t = o.temp || '기타';
-    const s = o.size || '기타';
-    const item = (o.menu || '') + (o.addons && o.addons.length ? ` (${o.addons.join(', ')})` : '');
-    if (!groups[t]) groups[t] = {};
-    if (!groups[t][s]) groups[t][s] = {};
-    if (!groups[t][s][item]) groups[t][s][item] = 0;
-    groups[t][s][item]++;
+    const menu = (o.menu || '').trim() || '기타';
+    const temp = o.temp || '';
+    const size = o.size || '';
+    const addons = Array.isArray(o.addons) ? o.addons.slice() : [];
+    const variantKey = `${temp}|${size}|${addons.join(',')}`;
+    if (!groups[menu]) groups[menu] = { count: 0, variants: {} };
+    groups[menu].count++;
+    if (!groups[menu].variants[variantKey]) {
+      groups[menu].variants[variantKey] = { temp, size, addons, count: 0 };
+    }
+    groups[menu].variants[variantKey].count++;
   });
-  const sortByOrder = (order) => (a, b) => {
-    const ai = order.indexOf(a), bi = order.indexOf(b);
-    return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
-  };
-  const sortedTemps = Object.keys(groups).sort(sortByOrder(TEMP_ORDER));
-  const tempCount = (t) => Object.values(groups[t])
-    .reduce((sum, sm) => sum + Object.values(sm).reduce((s, c) => s + c, 0), 0);
-  const sizeCount = (t, s) => Object.values(groups[t][s]).reduce((sum, c) => sum + c, 0);
-  const sortedSizes = (t) => Object.keys(groups[t]).sort(sortByOrder(SIZE_ORDER));
-  return { groups, sortedTemps, sortedSizes, tempCount, sizeCount };
+  // 메뉴 정렬: 잔 수 많은 순 → 한글 가나다
+  const sortedMenus = Object.entries(groups)
+    .sort((a, b) => b[1].count - a[1].count || a[0].localeCompare(b[0], 'ko'));
+  // 각 메뉴 내부의 변형 정렬: 온도 → 사이즈 → 옵션
+  const idx = (arr, v) => { const i = arr.indexOf(v); return i === -1 ? 999 : i; };
+  sortedMenus.forEach(([_, g]) => {
+    g.sortedVariants = Object.values(g.variants).sort((a, b) => {
+      const dt = idx(TEMP_ORDER, a.temp) - idx(TEMP_ORDER, b.temp);
+      if (dt) return dt;
+      const ds = idx(SIZE_ORDER, a.size) - idx(SIZE_ORDER, b.size);
+      if (ds) return ds;
+      return a.addons.join(',').localeCompare(b.addons.join(','));
+    });
+  });
+  return sortedMenus;
 }
 
 function renderSummary() {
@@ -1557,30 +1578,28 @@ function renderGroupedSummary() {
     list.innerHTML = '<div class="empty">아직 주문이 없어요 ☕️</div>';
     return;
   }
-  const { groups, sortedTemps, sortedSizes, tempCount, sizeCount } = buildGroupedOrders(orders);
+  const sortedMenus = buildGroupedOrders(orders);
 
   let html = '';
-  sortedTemps.forEach(t => {
-    const icon = TEMP_ICON[t] || '🥤';
-    html += `<div class="temp-group">
-      <div class="temp-group-header">
-        <span>${icon} ${escapeHtml(t)}</span>
-        <span class="temp-count">${tempCount(t)}잔</span>
+  sortedMenus.forEach(([menu, g]) => {
+    html += `<div class="menu-group">
+      <div class="menu-group-header">
+        <span class="menu-name">${escapeHtml(menu)}</span>
+        <span class="menu-count">${g.count}잔</span>
+      </div>
+      <div class="menu-variants">`;
+    g.sortedVariants.forEach(v => {
+      const tempCls = v.temp === 'ICE' ? 'ice' : v.temp === 'HOT' ? 'hot' : '';
+      const tempBadge = v.temp ? `<span class="variant-temp ${tempCls}">${escapeHtml(v.temp)}</span>` : '';
+      const sizeText  = v.size ? `<span class="variant-size">${escapeHtml(v.size)}</span>` : '';
+      const addonsText = v.addons.length
+        ? `<span class="variant-addons">${escapeHtml(v.addons.join(', '))}</span>` : '';
+      html += `<div class="variant-row">
+        <div class="variant-spec">${tempBadge}${sizeText}${addonsText}</div>
+        <span class="count">× ${v.count}</span>
       </div>`;
-    sortedSizes(t).forEach(s => {
-      html += `<div class="size-group">
-        <div class="size-label">${escapeHtml(s)} <span class="size-count">${sizeCount(t, s)}잔</span></div>`;
-      Object.entries(groups[t][s])
-        .sort((a, b) => b[1] - a[1])
-        .forEach(([item, count]) => {
-          html += `<div class="item-row">
-            <span class="item-name">${escapeHtml(item)}</span>
-            <span class="count">× ${count}</span>
-          </div>`;
-        });
-      html += `</div>`;
     });
-    html += `</div>`;
+    html += `</div></div>`;
   });
 
   // 특이사항 (메모 있는 주문)
@@ -1589,7 +1608,7 @@ function renderGroupedSummary() {
     html += `<div class="memos-section">
       <div class="memos-header">⚠️ 특이사항 (${memoOrders.length}건)</div>`;
     memoOrders.forEach(o => {
-      const desc = [o.temp, o.size, o.menu].filter(Boolean).join(' ');
+      const desc = [o.menu, o.temp, o.size].filter(Boolean).join(' ');
       html += `<div class="memo-row">
         <div class="memo-row-name"><b>${escapeHtml(o.name)}</b> · ${escapeHtml(desc)}</div>
         <div class="memo-row-text">📝 ${escapeHtml(o.memo)}</div>
@@ -1658,21 +1677,17 @@ document.getElementById('summaryList').addEventListener('change', e => {
 document.getElementById('copyBtn').addEventListener('click', async () => {
   const orders = Object.values(currentOrders);
   if (orders.length === 0) { toast('아직 주문이 없어요'); return; }
-  const { groups, sortedTemps, sortedSizes, tempCount, sizeCount } = buildGroupedOrders(orders);
+  const sortedMenus = buildGroupedOrders(orders);
 
   const lines = [];
   lines.push(`☕️ ${CONFIG.title} (총 ${orders.length}잔)`);
   lines.push('');
-  sortedTemps.forEach(t => {
-    const icon = TEMP_ICON[t] || '🥤';
-    lines.push(`━━ ${icon} ${t} (${tempCount(t)}잔) ━━`);
-    sortedSizes(t).forEach(s => {
-      lines.push(`[${s} · ${sizeCount(t, s)}잔]`);
-      Object.entries(groups[t][s])
-        .sort((a, b) => b[1] - a[1])
-        .forEach(([item, count]) => {
-          lines.push(`• ${item} × ${count}`);
-        });
+  sortedMenus.forEach(([menu, g]) => {
+    lines.push(`━━ ${menu} (${g.count}잔) ━━`);
+    g.sortedVariants.forEach(v => {
+      const parts = [v.temp, v.size].filter(Boolean);
+      if (v.addons.length) parts.push(v.addons.join(', '));
+      lines.push(`• ${parts.join(' ')} × ${v.count}`);
     });
     lines.push('');
   });
@@ -1681,7 +1696,7 @@ document.getElementById('copyBtn').addEventListener('click', async () => {
   if (memoOrders.length > 0) {
     lines.push('⚠️ 특이사항');
     memoOrders.forEach(o => {
-      const desc = [o.temp, o.size, o.menu].filter(Boolean).join(' ');
+      const desc = [o.menu, o.temp, o.size].filter(Boolean).join(' ');
       lines.push(`- ${o.name} (${desc}): ${o.memo.trim()}`);
     });
   }
