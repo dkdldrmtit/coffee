@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#006241">
-<title>☕️ 아들 탄생 기념 커피</title>
+<title>커피 주문</title>
 <style>
   :root {
     --sb-green: #006241;
@@ -26,19 +26,46 @@
     -webkit-tap-highlight-color: transparent;
   }
   .container { max-width: 560px; margin: 0 auto; }
-  .header { text-align: center; padding: 12px 0 8px; }
-  .header h1 {
-    font-size: 22px; margin: 0 0 6px;
-    color: var(--sb-green-dark);
+  .header { padding: 18px 4px 16px; }
+  .header-actions {
+    display: flex; justify-content: flex-end; gap: 6px;
+    margin-bottom: 14px;
   }
-  .header p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
+  .icon-btn {
+    background: white; border: 1px solid var(--border);
+    color: var(--sb-green-dark); padding: 7px 14px;
+    border-radius: 999px; font-size: 12px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .icon-btn:hover { background: var(--sb-light); border-color: var(--sb-light); }
+  .header h1 {
+    font-size: 24px; margin: 0 0 6px;
+    color: var(--sb-green-dark);
+    font-weight: 700;
+    letter-spacing: -0.4px;
+    line-height: 1.25;
+  }
+  .header p {
+    margin: 0; color: var(--muted);
+    font-size: 14px; line-height: 1.5;
+  }
+  .header p:empty { display: none; }
+  .header-meta {
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    margin-top: 14px;
+  }
   .countdown {
     background: var(--sb-green); color: white;
-    padding: 14px; border-radius: 14px; text-align: center;
-    font-size: 15px; margin: 14px 0 18px;
-    font-weight: 600; letter-spacing: 0.2px;
-    box-shadow: 0 4px 14px rgba(0, 98, 65, 0.25);
+    padding: 14px 18px; border-radius: 14px;
+    font-size: 14px; margin: 8px 0 18px;
+    font-weight: 600; letter-spacing: 0.1px;
+    box-shadow: 0 4px 14px rgba(0, 98, 65, 0.18);
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 12px;
   }
+  .countdown .countdown-label { font-size: 12px; opacity: 0.85; font-weight: 500; }
+  .countdown .countdown-time { font-size: 15px; font-weight: 700; }
   .countdown.closed { background: #8a8a8a; box-shadow: none; }
   .tabs {
     display: flex; gap: 4px; background: white;
@@ -163,7 +190,11 @@
     margin-left: 6px; vertical-align: middle; font-weight: 600;
   }
   .order-menu { color: #444; font-size: 14px; line-height: 1.45; }
-  .order-memo { color: var(--muted); font-size: 12px; margin-top: 3px; }
+  .order-memo {
+    color: #b8420b; font-size: 12px; margin-top: 4px;
+    padding: 3px 9px; background: #fff8e6;
+    border-radius: 6px; display: inline-block;
+  }
   .summary-row {
     padding: 10px 0; border-bottom: 1px dashed #eee;
     display: flex; justify-content: space-between; align-items: center;
@@ -185,10 +216,9 @@
     margin-left: 8px;
   }
   .summary-progress {
-    margin-bottom: 14px; padding: 10px 14px;
+    margin-bottom: 14px; padding: 11px 14px;
     background: var(--sb-light); color: var(--sb-green-dark);
     border-radius: 10px; font-size: 13px; font-weight: 700;
-    text-align: center;
   }
   .summary-progress.done {
     background: var(--sb-green); color: white;
@@ -380,50 +410,30 @@
   }
   .reset-btn:hover { background: #fff0f0; color: #c43535; border-color: #f0c2c2; }
 
-  /* ── 설정 버튼 ── */
-  .header { position: relative; }
-  .settings-btn {
-    position: absolute; top: 0; right: 0;
-    background: none; border: none; cursor: pointer;
-    font-size: 20px; padding: 6px; line-height: 1;
-    border-radius: 8px; color: var(--muted); transition: color 0.15s;
-  }
-  .settings-btn:hover { color: var(--sb-green-dark); }
-  .share-btn {
-    position: absolute; top: 0; left: 0;
-    background: none; border: none; cursor: pointer;
-    font-size: 18px; padding: 6px; line-height: 1;
-    border-radius: 8px; color: var(--muted); transition: color 0.15s;
-  }
-  .share-btn:hover { color: var(--sb-green-dark); }
   .room-code {
-    display: inline-block; margin-top: 6px;
+    display: inline-block;
     font-size: 11px; color: var(--muted);
-    background: white; padding: 3px 10px;
+    background: white; padding: 4px 11px;
     border: 1px solid var(--border); border-radius: 999px;
-  }
-  .room-code b {
-    color: var(--sb-green-dark); letter-spacing: 1.5px;
     font-family: ui-monospace, "SF Mono", Menlo, monospace;
-    font-size: 12px;
+    letter-spacing: 1.2px;
   }
   .owner-badge {
-    display: inline-block; margin-top: 6px; margin-left: 4px;
-    padding: 3px 9px; font-size: 11px; font-weight: 700;
+    display: inline-block;
+    padding: 4px 11px; font-size: 11px; font-weight: 700;
     background: var(--sb-accent); color: white;
-    border-radius: 999px; letter-spacing: 0.3px;
-    vertical-align: middle;
+    border-radius: 999px; letter-spacing: 0.2px;
   }
   .guest-note {
     padding: 12px 14px; background: #f5f5f5;
     border-radius: 10px; font-size: 12px; line-height: 1.5;
-    color: var(--muted); text-align: center;
+    color: var(--muted);
   }
   .welcome-note {
     padding: 14px 16px; margin-bottom: 18px;
     background: var(--sb-light); color: var(--sb-green-dark);
     border-radius: 12px; font-size: 13px; line-height: 1.55;
-    text-align: center; font-weight: 500;
+    font-weight: 500;
     border: 1px solid #b9d8c9;
   }
 
@@ -508,19 +518,26 @@
 </head>
 <body>
 <div class="container">
-  <div class="header">
-    <button class="share-btn" id="shareBtn" title="링크 공유">🔗</button>
-    <button class="settings-btn" id="settingsBtn" title="설정">⚙️</button>
+  <header class="header">
+    <div class="header-actions">
+      <button type="button" class="icon-btn" id="shareBtn">공유</button>
+      <button type="button" class="icon-btn" id="settingsBtn">설정</button>
+    </div>
     <h1 id="pageTitle"></h1>
     <p id="pageDesc"></p>
-    <div class="room-code">방 코드: <b id="roomCodeLabel"></b></div>
-    <span class="owner-badge hide" id="ownerBadge">👑 관리자</span>
+    <div class="header-meta">
+      <span class="room-code" id="roomCodeLabel"></span>
+      <span class="owner-badge hide" id="ownerBadge">관리자</span>
+    </div>
+  </header>
+
+  <div class="countdown" id="countdown">
+    <span class="countdown-label">마감까지</span>
+    <span class="countdown-time">--:--:--</span>
   </div>
 
-  <div class="countdown" id="countdown">⏰ 마감까지 --:--:--</div>
-
   <div id="setupWarning" class="setup-warning hide">
-    <b>⚠️ Firebase 설정이 필요합니다</b><br>
+    <b>Firebase 설정이 필요해요</b><br>
     <code>coffee.html</code> 상단의 <code>firebaseConfig</code>에 본인 프로젝트 설정을 붙여넣어주세요.
   </div>
 
@@ -552,11 +569,11 @@
 
       <label>
         메뉴
-        <a class="ext-link" id="sbuxMenuLink" href="https://www.starbucks.co.kr/menu/drink_list.do" target="_blank" rel="noopener">📱 스벅 메뉴 보기</a>
+        <a class="ext-link" id="sbuxMenuLink" href="https://www.starbucks.co.kr/menu/drink_list.do" target="_blank" rel="noopener">스타벅스 메뉴 보기</a>
       </label>
       <input id="menuInput" type="text" list="menuList" placeholder="메뉴 검색 또는 직접 입력" autocomplete="off">
       <datalist id="menuList"></datalist>
-      <div class="field-hint">예) 아메리카노 · 라벤더 라떼 · 돌체라떼 연하게 (온도는 위에서 선택 / "아이스~" 입력 시 자동 분리)</div>
+      <div class="field-hint">예) 아메리카노, 라벤더 라떼, 자바칩 프라푸치노</div>
 
       <details class="addon-details">
         <summary>
@@ -581,8 +598,8 @@
       <button class="ghost hide" id="deleteBtn">내 주문 취소하기</button>
 
       <div class="field-hint" style="margin-top:14px; line-height:1.7;">
-        ✏️ <b>변경</b> — 이름 선택 후 메뉴 수정하고 <b>주문 수정하기</b> 버튼 누르기<br>
-        🗑️ <b>취소</b> — 이름 선택 후 <b>내 주문 취소하기</b> 버튼 누르기
+        <b>변경</b> — 이름을 다시 선택하면 기존 메뉴가 자동으로 채워져요<br>
+        <b>취소</b> — 이름 선택 후 ‘내 주문 취소하기’를 눌러주세요
       </div>
     </div>
   </div>
@@ -604,7 +621,7 @@
     <div class="card">
       <h3>주문 요약 <span class="summary-hint">탭해서 주문 완료 체크</span></h3>
       <div id="summaryList"></div>
-      <button class="copy-btn" id="copyBtn">📋 요약 복사하기</button>
+      <button class="copy-btn" id="copyBtn">요약 복사하기</button>
     </div>
   </div>
 </div>
@@ -613,18 +630,18 @@
 <div class="modal-backdrop hide" id="settingsModal">
   <div class="modal">
     <div class="modal-handle"></div>
-    <h2>⚙️ 설정</h2>
+    <h2>설정</h2>
     <div class="welcome-note hide" id="newRoomWelcome">
-      👋 새 방을 만들었어요!<br>
+      새로운 방이 만들어졌어요.<br>
       이벤트 이름과 팀원을 설정하면 링크를 공유할 수 있어요.
     </div>
     <div class="guest-note hide" id="settingsGuestNote" style="margin-bottom:16px">
-      🔒 설정은 이 방의 <b>관리자</b>만 변경할 수 있어요
+      이 방의 관리자만 설정을 변경할 수 있어요
     </div>
     <label>이벤트 이름</label>
     <input type="text" id="cfgTitle" placeholder="예) 5월 회식 기념 커피">
     <label>부제목</label>
-    <input type="text" id="cfgDesc" placeholder="예) 수고하셨습니다 🙏">
+    <input type="text" id="cfgDesc" placeholder="예) 수고 많으셨어요">
     <label>마감 날짜</label>
     <input type="date" id="cfgDate">
     <label>마감 시각</label>
@@ -640,9 +657,9 @@
     <button class="primary" id="cfgSaveBtn" style="margin-top:20px">저장하기</button>
     <hr class="modal-divider">
     <div class="guest-note hide" id="resetGuestNote">
-      🔒 이 방의 <b>관리자</b>만 주문을 초기화할 수 있어요
+      관리자만 주문을 초기화할 수 있어요
     </div>
-    <button class="reset-btn" id="resetBtn">🔄 주문 초기화 (새 라운드 시작)</button>
+    <button class="reset-btn" id="resetBtn">주문 초기화 (새 라운드 시작)</button>
   </div>
 </div>
 
@@ -880,9 +897,9 @@ document.getElementById('roomCodeLabel').textContent = ROOM_ID;
 // CONFIG/MEMBERS → HTML 반영 (실시간 동기화)
 // ════════════════════════════════════════════════════════════════
 function applyConfig() {
-  document.getElementById('pageTitle').textContent = `☕️ ${CONFIG.title} ☕️`;
-  document.getElementById('pageDesc').innerHTML = `${CONFIG.desc}<br>메뉴 선택해주세요!`;
-  document.title = `☕️ ${CONFIG.title}`;
+  document.getElementById('pageTitle').textContent = CONFIG.title;
+  document.getElementById('pageDesc').textContent = CONFIG.desc;
+  document.title = CONFIG.title;
   calcDeadline();
   updateCountdown();
   // 마감시간이 연장되면 잠금 풀기, 단축되면 잠금
@@ -918,7 +935,7 @@ function renderMembersEditor() {
     const empty = document.createElement('div');
     empty.className = 'members-empty';
     empty.textContent = IS_OWNER
-      ? '↓ 아래에 팀원 이름을 추가해보세요'
+      ? '아래에 팀원 이름을 추가해보세요'
       : '아직 팀원이 없어요';
     container.appendChild(empty);
     return;
@@ -967,19 +984,19 @@ applyOwnerUI();
 // ════════════════════════════════════════════════════════════════
 document.getElementById('shareBtn').addEventListener('click', async () => {
   const url = window.location.href;
-  const shareText = `☕️ ${CONFIG.title}\n방 코드: ${ROOM_ID}`;
+  const shareText = `${CONFIG.title}\n방 코드: ${ROOM_ID}`;
   try {
     if (navigator.share) {
       await navigator.share({ title: CONFIG.title, text: shareText, url });
     } else {
       await navigator.clipboard.writeText(url);
-      toast('🔗 링크 복사 완료!');
+      toast('링크가 복사되었어요');
     }
   } catch (e) {
-    if (e.name === 'AbortError') return; // 사용자가 공유 취소
+    if (e.name === 'AbortError') return;
     try {
       await navigator.clipboard.writeText(url);
-      toast('🔗 링크 복사 완료!');
+      toast('링크가 복사되었어요');
     } catch {
       alert(url);
     }
@@ -1040,7 +1057,7 @@ document.getElementById('cfgSaveBtn').addEventListener('click', async () => {
     const { ref, set } = window._fb;
     await set(ref(db, `rooms/${ROOM_ID}/meta/config`), { title, desc, date, hour, minute });
     settingsModal.classList.add('hide');
-    toast('설정 저장 완료 ⚙️');
+    toast('설정이 저장되었어요');
     // onValue 구독이 applyConfig 자동 호출
   } catch (e) {
     alert('오류: ' + e.message);
@@ -1208,17 +1225,22 @@ function lockFormIfDeadline() {
   if (!isPastDeadline()) return;
   document.querySelector('#orderTab .card').classList.add('form-locked');
   const btn = document.getElementById('submitBtn');
-  btn.textContent = '주문이 마감되었습니다';
+  btn.textContent = '주문이 마감되었어요';
   btn.disabled = true;
+}
+
+function setCountdownText(label, time) {
+  const cd = document.getElementById('countdown');
+  cd.innerHTML = `<span class="countdown-label">${label}</span><span class="countdown-time">${time}</span>`;
 }
 
 function updateCountdown() {
   const cd = document.getElementById('countdown');
   const diff = DEADLINE - Date.now();
   if (diff <= 0) {
-    cd.textContent = '⏰ 주문이 마감되었습니다';
     cd.classList.remove('urgent', 'critical');
     cd.classList.add('closed');
+    setCountdownText('마감', '주문이 마감되었어요');
     lockFormIfDeadline();
     return;
   }
@@ -1227,8 +1249,8 @@ function updateCountdown() {
   const h = Math.floor(diff / 3600000);
   const m = Math.floor((diff % 3600000) / 60000);
   const s = Math.floor((diff % 60000) / 1000);
-  const urgencyPrefix = diff < 10 * 60 * 1000 ? '🚨' : diff < 30 * 60 * 1000 ? '⚠️' : '⏰';
-  cd.textContent = `${urgencyPrefix} ${deadlineLabel} 마감 · ${h}시간 ${m}분 ${s}초 남음`;
+  const remaining = h > 0 ? `${h}시간 ${m}분` : m > 0 ? `${m}분 ${s}초` : `${s}초`;
+  setCountdownText(`${deadlineLabel} 마감`, `${remaining} 남음`);
 }
 updateCountdown();
 lockFormIfDeadline();
@@ -1392,12 +1414,12 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
     const existingKey = getOrderKeys()[name];
     if (existingKey && currentOrders[existingKey]) {
       await set(ref(db, `rooms/${ROOM_ID}/orders/` + existingKey), order);
-      toast('주문 수정 완료 ☕️');
+      toast('주문이 수정되었어요');
     } else {
       const newRef = push(ordersRef);
       await set(newRef, order);
       setOrderKey(name, newRef.key);
-      toast('주문 완료! ☕️');
+      toast('주문이 완료되었어요');
     }
     lastSyncedName = name;
     savePref(name, order); // 선호 메뉴 저장 (다음 라운드에서 기본값으로 사용)
@@ -1426,7 +1448,7 @@ document.getElementById('deleteBtn').addEventListener('click', async () => {
     document.getElementById('submitBtn').textContent = '주문하기';
     document.getElementById('deleteBtn').classList.add('hide');
     lastSyncedName = name; // 빈 상태로 동기화됨
-    toast('주문 취소 완료');
+    toast('주문이 취소되었어요');
     renderList();
   } catch (e) {
     alert('오류: ' + e.message);
@@ -1466,14 +1488,14 @@ function renderList() {
   const entries = Object.entries(currentOrders)
     .sort((a, b) => (a[1].ts || 0) - (b[1].ts || 0));
   if (entries.length === 0) {
-    list.innerHTML = '<div class="empty">아직 주문이 없어요 ☕️</div>';
+    list.innerHTML = '<div class="empty">아직 주문이 없어요</div>';
     return;
   }
   list.innerHTML = entries.map(([k, o]) => `
     <div class="order-item">
       <div class="order-name">${escapeHtml(o.name)}${k === myKey ? '<span class="mine">내 주문</span>' : ''}</div>
       <div class="order-menu">${escapeHtml(formatOrder(o))}</div>
-      ${o.memo ? `<div class="order-memo">📝 ${escapeHtml(o.memo)}</div>` : ''}
+      ${o.memo ? `<div class="order-memo">${escapeHtml(o.memo)}</div>` : ''}
     </div>
   `).join('');
 }
@@ -1533,7 +1555,7 @@ function renderSummary() {
   const list = document.getElementById('summaryList');
   const orders = Object.values(currentOrders);
   if (orders.length === 0) {
-    list.innerHTML = '<div class="empty">아직 주문이 없어요 ☕️</div>';
+    list.innerHTML = '<div class="empty">아직 주문이 없어요</div>';
     return;
   }
   const sortedMenus = buildGroupedOrders(orders);
@@ -1549,7 +1571,7 @@ function renderSummary() {
   const total = orders.length;
   const allDone = checkedCups === total && total > 0;
   let html = `<div class="summary-progress${allDone ? ' done' : ''}">
-    ${allDone ? '✅ 모든 주문 완료!' : `${checkedCups} / ${total}잔 주문 완료`}
+    ${allDone ? '모든 주문 완료' : `${checkedCups} / ${total}잔 주문 완료`}
   </div>`;
 
   sortedMenus.forEach(([menu, g]) => {
@@ -1568,7 +1590,7 @@ function renderSummary() {
       const addonsText = v.addons.length
         ? `<span class="variant-addons">${escapeHtml(v.addons.join(', '))}</span>` : '';
       const memoText  = v.memo
-        ? `<span class="variant-memo">📝 ${escapeHtml(v.memo)}</span>` : '';
+        ? `<span class="variant-memo">${escapeHtml(v.memo)}</span>` : '';
       const classes = `variant-row${v.memo ? ' has-memo' : ''}${checked ? ' checked' : ''}`;
       html += `<label class="${classes}">
         <input type="checkbox" class="variant-check" data-vkey="${escapeHtml(vk)}"${checked ? ' checked' : ''}>
@@ -1605,15 +1627,15 @@ document.getElementById('copyBtn').addEventListener('click', async () => {
   const sortedMenus = buildGroupedOrders(orders);
 
   const lines = [];
-  lines.push(`☕️ ${CONFIG.title} (총 ${orders.length}잔)`);
+  lines.push(`${CONFIG.title} · 총 ${orders.length}잔`);
   lines.push('');
   sortedMenus.forEach(([menu, g]) => {
-    lines.push(`━━ ${menu} (${g.count}잔) ━━`);
+    lines.push(`[${menu}] ${g.count}잔`);
     g.sortedVariants.forEach(v => {
       const parts = [v.temp, v.size].filter(Boolean);
       if (v.addons.length) parts.push(v.addons.join(', '));
-      let line = `• ${parts.join(' ')} × ${v.count}`;
-      if (v.memo) line += ` 📝 ${v.memo}`;
+      let line = `· ${parts.join(' ')} × ${v.count}`;
+      if (v.memo) line += `  (${v.memo})`;
       lines.push(line);
     });
     lines.push('');
@@ -1622,7 +1644,7 @@ document.getElementById('copyBtn').addEventListener('click', async () => {
   const text = lines.join('\n').replace(/\n+$/, '');
   try {
     await navigator.clipboard.writeText(text);
-    toast('📋 복사 완료!');
+    toast('요약이 복사되었어요');
   } catch (e) {
     alert(text);
   }
@@ -1635,7 +1657,7 @@ document.getElementById('resetBtn').addEventListener('click', async () => {
     const { ref, remove } = window._fb;
     await remove(ref(db, `rooms/${ROOM_ID}/orders`));
     localStorage.removeItem(ORDER_KEYS_LS);
-    toast('초기화 완료! 새 주문을 시작하세요 ☕️');
+    toast('초기화되었어요. 새 라운드를 시작해주세요');
     setTimeout(() => location.reload(), 1500);
   } catch (e) {
     alert('오류: ' + e.message);
