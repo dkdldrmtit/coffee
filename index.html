@@ -542,6 +542,20 @@
     border: none;
   }
   .cafe-label:empty { display: none; }
+  .host-label {
+    display: inline-block;
+    padding: 4px 11px;
+    background: white; border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 11px; font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 0.2px;
+  }
+  .host-label strong {
+    color: var(--sb-accent);
+    font-weight: 800;
+    margin-left: 2px;
+  }
   .owner-badge {
     display: inline-block;
     padding: 4px 11px; font-size: 11px; font-weight: 700;
@@ -693,6 +707,7 @@
     <p id="pageDesc"></p>
     <div class="header-meta">
       <span class="cafe-label" id="cafeLabel"></span>
+      <span class="host-label hide" id="hostLabel"></span>
       <span class="owner-badge hide" id="ownerBadge">관리자</span>
     </div>
   </header>
@@ -1173,12 +1188,19 @@ document.getElementById('roomCodeLabel').textContent = ROOM_ID;
 // ════════════════════════════════════════════════════════════════
 function applyConfig() {
   document.getElementById('pageTitle').textContent = CONFIG.title;
-  // 쏘는 사람이 지정돼있으면 부제목을 자동 생성, 아니면 사용자 desc 사용
-  const subtitle = CONFIG.host && CONFIG.host.trim()
-    ? `오늘은 ${CONFIG.host}님이 쏩니다!`
-    : CONFIG.desc;
-  document.getElementById('pageDesc').textContent = subtitle;
+  document.getElementById('pageDesc').textContent = CONFIG.desc;
   document.title = `${CONFIG.title} · 커피 골든벨`;
+  // 쏘는 사람 라벨 — 설정돼있을 때만 노출
+  const hostLabel = document.getElementById('hostLabel');
+  if (hostLabel) {
+    const host = (CONFIG.host || '').trim();
+    if (host) {
+      hostLabel.innerHTML = `쏘는 사람 · <strong>${escapeHtml(host)}</strong>`;
+      hostLabel.classList.remove('hide');
+    } else {
+      hostLabel.classList.add('hide');
+    }
+  }
   applyCafeSizes();
   applyCafeMenus();
   calcDeadline();
