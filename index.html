@@ -160,29 +160,33 @@
   .field-hint .hint-muted {
     color: #a8a198; font-size: 10.5px;
   }
-  details.addon-details {
+  details.addon-details,
+  details.memo-details {
     margin: 14px 0 8px;
   }
-  details.addon-details > summary {
+  details.addon-details > summary,
+  details.memo-details > summary {
     display: flex; align-items: center; justify-content: space-between;
     gap: 8px; font-weight: 600; font-size: 13px;
     color: var(--sb-green-dark);
     cursor: pointer; list-style: none;
     padding: 4px 0;
   }
-  details.addon-details > summary::-webkit-details-marker { display: none; }
-  details.addon-details > summary::after {
+  details.addon-details > summary::-webkit-details-marker,
+  details.memo-details > summary::-webkit-details-marker { display: none; }
+  details.addon-details > summary::after,
+  details.memo-details > summary::after {
     content: "▼"; font-size: 9px; color: var(--muted);
     transition: transform 0.2s ease;
     margin-left: auto;
   }
-  details.addon-details[open] > summary::after {
+  details.addon-details[open] > summary::after,
+  details.memo-details[open] > summary::after {
     transform: rotate(180deg);
   }
-  details.addon-details > .chips {
-    margin-top: 10px;
-  }
-  .addon-count {
+  details.addon-details > .chips { margin-top: 10px; }
+  details.memo-details > textarea { margin-top: 10px; }
+  .addon-count, .memo-indicator {
     font-size: 11px; font-weight: 500; color: var(--sb-accent);
     margin-left: 4px;
   }
@@ -448,7 +452,8 @@
   .form-locked .chips           { pointer-events: none; opacity: 0.45; }
   .form-locked input[type=text] { pointer-events: none; background: #f5f5f5; color: #999; }
   .form-locked textarea         { pointer-events: none; background: #f5f5f5; color: #999; }
-  .form-locked details.addon-details { pointer-events: none; opacity: 0.45; }
+  .form-locked details.addon-details,
+  .form-locked details.memo-details { pointer-events: none; opacity: 0.45; }
 
   /* ── 로딩 스켈레톤 ── */
   @keyframes shimmer {
@@ -663,8 +668,12 @@
         </div>
       </details>
 
-      <label>메모 (선택)</label>
-      <textarea id="memoInput" rows="2" placeholder="예) 알러지, 특이사항 등"></textarea>
+      <details class="memo-details">
+        <summary>
+          <span>메모 (선택) <span class="memo-indicator" id="memoIndicator"></span></span>
+        </summary>
+        <textarea id="memoInput" rows="2" placeholder="예) 시럽 반만, 얼음 조금만"></textarea>
+      </details>
 
       <button class="primary" id="submitBtn">주문하기</button>
       <button class="ghost hide" id="deleteBtn">내 주문 취소하기</button>
@@ -1536,17 +1545,31 @@ function fillFormFromOrder(o) {
     document.querySelector('details.addon-details').open = true;
   }
   document.getElementById('memoInput').value = o.memo || '';
+  if (o.memo && o.memo.trim()) {
+    document.querySelector('details.memo-details').open = true;
+  }
+  updateMemoIndicator();
 }
 
 function resetFormFields() {
   setSingle('tempOptions', 'ICE');
-  setSingle('sizeOptions', 'Tall');
+  // 카페에 따라 사이즈가 다르므로 첫 번째 chip을 기본 선택
+  const firstSize = document.querySelector('#sizeOptions .chip')?.dataset.val;
+  if (firstSize) setSingle('sizeOptions', firstSize);
   menuInput.value = '';
   setMulti('addonOptions', []);
   updateAddonCount();
   document.querySelector('details.addon-details').open = false;
+  document.querySelector('details.memo-details').open = false;
   document.getElementById('memoInput').value = '';
+  updateMemoIndicator();
 }
+
+function updateMemoIndicator() {
+  const has = document.getElementById('memoInput').value.trim().length > 0;
+  document.getElementById('memoIndicator').textContent = has ? '· 작성됨' : '';
+}
+document.getElementById('memoInput').addEventListener('input', updateMemoIndicator);
 
 function syncFormForSelectedName() {
   const name = nameInput.value.trim();
