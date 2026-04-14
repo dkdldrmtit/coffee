@@ -4,7 +4,27 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#006241">
-<title>커피 주문</title>
+<title>커피 골든벨 · 오늘은 누가 쏘나요?</title>
+<meta name="description" content="팀원들 커피 주문, 한 번에 정리해요. 링크 하나로 누구나 메뉴 입력, 자동으로 합쳐서 카페에서 주문하기 편하게.">
+
+<!-- Open Graph (카카오톡 / 페이스북 미리보기) -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="커피 골든벨">
+<meta property="og:title" content="커피 골든벨 · 오늘은 누가 쏘나요?">
+<meta property="og:description" content="팀원들 커피 주문, 한 번에 정리해요. 링크 하나로 누구나 메뉴 입력하고 자동 집계.">
+<meta property="og:url" content="https://dkdldrmtit.github.io/coffee/">
+<meta property="og:image" content="https://dkdldrmtit.github.io/coffee/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="커피 골든벨 - 오늘은 누가 쏘나요?">
+<meta property="og:locale" content="ko_KR">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="커피 골든벨 · 오늘은 누가 쏘나요?">
+<meta name="twitter:description" content="팀원들 커피 주문, 한 번에 정리해요.">
+<meta name="twitter:image" content="https://dkdldrmtit.github.io/coffee/og-image.png">
+
 <style>
   :root {
     --sb-green: #006241;
@@ -27,9 +47,23 @@
   }
   .container { max-width: 560px; margin: 0 auto; }
   .header { padding: 18px 4px 16px; }
+  .header-top {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; margin-bottom: 18px;
+  }
+  .brand {
+    font-size: 13px; font-weight: 700;
+    color: var(--sb-accent);
+    letter-spacing: 0.4px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .brand::before {
+    content: ''; display: inline-block;
+    width: 22px; height: 3px; border-radius: 2px;
+    background: var(--sb-accent);
+  }
   .header-actions {
-    display: flex; justify-content: flex-end; gap: 6px;
-    margin-bottom: 14px;
+    display: flex; gap: 6px;
   }
   .icon-btn {
     background: white; border: 1px solid var(--border);
@@ -55,6 +89,16 @@
     display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
     margin-top: 14px;
   }
+  .footer {
+    padding: 28px 4px 16px;
+    font-size: 11px; color: var(--muted);
+    line-height: 1.6;
+  }
+  .footer .footer-brand {
+    color: var(--sb-accent); font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+  .footer .footer-sep { margin: 0 6px; opacity: 0.5; }
   .countdown {
     background: var(--sb-green); color: white;
     padding: 14px 18px; border-radius: 14px;
@@ -519,9 +563,12 @@
 <body>
 <div class="container">
   <header class="header">
-    <div class="header-actions">
-      <button type="button" class="icon-btn" id="shareBtn">공유</button>
-      <button type="button" class="icon-btn" id="settingsBtn">설정</button>
+    <div class="header-top">
+      <span class="brand">커피 골든벨</span>
+      <div class="header-actions">
+        <button type="button" class="icon-btn" id="shareBtn">공유</button>
+        <button type="button" class="icon-btn" id="settingsBtn">설정</button>
+      </div>
     </div>
     <h1 id="pageTitle"></h1>
     <p id="pageDesc"></p>
@@ -624,6 +671,12 @@
       <button class="copy-btn" id="copyBtn">요약 복사하기</button>
     </div>
   </div>
+
+  <footer class="footer">
+    <span class="footer-brand">커피 골든벨</span>
+    <span class="footer-sep">·</span>
+    <span>오늘 한 잔은 누가 쏘나요?</span>
+  </footer>
 </div>
 
 <!-- 설정 모달 -->
@@ -633,7 +686,7 @@
     <h2>설정</h2>
     <div class="welcome-note hide" id="newRoomWelcome">
       새로운 방이 만들어졌어요.<br>
-      이벤트 이름과 팀원을 설정하면 링크를 공유할 수 있어요.
+      이벤트 이름을 정하고 팀원을 추가하면 바로 시작할 수 있어요.
     </div>
     <div class="guest-note hide" id="settingsGuestNote" style="margin-bottom:16px">
       이 방의 관리자만 설정을 변경할 수 있어요
@@ -735,7 +788,7 @@ let IS_NEW_ROOM = false;
 // 설정 (⚙️ 버튼으로 웹에서 직접 변경 — 방장만 가능)
 // Firebase 실시간 동기화 — 같은 방 참여자 모두 같은 값을 봅니다.
 // ════════════════════════════════════════════════════════════════
-const DEFAULT_CONFIG = { title: '커피 주문', desc: '메뉴를 선택해주세요!', date: '', hour: 8, minute: 40 };
+const DEFAULT_CONFIG = { title: '오늘의 커피', desc: '마실 메뉴를 골라주세요', date: '', hour: 8, minute: 40 };
 let CONFIG = { ...DEFAULT_CONFIG };
 
 // ════════════════════════════════════════════════════════════════
@@ -899,7 +952,7 @@ document.getElementById('roomCodeLabel').textContent = ROOM_ID;
 function applyConfig() {
   document.getElementById('pageTitle').textContent = CONFIG.title;
   document.getElementById('pageDesc').textContent = CONFIG.desc;
-  document.title = CONFIG.title;
+  document.title = `${CONFIG.title} · 커피 골든벨`;
   calcDeadline();
   updateCountdown();
   // 마감시간이 연장되면 잠금 풀기, 단축되면 잠금
