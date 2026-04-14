@@ -542,7 +542,8 @@
   .member-add-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
   /* 비방장: 설정 입력 비활성화 스타일 */
-  .modal input:disabled {
+  .modal input:disabled,
+  .modal select:disabled {
     background: #f5f5f5; color: #888; cursor: default;
   }
 
@@ -713,9 +714,11 @@
       이 방의 관리자만 설정을 변경할 수 있어요
     </div>
     <label>이벤트 이름</label>
-    <input type="text" id="cfgTitle" placeholder="예) 김대리 승진턱">
+    <input type="text" id="cfgTitle" placeholder="예) 김과장 승진턱">
     <label>부제목</label>
     <input type="text" id="cfgDesc" placeholder="예) 오늘은 제가 쏩니다">
+    <label>카페</label>
+    <select id="cfgCafe"></select>
     <label>마감 날짜</label>
     <input type="date" id="cfgDate">
     <label>마감 시각</label>
@@ -809,8 +812,23 @@ let IS_NEW_ROOM = false;
 // 설정 (⚙️ 버튼으로 웹에서 직접 변경 — 방장만 가능)
 // Firebase 실시간 동기화 — 같은 방 참여자 모두 같은 값을 봅니다.
 // ════════════════════════════════════════════════════════════════
-const DEFAULT_CONFIG = { title: '오늘의 커피', desc: '마실 메뉴를 골라주세요', date: '', hour: 8, minute: 40 };
+const DEFAULT_CONFIG = { title: '오늘의 커피', desc: '마실 메뉴를 골라주세요', date: '', hour: 8, minute: 40, cafe: 'starbucks' };
 let CONFIG = { ...DEFAULT_CONFIG };
+
+// ════════════════════════════════════════════════════════════════
+// 카페별 사이즈 프리셋 (카페마다 이름/단계가 다름)
+// ════════════════════════════════════════════════════════════════
+const CAFE_PRESETS = {
+  starbucks: { name: '스타벅스',     sizes: ['Tall', 'Grande', 'Venti'] },
+  ediya:     { name: '이디야커피',   sizes: ['레귤러', '라지'] },
+  mega:      { name: '메가커피',     sizes: ['레귤러', '라지'] },
+  compose:   { name: '컴포즈커피',   sizes: ['레귤러', '라지'] },
+  twosome:   { name: '투썸플레이스', sizes: ['레귤러', '라지'] },
+  hollys:    { name: '할리스커피',   sizes: ['레귤러', '라지'] },
+  paik:      { name: '빽다방',       sizes: ['레귤러', '라지'] },
+  other:     { name: '기타',         sizes: ['작게', '보통', '크게'] },
+};
+const CAFE_ORDER = ['starbucks', 'ediya', 'mega', 'compose', 'twosome', 'hollys', 'paik', 'other'];
 
 // ════════════════════════════════════════════════════════════════
 // 마감 시간
@@ -974,6 +992,7 @@ function applyConfig() {
   document.getElementById('pageTitle').textContent = CONFIG.title;
   document.getElementById('pageDesc').textContent = CONFIG.desc;
   document.title = `${CONFIG.title} · 커피 골든벨`;
+  applyCafeSizes();
   calcDeadline();
   updateCountdown();
   // 마감시간이 연장되면 잠금 풀기, 단축되면 잠금
@@ -999,6 +1018,25 @@ function applyMembers() {
     list.appendChild(opt);
   });
   renderMembersEditor();
+}
+
+// 카페 프리셋에 맞춰 사이즈 chip을 재구성 (방장이 설정 바꾸면 실시간 반영)
+function applyCafeSizes() {
+  const preset = CAFE_PRESETS[CONFIG.cafe] || CAFE_PRESETS.starbucks;
+  const container = document.getElementById('sizeOptions');
+  if (!container) return;
+  const current = container.querySelector('.chip.active')?.dataset.val || '';
+  container.innerHTML = '';
+  preset.sizes.forEach((size, i) => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.dataset.val = size;
+    chip.textContent = size;
+    if (current === size || (!preset.sizes.includes(current) && i === 0)) {
+      chip.classList.add('active');
+    }
+    container.appendChild(chip);
+  });
 }
 
 function renderMembersEditor() {
@@ -1043,7 +1081,7 @@ function applyOwnerUI() {
   document.getElementById('settingsGuestNote').classList.toggle('hide', IS_OWNER);
   document.getElementById('cfgSaveBtn').classList.toggle('hide', !IS_OWNER);
   document.getElementById('memberAddRow').classList.toggle('hide', !IS_OWNER);
-  ['cfgTitle','cfgDesc','cfgDate','cfgTime'].forEach(id => {
+  ['cfgTitle','cfgDesc','cfgCafe','cfgDate','cfgTime'].forEach(id => {
     document.getElementById(id).disabled = !IS_OWNER;
   });
   renderMembersEditor(); // × 버튼 가시성 재계산
@@ -1087,21 +1125,41 @@ const nameInput = document.getElementById('nameInput');
 // ════════════════════════════════════════════════════════════════
 const settingsModal = document.getElementById('settingsModal');
 
+// 카페 드롭다운 초기 셋업
+(function populateCafeSelect() {
+  const sel = document.getElementById('cfgCafe');
+  CAFE_ORDER.forEach(id => {
+    const opt = document.createElement('option');
+    opt.value = id;
+    const sizeHint = CAFE_PRESETS[id].sizes.length
+      ? ` (${CAFE_PRESETS[id].sizes.join('/')})` : '';
+    opt.textContent = CAFE_PRESETS[id].name + sizeHint;
+    sel.appendChild(opt);
+  });
+})();
+
 // 설정 모달 placeholder 예시 — 매번 모달 열 때 랜덤으로 노출
 const EXAMPLE_PAIRS = [
-  { title: '김대리 승진턱',     desc: '오늘은 제가 쏩니다' },
+  // 직장
+  { title: '김과장 승진턱',     desc: '오늘은 제가 쏩니다' },
   { title: '프로젝트 마무리',   desc: '다들 수고 많았어요' },
-  { title: '막내 첫 월급 턱',   desc: '신입의 마음, 받아주세요' },
   { title: '팀장님 생신',       desc: '오래오래 함께해요' },
-  { title: '오랜만에 쏘는 날',  desc: '그냥, 마음이 동해서' },
   { title: '월요병 극복 커피',  desc: '한 주 시작, 같이 힘내요' },
+  // 일상
+  { title: '친구 생일 축하',    desc: '오늘만큼은 네가 주인공' },
+  { title: '주말 브런치 모임',  desc: '천천히, 여유롭게' },
+  { title: '운동 끝나고 한 잔', desc: '수고했어, 우리 몸' },
+  { title: '시험 끝난 기념',    desc: '이제 진짜 자유다' },
 ];
 
 function openSettingsModal({ welcome = false } = {}) {
   const today = new Date().toISOString().split('T')[0];
-  // 새 방 환영 플로우: 빈 입력칸 → placeholder 노출
-  document.getElementById('cfgTitle').value = welcome ? '' : CONFIG.title;
-  document.getElementById('cfgDesc').value  = welcome ? '' : CONFIG.desc;
+  // 아직 기본값인 방이면 placeholder 노출(welcome과 동일 처리)
+  const isDefault = CONFIG.title === DEFAULT_CONFIG.title && CONFIG.desc === DEFAULT_CONFIG.desc;
+  const empty = welcome || isDefault;
+  document.getElementById('cfgTitle').value = empty ? '' : CONFIG.title;
+  document.getElementById('cfgDesc').value  = empty ? '' : CONFIG.desc;
+  document.getElementById('cfgCafe').value  = CONFIG.cafe || 'starbucks';
   document.getElementById('cfgDate').value  = CONFIG.date || today;
   document.getElementById('cfgTime').value  =
     String(CONFIG.hour).padStart(2, '0') + ':' + String(CONFIG.minute).padStart(2, '0');
@@ -1137,6 +1195,8 @@ document.getElementById('cfgSaveBtn').addEventListener('click', async () => {
   if (!isConfigured) { alert('Firebase 설정이 필요합니다.'); return; }
   const title  = document.getElementById('cfgTitle').value.trim() || DEFAULT_CONFIG.title;
   const desc   = document.getElementById('cfgDesc').value.trim()  || DEFAULT_CONFIG.desc;
+  const cafeSel = document.getElementById('cfgCafe').value;
+  const cafe   = CAFE_PRESETS[cafeSel] ? cafeSel : 'starbucks';
   const date   = document.getElementById('cfgDate').value;
   const timeParts = document.getElementById('cfgTime').value.split(':').map(Number);
   const hour   = isNaN(timeParts[0]) ? 8 : timeParts[0];
@@ -1145,7 +1205,7 @@ document.getElementById('cfgSaveBtn').addEventListener('click', async () => {
   saveBtn.classList.add('loading'); saveBtn.disabled = true;
   try {
     const { ref, set } = window._fb;
-    await set(ref(db, `rooms/${ROOM_ID}/meta/config`), { title, desc, date, hour, minute });
+    await set(ref(db, `rooms/${ROOM_ID}/meta/config`), { title, desc, date, hour, minute, cafe });
     settingsModal.classList.add('hide');
     toast('설정을 저장했어요');
     // onValue 구독이 applyConfig 자동 호출
