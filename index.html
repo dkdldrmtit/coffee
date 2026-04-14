@@ -29,6 +29,7 @@
   :root {
     --sb-green: #006241;
     --sb-green-dark: #1e3932;
+    --sb-green-rgb: 0, 98, 65;
     --sb-light: #d4e9e2;
     --sb-accent: #cba258;
     --sb-accent-soft: #f4e7c5;
@@ -38,6 +39,29 @@
     --muted: #6b6b6b;
     --border: #ece5d4;
   }
+  /* 카페별 브랜드 컬러 오버라이드 — data-cafe 속성으로 전환 */
+  body[data-cafe="ediya"] {
+    --sb-green: #1F3862;  --sb-green-dark: #0A1F3E;  --sb-green-rgb: 31, 56, 98;   --sb-light: #D5DEEB;
+  }
+  body[data-cafe="mega"] {
+    --sb-green: #EF1C22;  --sb-green-dark: #8B0C10;  --sb-green-rgb: 239, 28, 34;  --sb-light: #FDE0E1;
+  }
+  body[data-cafe="compose"] {
+    --sb-green: #6B4423;  --sb-green-dark: #3E2517;  --sb-green-rgb: 107, 68, 35;  --sb-light: #EFE4D6;
+  }
+  body[data-cafe="twosome"] {
+    --sb-green: #C8102E;  --sb-green-dark: #7A0016;  --sb-green-rgb: 200, 16, 46;  --sb-light: #FBDCE2;
+  }
+  body[data-cafe="hollys"] {
+    --sb-green: #EE2127;  --sb-green-dark: #811014;  --sb-green-rgb: 238, 33, 39;  --sb-light: #FDDCDE;
+  }
+  body[data-cafe="paik"] {
+    --sb-green: #D1121E;  --sb-green-dark: #6B0810;  --sb-green-rgb: 209, 18, 30;  --sb-light: #FDD9DC;
+  }
+  body[data-cafe="other"] {
+    --sb-green: #6b4f3b;  --sb-green-dark: #4a3527;  --sb-green-rgb: 107, 79, 59;  --sb-light: #e8dcc4;
+  }
+  body { transition: background 0.4s ease; }
   * { box-sizing: border-box; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
@@ -114,7 +138,7 @@
     padding: 14px 18px; border-radius: 14px;
     font-size: 14px; margin: 8px 0 18px;
     font-weight: 600; letter-spacing: 0.1px;
-    box-shadow: 0 4px 14px rgba(0, 98, 65, 0.18);
+    box-shadow: 0 4px 14px rgba(var(--sb-green-rgb), 0.18);
     display: flex; justify-content: space-between; align-items: center;
     gap: 12px;
   }
@@ -223,7 +247,7 @@
     color: white; border: none; border-radius: 12px;
     font-size: 16px; font-weight: 700; cursor: pointer;
     margin-top: 18px; font-family: inherit;
-    box-shadow: 0 4px 12px rgba(0, 98, 65, 0.22);
+    box-shadow: 0 4px 12px rgba(var(--sb-green-rgb), 0.22);
   }
   button.primary:active { transform: translateY(1px); }
   button.ghost {
@@ -395,7 +419,7 @@
   .toast { bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
 
   /* ── hover 상태 ── */
-  button.primary:hover { background: #00754a; }
+  button.primary:hover { filter: brightness(1.12); }
   button.ghost:hover { background: #fff0f0; border-color: #f0c2c2; }
   .copy-btn:hover { background: #b8923f; }
   .ext-link:hover { background: var(--sb-light); color: var(--sb-green-dark); }
@@ -546,7 +570,7 @@
     line-height: 1; padding: 0;
     transition: background 0.15s;
   }
-  .member-add-btn:hover { background: #00754a; }
+  .member-add-btn:hover { filter: brightness(1.12); }
   .member-add-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
   /* 비방장: 설정 입력 비활성화 스타일 */
@@ -1055,6 +1079,8 @@ function applyConfig() {
   document.getElementById('pageTitle').textContent = CONFIG.title;
   document.getElementById('pageDesc').textContent = CONFIG.desc;
   document.title = `${CONFIG.title} · 커피 골든벨`;
+  // 카페별 브랜드 컬러 반영 (CSS custom property 오버라이드)
+  document.body.dataset.cafe = CAFE_PRESETS[CONFIG.cafe] ? CONFIG.cafe : 'starbucks';
   applyCafeSizes();
   applyCafeMenus();
   calcDeadline();
