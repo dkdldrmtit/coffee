@@ -295,6 +295,24 @@
     border-radius: 8px; color: var(--muted); transition: color 0.15s;
   }
   .settings-btn:hover { color: var(--sb-green-dark); }
+  .share-btn {
+    position: absolute; top: 0; left: 0;
+    background: none; border: none; cursor: pointer;
+    font-size: 18px; padding: 6px; line-height: 1;
+    border-radius: 8px; color: var(--muted); transition: color 0.15s;
+  }
+  .share-btn:hover { color: var(--sb-green-dark); }
+  .room-code {
+    display: inline-block; margin-top: 6px;
+    font-size: 11px; color: var(--muted);
+    background: white; padding: 3px 10px;
+    border: 1px solid var(--border); border-radius: 999px;
+  }
+  .room-code b {
+    color: var(--sb-green-dark); letter-spacing: 1.5px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 12px;
+  }
 
   /* ── 설정 모달 (바텀시트) ── */
   .modal-backdrop {
@@ -331,9 +349,11 @@
 <body>
 <div class="container">
   <div class="header">
+    <button class="share-btn" id="shareBtn" title="링크 공유">🔗</button>
     <button class="settings-btn" id="settingsBtn" title="설정">⚙️</button>
     <h1 id="pageTitle"></h1>
     <p id="pageDesc"></p>
+    <div class="room-code">방 코드: <b id="roomCodeLabel"></b></div>
   </div>
 
   <div class="countdown" id="countdown">⏰ 마감까지 --:--:--</div>
@@ -474,6 +494,30 @@ const firebaseConfig = {
 };
 
 // ════════════════════════════════════════════════════════════════
+// 🏠 방(Room) 시스템 — URL 기반 데이터 격리
+// ────────────────────────────────────────────────────────────────
+// URL이 ?room=ABC123 형태가 되며, 같은 코드를 공유받은 사람끼리만
+// 같은 주문 목록을 봅니다. 없으면 자동 생성 후 URL을 갱신합니다.
+// ════════════════════════════════════════════════════════════════
+function generateRoomId() {
+  // 헷갈리는 글자(0/O, 1/I/l) 제외한 안전 알파벳 6자리
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let id = '';
+  for (let i = 0; i < 6; i++) id += chars[Math.floor(Math.random() * chars.length)];
+  return id;
+}
+function getOrCreateRoomId() {
+  const url = new URL(window.location.href);
+  const raw = (url.searchParams.get('room') || '').toUpperCase();
+  if (/^[A-HJ-NP-Z2-9]{6}$/.test(raw)) return raw;
+  const fresh = generateRoomId();
+  url.searchParams.set('room', fresh);
+  window.history.replaceState(null, '', url.toString());
+  return fresh;
+}
+const ROOM_ID = getOrCreateRoomId();
+
+// ════════════════════════════════════════════════════════════════
 // 설정 (⚙️ 버튼으로 웹에서 직접 변경 — 코드 수정 불필요)
 // ════════════════════════════════════════════════════════════════
 const DEFAULT_CONFIG = { title: '커피 주문', desc: '메뉴를 선택해주세요!', date: '', hour: 8, minute: 40 };
@@ -593,7 +637,7 @@ if (isConfigured) {
   const dbMod = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js");
   const app = initializeApp(firebaseConfig);
   db = dbMod.getDatabase(app);
-  ordersRef = dbMod.ref(db, 'coffee_orders');
+  ordersRef = dbMod.ref(db, `rooms/${ROOM_ID}/orders`);
   window._fb = dbMod;
 } else {
   document.getElementById('setupWarning').classList.remove('hide');
@@ -605,6 +649,31 @@ if (isConfigured) {
 document.getElementById('pageTitle').textContent = `☕️ ${CONFIG.title} ☕️`;
 document.getElementById('pageDesc').innerHTML = `${CONFIG.desc}<br>메뉴 선택해주세요!`;
 document.title = `☕️ ${CONFIG.title}`;
+document.getElementById('roomCodeLabel').textContent = ROOM_ID;
+
+// ════════════════════════════════════════════════════════════════
+// 🔗 링크 공유 버튼 — 현재 방 URL을 공유/복사
+// ════════════════════════════════════════════════════════════════
+document.getElementById('shareBtn').addEventListener('click', async () => {
+  const url = window.location.href;
+  const shareText = `☕️ ${CONFIG.title}\n방 코드: ${ROOM_ID}`;
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: CONFIG.title, text: shareText, url });
+    } else {
+      await navigator.clipboard.writeText(url);
+      toast('🔗 링크 복사 완료!');
+    }
+  } catch (e) {
+    if (e.name === 'AbortError') return; // 사용자가 공유 취소
+    try {
+      await navigator.clipboard.writeText(url);
+      toast('🔗 링크 복사 완료!');
+    } catch {
+      alert(url);
+    }
+  }
+});
 
 // ════════════════════════════════════════════════════════════════
 // 드롭다운 셋업 (이름 datalist + 메뉴 datalist)
@@ -796,14 +865,15 @@ let currentOrders = {};
 let lastSyncedName = null;     // 폼이 현재 어느 이름에 대해 동기화됐는지
 let firebaseDataLoaded = false;
 
+const ORDER_KEYS_LS = `coffee_order_keys_${ROOM_ID}`;
 function getOrderKeys() {
-  try { return JSON.parse(localStorage.getItem('coffee_order_keys') || '{}'); }
+  try { return JSON.parse(localStorage.getItem(ORDER_KEYS_LS) || '{}'); }
   catch { return {}; }
 }
 function setOrderKey(name, key) {
   const keys = getOrderKeys();
   if (key) keys[name] = key; else delete keys[name];
-  localStorage.setItem('coffee_order_keys', JSON.stringify(keys));
+  localStorage.setItem(ORDER_KEYS_LS, JSON.stringify(keys));
 }
 
 // 선호 메뉴 저장/불러오기
@@ -945,7 +1015,7 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
     const { ref, set, push } = window._fb;
     const existingKey = getOrderKeys()[name];
     if (existingKey && currentOrders[existingKey]) {
-      await set(ref(db, 'coffee_orders/' + existingKey), order);
+      await set(ref(db, `rooms/${ROOM_ID}/orders/` + existingKey), order);
       toast('주문 수정 완료 ☕️');
     } else {
       const newRef = push(ordersRef);
@@ -974,7 +1044,7 @@ document.getElementById('deleteBtn').addEventListener('click', async () => {
   if (!confirm('주문을 취소하시겠습니까?')) return;
   try {
     const { ref, remove } = window._fb;
-    await remove(ref(db, 'coffee_orders/' + myKey));
+    await remove(ref(db, `rooms/${ROOM_ID}/orders/` + myKey));
     setOrderKey(name, null);
     resetFormFields();
     document.getElementById('submitBtn').textContent = '주문하기';
@@ -1082,8 +1152,8 @@ document.getElementById('resetBtn').addEventListener('click', async () => {
   if (!confirm(`모든 주문을 초기화하고 새 라운드를 시작할까요?\n이 작업은 되돌릴 수 없습니다.`)) return;
   try {
     const { ref, remove } = window._fb;
-    await remove(ref(db, 'coffee_orders'));
-    localStorage.removeItem('coffee_order_keys');
+    await remove(ref(db, `rooms/${ROOM_ID}/orders`));
+    localStorage.removeItem(ORDER_KEYS_LS);
     toast('초기화 완료! 새 주문을 시작하세요 ☕️');
     setTimeout(() => location.reload(), 1500);
   } catch (e) {
