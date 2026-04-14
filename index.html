@@ -40,34 +40,6 @@
     --muted: #64748b;            /* slate-500 */
     --border: #e2e8f0;           /* slate-200 */
   }
-  /* 카페별 브랜드 컬러 오버라이드 — data-cafe 속성으로 전환 */
-  /* 이디야: 네이비 블루 (CI 기본색, 공식 hex 미공개라 통용값 사용) */
-  body[data-cafe="ediya"] {
-    --sb-green: #1A4995;  --sb-green-dark: #0E2E61;  --sb-green-rgb: 26, 73, 149;  --sb-light: #D7E0EE;
-  }
-  /* 메가커피: 멕시칸 레드 (Brandfetch 기준, 로고 주색) */
-  body[data-cafe="mega"] {
-    --sb-green: #98242D;  --sb-green-dark: #5C1619;  --sb-green-rgb: 152, 36, 45;  --sb-light: #F5DFE2;
-  }
-  /* 컴포즈커피: 시그니처 노랑 → UI용 다크 머스타드 (흰 글씨 대비) */
-  body[data-cafe="compose"] {
-    --sb-green: #8B6914;  --sb-green-dark: #53410C;  --sb-green-rgb: 139, 105, 20; --sb-light: #F5E8C7;
-  }
-  /* 투썸플레이스: 블랙 (공식 주 컬러) */
-  body[data-cafe="twosome"] {
-    --sb-green: #1a1a1a;  --sb-green-dark: #000000;  --sb-green-rgb: 26, 26, 26;   --sb-light: #E8E8E8;
-  }
-  /* 할리스: 레드 (크라운/도어 상징, 공식 hex 미공개) */
-  body[data-cafe="hollys"] {
-    --sb-green: #D7181F;  --sb-green-dark: #7F0912;  --sb-green-rgb: 215, 24, 31;  --sb-light: #FCDBDE;
-  }
-  /* 빽다방: 네이비 (노랑+네이비 공식 조합 중 UI 대비용 네이비) */
-  body[data-cafe="paik"] {
-    --sb-green: #001F60;  --sb-green-dark: #000F30;  --sb-green-rgb: 0, 31, 96;    --sb-light: #D5DBEB;
-  }
-  body[data-cafe="other"] {
-    --sb-green: #6b4f3b;  --sb-green-dark: #4a3527;  --sb-green-rgb: 107, 79, 59;  --sb-light: #e8dcc4;
-  }
   body { transition: background 0.4s ease; }
   * { box-sizing: border-box; }
   html, body {
@@ -528,6 +500,15 @@
     font-family: ui-monospace, "SF Mono", Menlo, monospace;
     letter-spacing: 1.2px;
   }
+  .cafe-label {
+    display: inline-block;
+    font-size: 11px; font-weight: 600;
+    color: var(--sb-green-dark);
+    background: white; padding: 4px 11px;
+    border: 1px solid var(--border); border-radius: 999px;
+    letter-spacing: 0.2px;
+  }
+  .cafe-label:empty { display: none; }
   .owner-badge {
     display: inline-block;
     padding: 4px 11px; font-size: 11px; font-weight: 700;
@@ -651,6 +632,7 @@
     <p id="pageDesc"></p>
     <div class="header-meta">
       <span class="room-code" id="roomCodeLabel"></span>
+      <span class="cafe-label" id="cafeLabel"></span>
       <span class="owner-badge hide" id="ownerBadge">관리자</span>
     </div>
   </header>
@@ -1119,8 +1101,6 @@ function applyConfig() {
   document.getElementById('pageTitle').textContent = CONFIG.title;
   document.getElementById('pageDesc').textContent = CONFIG.desc;
   document.title = `${CONFIG.title} · 커피 골든벨`;
-  // 카페별 브랜드 컬러 반영 (CSS custom property 오버라이드)
-  document.body.dataset.cafe = CAFE_PRESETS[CONFIG.cafe] ? CONFIG.cafe : 'starbucks';
   applyCafeSizes();
   applyCafeMenus();
   calcDeadline();
@@ -1156,6 +1136,9 @@ function applyMembers() {
 // 카페 프리셋에 맞춰 사이즈 chip을 재구성 (방장이 설정 바꾸면 실시간 반영)
 function applyCafeSizes() {
   const preset = CAFE_PRESETS[CONFIG.cafe] || CAFE_PRESETS.starbucks;
+  // 헤더의 카페 라벨 갱신
+  const cafeLabel = document.getElementById('cafeLabel');
+  if (cafeLabel) cafeLabel.textContent = preset.name;
   const container = document.getElementById('sizeOptions');
   if (!container) return;
   const current = container.querySelector('.chip.active')?.dataset.val || '';
