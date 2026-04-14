@@ -31,8 +31,8 @@
     --sb-green-dark: #1e3932;
     --sb-green-rgb: 0, 98, 65;
     --sb-light: #d4e9e2;
-    --sb-accent: #cba258;
-    --sb-accent-soft: #f4e7c5;
+    --sb-accent: #FF6B47;        /* 바이브런트 코랄 — 따뜻하고 활기찬 */
+    --sb-accent-soft: #FFE5DD;   /* 옅은 피치 */
     --bg: #f9f5ec;
     --bg-deep: #f1e9d6;
     --text: #1e3932;
@@ -131,7 +131,7 @@
   .header h1::before {
     content: ''; position: absolute;
     left: 0; top: 8px; bottom: 8px; width: 4px;
-    background: linear-gradient(180deg, var(--sb-accent) 0%, #b8923f 100%);
+    background: linear-gradient(180deg, var(--sb-accent) 0%, #E04A28 100%);
     border-radius: 999px;
   }
   .header p {
@@ -441,7 +441,7 @@
   /* ── hover 상태 ── */
   button.primary:hover { filter: brightness(1.12); }
   button.ghost:hover { background: #fff0f0; border-color: #f0c2c2; }
-  .copy-btn:hover { background: #b8923f; }
+  .copy-btn:hover { filter: brightness(1.08); }
   .ext-link:hover { background: var(--sb-light); color: var(--sb-green-dark); }
   .tab:not(.active):hover { background: var(--sb-light); color: var(--sb-green-dark); }
   .chip:not(.active):hover { border-color: var(--sb-green); color: var(--sb-green); background: #f0f9f5; }
