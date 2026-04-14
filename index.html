@@ -1055,12 +1055,15 @@ function applyConfig() {
   const submitBtn = document.getElementById('submitBtn');
   if (isPastDeadline()) {
     card.classList.add('form-locked');
-    submitBtn.textContent = '주문이 마감되었습니다';
+    submitBtn.textContent = '주문이 마감됐어요';
     submitBtn.disabled = true;
-  } else if (submitBtn.disabled && submitBtn.textContent === '주문이 마감되었습니다') {
+  } else if (card.classList.contains('form-locked')) {
     card.classList.remove('form-locked');
     submitBtn.disabled = false;
     submitBtn.textContent = '주문하기';
+    // 이름이 선택돼있다면 "주문 수정하기"/"주문하기" 상태를 다시 맞춤
+    lastSyncedName = null;
+    if (typeof syncFormForSelectedName === 'function') syncFormForSelectedName();
   }
 }
 
@@ -1465,6 +1468,7 @@ function updateCountdown() {
     lockFormIfDeadline();
     return;
   }
+  cd.classList.remove('closed'); // 마감 → 연장 전환 시 회색 배경 해제
   cd.classList.toggle('urgent',   diff < 30 * 60 * 1000 && diff >= 10 * 60 * 1000);
   cd.classList.toggle('critical', diff < 10 * 60 * 1000);
   const h = Math.floor(diff / 3600000);
