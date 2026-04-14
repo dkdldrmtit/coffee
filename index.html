@@ -278,13 +278,20 @@
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
   }
+  .reset-btn {
+    width: 100%; padding: 12px; background: transparent;
+    color: #999; border: 1.5px solid #e8e8e8; border-radius: 10px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    margin-top: 8px; font-family: inherit; transition: all 0.15s;
+  }
+  .reset-btn:hover { background: #fff0f0; color: #c43535; border-color: #f0c2c2; }
 </style>
 </head>
 <body>
 <div class="container">
   <div class="header">
-    <h1>☕️ 아들 탄생 기념 커피 한 잔 ☕️</h1>
-    <p>축하해주셔서 감사합니다 🙏<br>메뉴 선택해주세요!</p>
+    <h1 id="pageTitle"></h1>
+    <p id="pageDesc"></p>
   </div>
 
   <div class="countdown" id="countdown">⏰ 마감까지 --:--:--</div>
@@ -375,6 +382,7 @@
       <h3>메뉴별 집계</h3>
       <div id="summaryList"></div>
       <button class="copy-btn" id="copyBtn">📋 요약 복사하기</button>
+      <button class="reset-btn" id="resetBtn">🔄 주문 초기화 (새 라운드 시작)</button>
     </div>
   </div>
 </div>
@@ -406,12 +414,29 @@ const firebaseConfig = {
 };
 
 // ════════════════════════════════════════════════════════════════
-// 마감 시간: 오늘 오전 8시 40분
+// ✏️ 새 주문 라운드마다 여기만 수정하세요
+// ════════════════════════════════════════════════════════════════
+const CONFIG = {
+  title:  '아들 탄생 기념 커피',   // 이벤트 이름
+  desc:   '축하해주셔서 감사합니다 🙏', // 부제목
+  hour:   8,                        // 마감 시각 (24시간제)
+  minute: 40,                       // 마감 분
+};
+
+// ════════════════════════════════════════════════════════════════
+// 마감 시간 (CONFIG 기준)
 // ════════════════════════════════════════════════════════════════
 const DEADLINE = (() => {
   const d = new Date();
-  d.setHours(8, 40, 0, 0);
+  d.setHours(CONFIG.hour, CONFIG.minute, 0, 0);
   return d.getTime();
+})();
+
+const deadlineLabel = (() => {
+  const ampm = CONFIG.hour < 12 ? '오전' : '오후';
+  const h = CONFIG.hour % 12 || 12;
+  const m = String(CONFIG.minute).padStart(2, '0');
+  return `오늘 ${ampm} ${h}:${m}`;
 })();
 
 // ════════════════════════════════════════════════════════════════
@@ -508,6 +533,13 @@ if (isConfigured) {
 } else {
   document.getElementById('setupWarning').classList.remove('hide');
 }
+
+// ════════════════════════════════════════════════════════════════
+// CONFIG → HTML 반영
+// ════════════════════════════════════════════════════════════════
+document.getElementById('pageTitle').textContent = `☕️ ${CONFIG.title} ☕️`;
+document.getElementById('pageDesc').innerHTML = `${CONFIG.desc}<br>메뉴 선택해주세요!`;
+document.title = `☕️ ${CONFIG.title}`;
 
 // ════════════════════════════════════════════════════════════════
 // 드롭다운 셋업 (이름 datalist + 메뉴 datalist)
@@ -641,7 +673,7 @@ function updateCountdown() {
   const m = Math.floor((diff % 3600000) / 60000);
   const s = Math.floor((diff % 60000) / 1000);
   const urgencyPrefix = diff < 10 * 60 * 1000 ? '🚨' : diff < 30 * 60 * 1000 ? '⚠️' : '⏰';
-  cd.textContent = `${urgencyPrefix} 오늘 오전 8:40 마감 · ${h}시간 ${m}분 ${s}초 남음`;
+  cd.textContent = `${urgencyPrefix} ${deadlineLabel} 마감 · ${h}시간 ${m}분 ${s}초 남음`;
 }
 updateCountdown();
 lockFormIfDeadline();
@@ -915,6 +947,20 @@ document.getElementById('copyBtn').addEventListener('click', async () => {
     toast('📋 복사 완료!');
   } catch (e) {
     alert(text);
+  }
+});
+
+document.getElementById('resetBtn').addEventListener('click', async () => {
+  if (!isConfigured) { alert('Firebase 설정이 필요합니다.'); return; }
+  if (!confirm(`모든 주문을 초기화하고 새 라운드를 시작할까요?\n이 작업은 되돌릴 수 없습니다.`)) return;
+  try {
+    const { ref, remove } = window._fb;
+    await remove(ref(db, 'coffee_orders'));
+    localStorage.removeItem('coffee_order_keys');
+    toast('초기화 완료! 새 주문을 시작하세요 ☕️');
+    setTimeout(() => location.reload(), 1500);
+  } catch (e) {
+    alert('오류: ' + e.message);
   }
 });
 
