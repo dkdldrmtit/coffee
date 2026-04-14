@@ -180,21 +180,18 @@
     font-size: 13px;
   }
 
-  /* ── 요약 뷰 토글 ── */
-  .view-toggle {
-    display: flex; gap: 4px; background: #f5f5f5;
-    border-radius: 10px; padding: 4px; margin-bottom: 16px;
+  .summary-hint {
+    font-size: 11px; font-weight: 500; color: var(--muted);
+    margin-left: 8px;
   }
-  .view-toggle-btn {
-    flex: 1; padding: 9px 8px; border: none;
-    background: transparent; color: var(--muted);
-    border-radius: 8px; cursor: pointer; font-size: 13px;
-    font-weight: 600; font-family: inherit;
-    transition: background 0.15s, color 0.15s;
+  .summary-progress {
+    margin-bottom: 14px; padding: 10px 14px;
+    background: var(--sb-light); color: var(--sb-green-dark);
+    border-radius: 10px; font-size: 13px; font-weight: 700;
+    text-align: center;
   }
-  .view-toggle-btn.active {
-    background: white; color: var(--sb-green-dark);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  .summary-progress.done {
+    background: var(--sb-green); color: white;
   }
 
   /* ── 요약: 메뉴별 그룹 (스타벅스 주문 흐름과 동일) ── */
@@ -216,10 +213,21 @@
   .menu-variants { padding: 4px 4px 2px; }
   .variant-row {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 9px 8px; gap: 10px;
+    padding: 10px 8px; gap: 10px;
     border-bottom: 1px dashed #f0f0f0;
+    cursor: pointer; user-select: none;
+    transition: opacity 0.15s, background 0.15s;
   }
   .variant-row:last-child { border-bottom: none; }
+  .variant-row:hover { background: #f9faf8; }
+  .variant-row .variant-check {
+    width: 20px; height: 20px; flex-shrink: 0;
+    accent-color: var(--sb-green); cursor: pointer;
+    margin: 0;
+  }
+  .variant-row.checked { opacity: 0.45; }
+  .variant-row.checked .variant-spec { text-decoration: line-through; }
+  .variant-row.checked.has-memo { background: #fffaf5; }
   .variant-spec {
     display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
     font-size: 13px; min-width: 0;
@@ -265,45 +273,6 @@
     font-size: 15px; font-weight: 800; color: var(--sb-green-dark);
   }
 
-  /* ── 체크리스트 뷰 ── */
-  .checklist-list { display: flex; flex-direction: column; gap: 6px; }
-  .checklist-row {
-    display: flex; align-items: flex-start; gap: 12px;
-    padding: 12px 14px; background: #fafafa;
-    border-radius: 10px; cursor: pointer;
-    border: 1.5px solid transparent;
-    transition: all 0.15s;
-  }
-  .checklist-row:hover { background: #f0f9f5; }
-  .checklist-row.checked {
-    background: #f0f9f5; border-color: var(--sb-light);
-  }
-  .checklist-row.checked .checklist-name,
-  .checklist-row.checked .checklist-menu {
-    text-decoration: line-through; color: #aaa;
-  }
-  .checklist-row input[type="checkbox"] {
-    width: 20px; height: 20px; margin-top: 2px;
-    accent-color: var(--sb-green); cursor: pointer; flex-shrink: 0;
-  }
-  .checklist-content { flex: 1; min-width: 0; }
-  .checklist-name {
-    font-weight: 700; font-size: 14px;
-    color: var(--sb-green-dark); margin-bottom: 2px;
-  }
-  .checklist-menu { font-size: 13px; color: #444; }
-  .checklist-memo {
-    font-size: 11px; color: #b8860b;
-    margin-top: 4px; padding: 4px 8px;
-    background: #fff8e6; border-radius: 6px;
-    display: inline-block;
-  }
-  .checklist-progress {
-    margin-top: 14px; padding: 12px;
-    background: var(--sb-light); color: var(--sb-green-dark);
-    border-radius: 10px; text-align: center;
-    font-size: 13px; font-weight: 700;
-  }
   .empty {
     text-align: center; color: #aaa; padding: 28px 10px;
     font-size: 14px;
@@ -633,10 +602,7 @@
   <!-- SUMMARY TAB -->
   <div id="summaryTab" class="hide tab-content">
     <div class="card">
-      <div class="view-toggle">
-        <button type="button" class="view-toggle-btn active" data-view="summary">📊 메뉴 집계</button>
-        <button type="button" class="view-toggle-btn" data-view="checklist">✓ 체크리스트</button>
-      </div>
+      <h3>주문 요약 <span class="summary-hint">탭해서 주문 완료 체크</span></h3>
       <div id="summaryList"></div>
       <button class="copy-btn" id="copyBtn">📋 요약 복사하기</button>
     </div>
@@ -1513,13 +1479,17 @@ function renderList() {
 }
 
 // ════════════════════════════════════════════════════════════════
-// 요약 탭: 메뉴 집계 + 체크리스트 뷰
+// 요약 탭: 메뉴 집계 + 변형별 주문 완료 체크
 // ════════════════════════════════════════════════════════════════
-let summaryViewMode = 'summary'; // 'summary' | 'checklist'
-const checkedOrders = new Set(); // 체크리스트 상태 (in-memory)
+// 카운터에서 한 항목씩 주문하면서 탭하면 체크/취소 (in-memory)
+const checkedVariants = new Set();
 
 const TEMP_ORDER = ['ICE', 'HOT'];
 const SIZE_ORDER = ['Tall', 'Grande', 'Venti'];
+
+function makeVariantKey(menu, v) {
+  return `${menu}::${v.temp}|${v.size}|${v.addons.join(',')}|${v.memo || ''}`;
+}
 
 // 주문 목록 → 메뉴별로 묶고, 각 메뉴 내부에서 (온도/사이즈/옵션/메모) 변형별로 카운트
 // 스타벅스 주문 흐름(메뉴 → 온도 → 사이즈 → 옵션/요구사항)에 맞춰 정렬
@@ -1560,14 +1530,6 @@ function buildGroupedOrders(orders) {
 }
 
 function renderSummary() {
-  if (summaryViewMode === 'checklist') {
-    renderChecklistView();
-  } else {
-    renderGroupedSummary();
-  }
-}
-
-function renderGroupedSummary() {
   const list = document.getElementById('summaryList');
   const orders = Object.values(currentOrders);
   if (orders.length === 0) {
@@ -1576,7 +1538,20 @@ function renderGroupedSummary() {
   }
   const sortedMenus = buildGroupedOrders(orders);
 
-  let html = '';
+  // 체크된 잔 수 계산 (진행률 표시용)
+  let checkedCups = 0;
+  sortedMenus.forEach(([menu, g]) => {
+    g.sortedVariants.forEach(v => {
+      if (checkedVariants.has(makeVariantKey(menu, v))) checkedCups += v.count;
+    });
+  });
+
+  const total = orders.length;
+  const allDone = checkedCups === total && total > 0;
+  let html = `<div class="summary-progress${allDone ? ' done' : ''}">
+    ${allDone ? '✅ 모든 주문 완료!' : `${checkedCups} / ${total}잔 주문 완료`}
+  </div>`;
+
   sortedMenus.forEach(([menu, g]) => {
     html += `<div class="menu-group">
       <div class="menu-group-header">
@@ -1585,6 +1560,8 @@ function renderGroupedSummary() {
       </div>
       <div class="menu-variants">`;
     g.sortedVariants.forEach(v => {
+      const vk = makeVariantKey(menu, v);
+      const checked = checkedVariants.has(vk);
       const tempCls = v.temp === 'ICE' ? 'ice' : v.temp === 'HOT' ? 'hot' : '';
       const tempBadge = v.temp ? `<span class="variant-temp ${tempCls}">${escapeHtml(v.temp)}</span>` : '';
       const sizeText  = v.size ? `<span class="variant-size">${escapeHtml(v.size)}</span>` : '';
@@ -1592,66 +1569,31 @@ function renderGroupedSummary() {
         ? `<span class="variant-addons">${escapeHtml(v.addons.join(', '))}</span>` : '';
       const memoText  = v.memo
         ? `<span class="variant-memo">📝 ${escapeHtml(v.memo)}</span>` : '';
-      html += `<div class="variant-row${v.memo ? ' has-memo' : ''}">
+      const classes = `variant-row${v.memo ? ' has-memo' : ''}${checked ? ' checked' : ''}`;
+      html += `<label class="${classes}">
+        <input type="checkbox" class="variant-check" data-vkey="${escapeHtml(vk)}"${checked ? ' checked' : ''}>
         <div class="variant-spec">${tempBadge}${sizeText}${addonsText}${memoText}</div>
         <span class="count">× ${v.count}</span>
-      </div>`;
+      </label>`;
     });
     html += `</div></div>`;
   });
 
   html += `<div class="summary-total">
     <span>총계</span>
-    <span>${orders.length}잔</span>
+    <span>${total}잔</span>
   </div>`;
 
   list.innerHTML = html;
 }
 
-function renderChecklistView() {
-  const list = document.getElementById('summaryList');
-  const entries = Object.entries(currentOrders)
-    .sort((a, b) => (a[1].name || '').localeCompare(b[1].name || '', 'ko'));
-  if (entries.length === 0) {
-    list.innerHTML = '<div class="empty">아직 주문이 없어요 ☕️</div>';
-    return;
-  }
-  let html = '<div class="checklist-list">';
-  entries.forEach(([key, o]) => {
-    const checked = checkedOrders.has(key);
-    html += `<label class="checklist-row${checked ? ' checked' : ''}">
-      <input type="checkbox" data-key="${escapeHtml(key)}"${checked ? ' checked' : ''}>
-      <div class="checklist-content">
-        <div class="checklist-name">${escapeHtml(o.name)}</div>
-        <div class="checklist-menu">${escapeHtml(formatOrder(o))}</div>
-        ${o.memo ? `<div class="checklist-memo">📝 ${escapeHtml(o.memo)}</div>` : ''}
-      </div>
-    </label>`;
-  });
-  const checkedCount = entries.filter(([k]) => checkedOrders.has(k)).length;
-  html += `</div>
-    <div class="checklist-progress">${checkedCount} / ${entries.length} 받음</div>`;
-  list.innerHTML = html;
-}
-
-// 뷰 토글
-document.querySelectorAll('.view-toggle-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.view-toggle-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    summaryViewMode = btn.dataset.view;
-    renderSummary();
-  });
-});
-
-// 체크리스트 체크박스 변경 → Set 갱신 + 진행률 업데이트
+// 변형 체크박스 변경 → Set 갱신 + 진행률 즉시 갱신
 document.getElementById('summaryList').addEventListener('change', e => {
-  const cb = e.target.closest('input[type="checkbox"]');
+  const cb = e.target.closest('input.variant-check');
   if (!cb) return;
-  const key = cb.dataset.key;
-  if (cb.checked) checkedOrders.add(key); else checkedOrders.delete(key);
-  // 라벨/진행률 즉시 반영
-  if (summaryViewMode === 'checklist') renderChecklistView();
+  const vk = cb.dataset.vkey;
+  if (cb.checked) checkedVariants.add(vk); else checkedVariants.delete(vk);
+  renderSummary();
 });
 
 // ════════════════════════════════════════════════════════════════
