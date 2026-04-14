@@ -325,6 +325,13 @@
     border-radius: 10px; font-size: 12px; line-height: 1.5;
     color: var(--muted); text-align: center;
   }
+  .welcome-note {
+    padding: 14px 16px; margin-bottom: 18px;
+    background: var(--sb-light); color: var(--sb-green-dark);
+    border-radius: 12px; font-size: 13px; line-height: 1.55;
+    text-align: center; font-weight: 500;
+    border: 1px solid #b9d8c9;
+  }
 
   /* ── 팀원 명단 편집 ── */
   .members-chips {
@@ -513,6 +520,10 @@
   <div class="modal">
     <div class="modal-handle"></div>
     <h2>⚙️ 설정</h2>
+    <div class="welcome-note hide" id="newRoomWelcome">
+      👋 새 방을 만들었어요!<br>
+      이벤트 이름과 팀원을 설정하면 링크를 공유할 수 있어요.
+    </div>
     <div class="guest-note hide" id="settingsGuestNote" style="margin-bottom:16px">
       🔒 설정은 이 방의 <b>관리자</b>만 변경할 수 있어요
     </div>
@@ -607,6 +618,7 @@ function getOrCreateUserId() {
 }
 const USER_ID = getOrCreateUserId();
 let IS_OWNER = false;
+let IS_NEW_ROOM = false;
 
 // ════════════════════════════════════════════════════════════════
 // 설정 (⚙️ 버튼으로 웹에서 직접 변경 — 방장만 가능)
@@ -634,9 +646,7 @@ function calcDeadline() {
 calcDeadline();
 
 // ════════════════════════════════════════════════════════════════
-// 👥 기본 부서원 명단 (새 방 생성 시 초깃값)
-// ────────────────────────────────────────────────────────────────
-// 이후 방장이 설정 모달에서 UI로 직접 추가/삭제할 수 있습니다.
+// 👥 팀원 명단 — 빈 상태로 시작, 방장이 설정 모달에서 직접 추가
 // ════════════════════════════════════════════════════════════════
 // Firebase는 배열을 {0:..., 1:...} 객체로 반환할 때가 있어 방어 처리
 function normalizeMembers(raw) {
@@ -645,22 +655,7 @@ function normalizeMembers(raw) {
   return [];
 }
 
-const DEFAULT_MEMBERS = [
-  "박웅",
-  "장민석",
-  "안소희",
-  "하규홍",
-  "김경인",
-  "조상혁",
-  "송현준",
-  "이영",
-  "이승아",
-  "우성원",
-  "김민석",
-  "이현욱",
-  "정하임",
-  "김동규",
-];
+const DEFAULT_MEMBERS = [];
 let CURRENT_MEMBERS = [...DEFAULT_MEMBERS];
 
 // ════════════════════════════════════════════════════════════════
@@ -754,8 +749,15 @@ if (isConfigured) {
     const existing = (await dbMod.get(metaRef)).val() || {};
     if (IS_OWNER) {
       const seeds = {};
-      if (!existing.config)  seeds[`rooms/${ROOM_ID}/meta/config`]  = { ...DEFAULT_CONFIG };
-      if (!existing.members) seeds[`rooms/${ROOM_ID}/meta/members`] = [...DEFAULT_MEMBERS];
+      // config 부재 = 진짜 신규 방 (방장이 처음 만든 시점)
+      if (!existing.config) {
+        seeds[`rooms/${ROOM_ID}/meta/config`] = { ...DEFAULT_CONFIG };
+        IS_NEW_ROOM = true;
+      }
+      // 빈 배열은 RTDB가 저장하지 않아 매번 seed가 트리거됨 → DEFAULT_MEMBERS가 있을 때만 시드
+      if (!existing.members && DEFAULT_MEMBERS.length > 0) {
+        seeds[`rooms/${ROOM_ID}/meta/members`] = [...DEFAULT_MEMBERS];
+      }
       if (Object.keys(seeds).length > 0) await dbMod.update(dbMod.ref(db), seeds);
     }
     // 최신 메타 재로드 (시드 반영)
@@ -821,7 +823,9 @@ function renderMembersEditor() {
   if (CURRENT_MEMBERS.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'members-empty';
-    empty.textContent = '아직 팀원이 없어요';
+    empty.textContent = IS_OWNER
+      ? '↓ 아래에 팀원 이름을 추가해보세요'
+      : '아직 팀원이 없어요';
     container.appendChild(empty);
     return;
   }
@@ -898,19 +902,34 @@ const nameInput = document.getElementById('nameInput');
 // ════════════════════════════════════════════════════════════════
 const settingsModal = document.getElementById('settingsModal');
 
-document.getElementById('settingsBtn').addEventListener('click', () => {
+function openSettingsModal({ welcome = false } = {}) {
   const today = new Date().toISOString().split('T')[0];
-  document.getElementById('cfgTitle').value = CONFIG.title;
-  document.getElementById('cfgDesc').value = CONFIG.desc;
-  document.getElementById('cfgDate').value = CONFIG.date || today;
-  document.getElementById('cfgTime').value =
+  // 새 방 환영 플로우: 빈 입력칸 → placeholder 노출
+  document.getElementById('cfgTitle').value = welcome ? '' : CONFIG.title;
+  document.getElementById('cfgDesc').value  = welcome ? '' : CONFIG.desc;
+  document.getElementById('cfgDate').value  = CONFIG.date || today;
+  document.getElementById('cfgTime').value  =
     String(CONFIG.hour).padStart(2, '0') + ':' + String(CONFIG.minute).padStart(2, '0');
+  document.getElementById('newRoomWelcome').classList.toggle('hide', !welcome);
   settingsModal.classList.remove('hide');
-});
+  if (welcome) {
+    setTimeout(() => {
+      const t = document.getElementById('cfgTitle');
+      t.focus();
+      t.select && t.select();
+    }, 80);
+  }
+}
+document.getElementById('settingsBtn').addEventListener('click', () => openSettingsModal());
 
 settingsModal.addEventListener('click', e => {
   if (e.target === settingsModal) settingsModal.classList.add('hide');
 });
+
+// 새로 만든 방의 방장 → 설정 모달 자동 안내
+if (IS_NEW_ROOM && IS_OWNER) {
+  openSettingsModal({ welcome: true });
+}
 
 document.getElementById('cfgSaveBtn').addEventListener('click', async () => {
   if (!IS_OWNER) return;
