@@ -326,6 +326,53 @@
     color: var(--muted); text-align: center;
   }
 
+  /* ── 팀원 명단 편집 ── */
+  .members-chips {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    padding: 10px; min-height: 44px;
+    background: #f9f9f9; border-radius: 10px;
+    border: 1.5px solid var(--border);
+  }
+  .members-empty {
+    width: 100%; text-align: center;
+    color: #aaa; font-size: 12px; padding: 4px 0;
+  }
+  .member-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: white; padding: 6px 6px 6px 12px;
+    border-radius: 999px; font-size: 13px;
+    border: 1px solid var(--border);
+    color: var(--sb-green-dark); font-weight: 500;
+  }
+  .member-chip .rm {
+    background: #eee; border: none; cursor: pointer;
+    width: 20px; height: 20px; border-radius: 50%;
+    color: #666; font-size: 13px; font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center;
+    line-height: 1; padding: 0;
+    transition: background 0.12s, color 0.12s;
+  }
+  .member-chip .rm:hover { background: #c43535; color: white; }
+  .member-add-row {
+    display: flex; gap: 8px; margin-top: 10px;
+  }
+  .member-add-row input { flex: 1; }
+  .member-add-btn {
+    width: 48px; flex-shrink: 0;
+    background: var(--sb-green); color: white;
+    border: none; border-radius: 10px; cursor: pointer;
+    font-size: 22px; font-weight: 700; font-family: inherit;
+    line-height: 1; padding: 0;
+    transition: background 0.15s;
+  }
+  .member-add-btn:hover { background: #00754a; }
+  .member-add-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* 비방장: 설정 입력 비활성화 스타일 */
+  .modal input:disabled {
+    background: #f5f5f5; color: #888; cursor: default;
+  }
+
   /* ── 설정 모달 (바텀시트) ── */
   .modal-backdrop {
     position: fixed; inset: 0; z-index: 200;
@@ -466,6 +513,9 @@
   <div class="modal">
     <div class="modal-handle"></div>
     <h2>⚙️ 설정</h2>
+    <div class="guest-note hide" id="settingsGuestNote" style="margin-bottom:16px">
+      🔒 설정은 이 방의 <b>관리자</b>만 변경할 수 있어요
+    </div>
     <label>이벤트 이름</label>
     <input type="text" id="cfgTitle" placeholder="예) 5월 회식 기념 커피">
     <label>부제목</label>
@@ -474,6 +524,14 @@
     <input type="date" id="cfgDate">
     <label>마감 시각</label>
     <input type="time" id="cfgTime">
+
+    <label style="margin-top:18px">팀원 명단</label>
+    <div class="members-chips" id="membersChips"></div>
+    <div class="member-add-row" id="memberAddRow">
+      <input type="text" id="memberAddInput" placeholder="이름 추가 후 Enter" maxlength="20">
+      <button type="button" class="member-add-btn" id="memberAddBtn" aria-label="팀원 추가">+</button>
+    </div>
+
     <button class="primary" id="cfgSaveBtn" style="margin-top:20px">저장하기</button>
     <hr class="modal-divider">
     <div class="guest-note hide" id="resetGuestNote">
@@ -551,17 +609,11 @@ const USER_ID = getOrCreateUserId();
 let IS_OWNER = false;
 
 // ════════════════════════════════════════════════════════════════
-// 설정 (⚙️ 버튼으로 웹에서 직접 변경 — 코드 수정 불필요)
+// 설정 (⚙️ 버튼으로 웹에서 직접 변경 — 방장만 가능)
+// Firebase 실시간 동기화 — 같은 방 참여자 모두 같은 값을 봅니다.
 // ════════════════════════════════════════════════════════════════
 const DEFAULT_CONFIG = { title: '커피 주문', desc: '메뉴를 선택해주세요!', date: '', hour: 8, minute: 40 };
-
-function loadConfig() {
-  try {
-    const s = localStorage.getItem('coffee_config');
-    return s ? { ...DEFAULT_CONFIG, ...JSON.parse(s) } : { ...DEFAULT_CONFIG };
-  } catch { return { ...DEFAULT_CONFIG }; }
-}
-let CONFIG = loadConfig();
+let CONFIG = { ...DEFAULT_CONFIG };
 
 // ════════════════════════════════════════════════════════════════
 // 마감 시간
@@ -582,9 +634,18 @@ function calcDeadline() {
 calcDeadline();
 
 // ════════════════════════════════════════════════════════════════
-// 👥 부서원 명단 (여기를 수정하면 드롭다운이 바뀝니다)
+// 👥 기본 부서원 명단 (새 방 생성 시 초깃값)
+// ────────────────────────────────────────────────────────────────
+// 이후 방장이 설정 모달에서 UI로 직접 추가/삭제할 수 있습니다.
 // ════════════════════════════════════════════════════════════════
-const TEAM_MEMBERS = [
+// Firebase는 배열을 {0:..., 1:...} 객체로 반환할 때가 있어 방어 처리
+function normalizeMembers(raw) {
+  if (Array.isArray(raw)) return [...raw].filter(v => typeof v === 'string' && v.trim());
+  if (raw && typeof raw === 'object') return Object.values(raw).filter(v => typeof v === 'string' && v.trim());
+  return [];
+}
+
+const DEFAULT_MEMBERS = [
   "박웅",
   "장민석",
   "안소희",
@@ -600,6 +661,7 @@ const TEAM_MEMBERS = [
   "정하임",
   "김동규",
 ];
+let CURRENT_MEMBERS = [...DEFAULT_MEMBERS];
 
 // ════════════════════════════════════════════════════════════════
 // ☕️ 스타벅스 메뉴 (평균적인 인기순 — 위로 갈수록 많이 시킴)
@@ -685,29 +747,121 @@ if (isConfigured) {
   } catch (e) {
     console.warn('방장 판정 실패:', e);
   }
+
+  // 메타 시드 — 방이 새로 만들어진 경우 방장이 기본 설정/팀원을 심음
+  const metaRef = dbMod.ref(db, `rooms/${ROOM_ID}/meta`);
+  try {
+    const existing = (await dbMod.get(metaRef)).val() || {};
+    if (IS_OWNER) {
+      const seeds = {};
+      if (!existing.config)  seeds[`rooms/${ROOM_ID}/meta/config`]  = { ...DEFAULT_CONFIG };
+      if (!existing.members) seeds[`rooms/${ROOM_ID}/meta/members`] = [...DEFAULT_MEMBERS];
+      if (Object.keys(seeds).length > 0) await dbMod.update(dbMod.ref(db), seeds);
+    }
+    // 최신 메타 재로드 (시드 반영)
+    const loaded = (await dbMod.get(metaRef)).val() || {};
+    if (loaded.config) CONFIG = { ...DEFAULT_CONFIG, ...loaded.config };
+    if (loaded.members) CURRENT_MEMBERS = normalizeMembers(loaded.members);
+  } catch (e) {
+    console.warn('메타 로드 실패:', e);
+  }
+
+  // 메타 실시간 구독 — 방장이 설정/팀원을 바꾸면 모두에게 반영
+  dbMod.onValue(metaRef, snap => {
+    const m = snap.val() || {};
+    if (m.config) CONFIG = { ...DEFAULT_CONFIG, ...m.config };
+    if (m.members) CURRENT_MEMBERS = normalizeMembers(m.members);
+    applyConfig();
+    applyMembers();
+  });
 } else {
   document.getElementById('setupWarning').classList.remove('hide');
 }
 
-// ════════════════════════════════════════════════════════════════
-// CONFIG → HTML 반영
-// ════════════════════════════════════════════════════════════════
-document.getElementById('pageTitle').textContent = `☕️ ${CONFIG.title} ☕️`;
-document.getElementById('pageDesc').innerHTML = `${CONFIG.desc}<br>메뉴 선택해주세요!`;
-document.title = `☕️ ${CONFIG.title}`;
 document.getElementById('roomCodeLabel').textContent = ROOM_ID;
 
 // ════════════════════════════════════════════════════════════════
-// 방장 권한별 UI 반영 (뱃지, 초기화 버튼 가시성)
+// CONFIG/MEMBERS → HTML 반영 (실시간 동기화)
+// ════════════════════════════════════════════════════════════════
+function applyConfig() {
+  document.getElementById('pageTitle').textContent = `☕️ ${CONFIG.title} ☕️`;
+  document.getElementById('pageDesc').innerHTML = `${CONFIG.desc}<br>메뉴 선택해주세요!`;
+  document.title = `☕️ ${CONFIG.title}`;
+  calcDeadline();
+  updateCountdown();
+  // 마감시간이 연장되면 잠금 풀기, 단축되면 잠금
+  const card = document.querySelector('#orderTab .card');
+  const submitBtn = document.getElementById('submitBtn');
+  if (isPastDeadline()) {
+    card.classList.add('form-locked');
+    submitBtn.textContent = '주문이 마감되었습니다';
+    submitBtn.disabled = true;
+  } else if (submitBtn.disabled && submitBtn.textContent === '주문이 마감되었습니다') {
+    card.classList.remove('form-locked');
+    submitBtn.disabled = false;
+    submitBtn.textContent = '주문하기';
+  }
+}
+
+function applyMembers() {
+  const list = document.getElementById('nameList');
+  list.innerHTML = '';
+  CURRENT_MEMBERS.forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name;
+    list.appendChild(opt);
+  });
+  renderMembersEditor();
+}
+
+function renderMembersEditor() {
+  const container = document.getElementById('membersChips');
+  if (!container) return;
+  container.innerHTML = '';
+  if (CURRENT_MEMBERS.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'members-empty';
+    empty.textContent = '아직 팀원이 없어요';
+    container.appendChild(empty);
+    return;
+  }
+  CURRENT_MEMBERS.forEach((name, idx) => {
+    const chip = document.createElement('span');
+    chip.className = 'member-chip';
+    const nameSpan = document.createElement('span');
+    nameSpan.textContent = name;
+    chip.appendChild(nameSpan);
+    if (IS_OWNER) {
+      const rm = document.createElement('button');
+      rm.className = 'rm';
+      rm.type = 'button';
+      rm.textContent = '×';
+      rm.dataset.idx = String(idx);
+      rm.setAttribute('aria-label', `${name} 삭제`);
+      chip.appendChild(rm);
+    }
+    container.appendChild(chip);
+  });
+}
+
+// ════════════════════════════════════════════════════════════════
+// 방장 권한별 UI 반영
 // ════════════════════════════════════════════════════════════════
 function applyOwnerUI() {
-  const badge = document.getElementById('ownerBadge');
-  const resetBtn = document.getElementById('resetBtn');
-  const guestNote = document.getElementById('resetGuestNote');
-  badge.classList.toggle('hide', !IS_OWNER);
-  resetBtn.classList.toggle('hide', !IS_OWNER);
-  guestNote.classList.toggle('hide', IS_OWNER);
+  document.getElementById('ownerBadge').classList.toggle('hide', !IS_OWNER);
+  document.getElementById('resetBtn').classList.toggle('hide', !IS_OWNER);
+  document.getElementById('resetGuestNote').classList.toggle('hide', IS_OWNER);
+  document.getElementById('settingsGuestNote').classList.toggle('hide', IS_OWNER);
+  document.getElementById('cfgSaveBtn').classList.toggle('hide', !IS_OWNER);
+  document.getElementById('memberAddRow').classList.toggle('hide', !IS_OWNER);
+  ['cfgTitle','cfgDesc','cfgDate','cfgTime'].forEach(id => {
+    document.getElementById(id).disabled = !IS_OWNER;
+  });
+  renderMembersEditor(); // × 버튼 가시성 재계산
 }
+
+applyConfig();
+applyMembers();
 applyOwnerUI();
 
 // ════════════════════════════════════════════════════════════════
@@ -735,15 +889,9 @@ document.getElementById('shareBtn').addEventListener('click', async () => {
 });
 
 // ════════════════════════════════════════════════════════════════
-// 드롭다운 셋업 (이름 datalist + 메뉴 datalist)
+// 이름 입력 refs — datalist 자체는 applyMembers()가 관리
 // ════════════════════════════════════════════════════════════════
 const nameInput = document.getElementById('nameInput');
-const nameList = document.getElementById('nameList');
-TEAM_MEMBERS.forEach(name => {
-  const opt = document.createElement('option');
-  opt.value = name;
-  nameList.appendChild(opt);
-});
 
 // ════════════════════════════════════════════════════════════════
 // 설정 모달
@@ -764,15 +912,71 @@ settingsModal.addEventListener('click', e => {
   if (e.target === settingsModal) settingsModal.classList.add('hide');
 });
 
-document.getElementById('cfgSaveBtn').addEventListener('click', () => {
+document.getElementById('cfgSaveBtn').addEventListener('click', async () => {
+  if (!IS_OWNER) return;
+  if (!isConfigured) { alert('Firebase 설정이 필요합니다.'); return; }
   const title  = document.getElementById('cfgTitle').value.trim() || DEFAULT_CONFIG.title;
   const desc   = document.getElementById('cfgDesc').value.trim()  || DEFAULT_CONFIG.desc;
   const date   = document.getElementById('cfgDate').value;
   const timeParts = document.getElementById('cfgTime').value.split(':').map(Number);
   const hour   = isNaN(timeParts[0]) ? 8 : timeParts[0];
   const minute = isNaN(timeParts[1]) ? 0 : timeParts[1];
-  localStorage.setItem('coffee_config', JSON.stringify({ title, desc, date, hour, minute }));
-  location.reload();
+  const saveBtn = document.getElementById('cfgSaveBtn');
+  saveBtn.classList.add('loading'); saveBtn.disabled = true;
+  try {
+    const { ref, set } = window._fb;
+    await set(ref(db, `rooms/${ROOM_ID}/meta/config`), { title, desc, date, hour, minute });
+    settingsModal.classList.add('hide');
+    toast('설정 저장 완료 ⚙️');
+    // onValue 구독이 applyConfig 자동 호출
+  } catch (e) {
+    alert('오류: ' + e.message);
+  } finally {
+    saveBtn.classList.remove('loading'); saveBtn.disabled = false;
+  }
+});
+
+// ════════════════════════════════════════════════════════════════
+// 팀원 명단 편집 (방장만)
+// ════════════════════════════════════════════════════════════════
+async function saveMembers(next) {
+  if (!IS_OWNER || !isConfigured) return;
+  try {
+    const { ref, set } = window._fb;
+    await set(ref(db, `rooms/${ROOM_ID}/meta/members`), next);
+    // onValue 구독이 applyMembers 자동 호출
+  } catch (e) {
+    alert('팀원 저장 오류: ' + e.message);
+  }
+}
+
+document.getElementById('membersChips').addEventListener('click', e => {
+  if (!IS_OWNER) return;
+  const rm = e.target.closest('.rm');
+  if (!rm) return;
+  const idx = Number(rm.dataset.idx);
+  if (Number.isNaN(idx)) return;
+  const next = CURRENT_MEMBERS.filter((_, i) => i !== idx);
+  saveMembers(next);
+});
+
+function addMemberFromInput() {
+  if (!IS_OWNER) return;
+  const input = document.getElementById('memberAddInput');
+  const name = input.value.trim();
+  if (!name) return;
+  if (CURRENT_MEMBERS.includes(name)) {
+    toast('이미 있는 이름이에요');
+    input.value = '';
+    return;
+  }
+  const next = [...CURRENT_MEMBERS, name];
+  input.value = '';
+  saveMembers(next);
+}
+document.getElementById('memberAddBtn').addEventListener('click', addMemberFromInput);
+document.getElementById('memberAddInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); addMemberFromInput(); }
 });
 
 // ════════════════════════════════════════════════════════════════
@@ -948,7 +1152,7 @@ function savePref(name, order) {
 
 // 페이지 로드 시 마지막 선택 이름 복원
 const lastName = localStorage.getItem('coffee_last_name');
-if (lastName && TEAM_MEMBERS.includes(lastName)) {
+if (lastName) {
   nameInput.value = lastName;
 }
 
@@ -1029,7 +1233,7 @@ nameInput.addEventListener('input', () => {
   const name = nameInput.value.trim();
 
   // 부원 이름이 아닌 경우 → 버튼 즉시 초기화
-  if (!TEAM_MEMBERS.includes(name)) {
+  if (!CURRENT_MEMBERS.includes(name)) {
     document.getElementById('deleteBtn').classList.add('hide');
     document.getElementById('submitBtn').textContent = '주문하기';
     return;
