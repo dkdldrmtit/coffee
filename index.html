@@ -155,7 +155,10 @@
   .field-hint {
     font-size: 11px; color: var(--muted);
     margin-top: 6px; padding-left: 2px;
-    line-height: 1.45;
+    line-height: 1.55;
+  }
+  .field-hint .hint-muted {
+    color: #a8a198; font-size: 10.5px;
   }
   details.addon-details {
     margin: 14px 0 8px;
@@ -639,7 +642,10 @@
       </label>
       <input id="menuInput" type="text" list="menuList" placeholder="메뉴 검색 또는 직접 입력" autocomplete="off">
       <datalist id="menuList"></datalist>
-      <div class="field-hint">예) 아메리카노, 라벤더 라떼, 자바칩 프라푸치노</div>
+      <div class="field-hint">
+        예) 아메리카노, 카페라떼, 바닐라 라떼<br>
+        <span class="hint-muted">시즌·신메뉴는 목록에 없을 수 있어요 — 직접 입력하셔도 돼요</span>
+      </div>
 
       <details class="addon-details">
         <summary>
@@ -865,59 +871,107 @@ let CURRENT_MEMBERS = [...DEFAULT_MEMBERS];
 // ☕️ 스타벅스 메뉴 (평균적인 인기순 — 위로 갈수록 많이 시킴)
 // 여기에 없는 시즌/신메뉴는 입력란에 직접 타이핑하면 주문 가능합니다.
 // ════════════════════════════════════════════════════════════════
-const MENUS = [
-  // 스테디 셀러 (가장 많이 시키는 메뉴)
-  "아메리카노",
-  "카페라떼",
-  "바닐라 라떼",
-  "카라멜 마키아또",
-  "카페모카",
-  "돌체 라떼",
-  "콜드브루",
-  "바닐라 크림 콜드브루",
-  "자바칩 프라푸치노",
-  "카라멜 프라푸치노",
-  "디카페인 아메리카노",
-  "카푸치노",
-  "제주 유기농 말차로 만든 라떼",
-  "헤이즐넛 라떼",
-  "디카페인 카페라떼",
-  // 중간 인기
-  "돌체 콜드브루",
-  "모카 프라푸치노",
-  "화이트 초콜릿 모카",
-  "차이 티 라떼",
-  "자몽 허니 블랙 티",
-  "그린 티 크림 프라푸치노",
-  "딸기 딜라이트 요거트 블렌디드",
-  "망고 바나나 블렌디드",
-  "바닐라 크림 프라푸치노",
-  "핫초콜릿",
-  "카라멜 모카",
-  "플랫 화이트",
-  // 가끔 시키는 메뉴
-  "나이트로 콜드브루",
-  "나이트로 바닐라 크림",
-  "벨벳 다크 모카 나이트로",
-  "화이트 초콜릿 모카 프라푸치노",
-  "자바칩 민트 초콜릿 프라푸치노",
-  "에스프레소 프라푸치노",
-  "피치 요거트 블렌디드",
-  "유자 민트 티",
-  "잉글리쉬 브렉퍼스트 티",
-  "얼 그레이 티",
-  "캐모마일 티",
-  "히비스커스 블렌드 티",
-  "민트 블렌드 티",
-  "화이트 핫초콜릿",
-  "쿨 라임 피지오",
-  "블랙 티 레모네이드 피지오",
-  "패션 탱고 티 레모네이드 피지오",
-  // 에스프레소 매니아용
-  "에스프레소",
-  "에스프레소 마키아또",
-  "에스프레소 콘파나",
+// ════════════════════════════════════════════════════════════════
+// ☕️ 메뉴 데이터베이스
+// ────────────────────────────────────────────────────────────────
+// - COMMON_MENUS: 대부분 카페에 있는 기본 음료 (모든 카페에 공통 노출)
+// - CAFE_MENUS[id]: 그 카페의 시그니처/인기 메뉴 (공통 아래에 추가 노출)
+// 여기 없는 시즌/신메뉴는 사용자가 직접 타이핑 가능 (datalist = 힌트일 뿐)
+// ════════════════════════════════════════════════════════════════
+const COMMON_MENUS = [
+  '아메리카노',
+  '디카페인 아메리카노',
+  '카페라떼',
+  '디카페인 카페라떼',
+  '바닐라 라떼',
+  '카라멜 마키아또',
+  '카페모카',
+  '카푸치노',
+  '에스프레소',
+  '핫초콜릿',
 ];
+const CAFE_MENUS = {
+  starbucks: [
+    '돌체 라떼',
+    '콜드브루',
+    '바닐라 크림 콜드브루',
+    '돌체 콜드브루',
+    '나이트로 콜드브루',
+    '자바칩 프라푸치노',
+    '카라멜 프라푸치노',
+    '모카 프라푸치노',
+    '제주 유기농 말차로 만든 라떼',
+    '헤이즐넛 라떼',
+    '플랫 화이트',
+    '화이트 초콜릿 모카',
+    '차이 티 라떼',
+    '자몽 허니 블랙 티',
+    '그린 티 크림 프라푸치노',
+    '쿨 라임 피지오',
+  ],
+  ediya: [
+    '토피넛 라떼',
+    '쫀득 인절미 라떼',
+    '얼그레이 라떼',
+    '딸기 라떼',
+    '초코 라떼',
+    '아인슈페너',
+    '플라워 블렌딩 티',
+    '블루레몬에이드',
+    '수박 주스',
+  ],
+  mega: [
+    '초코 라떼',
+    '연유 라떼',
+    '딸기 스무디',
+    '망고 스무디',
+    '블루베리 요거트 스무디',
+    '레몬 에이드',
+    '자몽 에이드',
+    '아이스티',
+  ],
+  compose: [
+    '아인슈페너',
+    '바닐라 콘파나',
+    '딸기 라떼',
+    '흑임자 라떼',
+    '복숭아 아이스티',
+    '레몬 에이드',
+    '자몽 에이드',
+  ],
+  twosome: [
+    '아이스 초콜라떼',
+    '유자 얼그레이 티',
+    '라즈베리 초코 라떼',
+    '얼 그레이 밀크티',
+    '스트로베리 요거트 스무디',
+    '망고 패션후르츠 티',
+  ],
+  hollys: [
+    '할리치노',
+    '초코 할리치노',
+    '드림 카푸치노',
+    '녹차 라떼',
+    '고구마 라떼',
+    '블루 레모네이드',
+    '유자차',
+  ],
+  paik: [
+    '원샷 아메리카노',
+    '빽스치노',
+    '달콤 연유 라떼',
+    '딸기 스무디',
+    '키위 주스',
+    '레몬 에이드',
+  ],
+  other: [
+    '녹차 라떼',
+    '고구마 라떼',
+    '딸기 라떼',
+    '레몬 에이드',
+    '아이스티',
+  ],
+};
 
 // ════════════════════════════════════════════════════════════════
 // Firebase 초기화
@@ -993,6 +1047,7 @@ function applyConfig() {
   document.getElementById('pageDesc').textContent = CONFIG.desc;
   document.title = `${CONFIG.title} · 커피 골든벨`;
   applyCafeSizes();
+  applyCafeMenus();
   calcDeadline();
   updateCountdown();
   // 마감시간이 연장되면 잠금 풀기, 단축되면 잠금
@@ -1037,6 +1092,27 @@ function applyCafeSizes() {
     }
     container.appendChild(chip);
   });
+}
+
+// 카페 선택에 맞춰 메뉴 datalist를 재구성 (공통 메뉴 + 카페 시그니처)
+function applyCafeMenus() {
+  const cafeId = CAFE_MENUS[CONFIG.cafe] ? CONFIG.cafe : 'starbucks';
+  const specials = CAFE_MENUS[cafeId] || [];
+  const list = document.getElementById('menuList');
+  if (!list) return;
+  list.innerHTML = '';
+  // 공통 + 카페 시그니처, 중복 제거
+  const seen = new Set();
+  [...COMMON_MENUS, ...specials].forEach(m => {
+    if (seen.has(m)) return;
+    seen.add(m);
+    const opt = document.createElement('option');
+    opt.value = m;
+    list.appendChild(opt);
+  });
+  // 스타벅스 메뉴 외부 링크는 스벅일 때만 노출
+  const sbuxLink = document.getElementById('sbuxMenuLink');
+  if (sbuxLink) sbuxLink.classList.toggle('hide', cafeId !== 'starbucks');
 }
 
 function renderMembersEditor() {
@@ -1276,12 +1352,7 @@ document.getElementById('sbuxMenuLink').addEventListener('click', e => {
 });
 
 const menuInput = document.getElementById('menuInput');
-const menuList = document.getElementById('menuList');
-MENUS.forEach(m => {
-  const opt = document.createElement('option');
-  opt.value = m;
-  menuList.appendChild(opt);
-});
+// datalist 자체는 applyCafeMenus()가 관리
 
 // 메뉴에 온도 접두어가 포함된 경우 자동 분리
 // 예) "아이스아메리카노" → ICE 자동 선택 + "아메리카노"
