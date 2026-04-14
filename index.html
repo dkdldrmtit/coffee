@@ -31,15 +31,18 @@
     --sb-green-dark: #1e3932;
     --sb-light: #d4e9e2;
     --sb-accent: #cba258;
-    --bg: #f7f4ef;
+    --sb-accent-soft: #f4e7c5;
+    --bg: #f9f5ec;
+    --bg-deep: #f1e9d6;
     --text: #1e3932;
     --muted: #6b6b6b;
-    --border: #e5e5e5;
+    --border: #ece5d4;
   }
   * { box-sizing: border-box; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
-    background: var(--bg);
+    background: linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+    background-attachment: fixed;
     margin: 0;
     padding: 16px;
     color: var(--text);
@@ -55,12 +58,11 @@
     font-size: 13px; font-weight: 700;
     color: var(--sb-accent);
     letter-spacing: 0.4px;
-    display: flex; align-items: center; gap: 8px;
+    display: inline-flex; align-items: center; gap: 6px;
   }
-  .brand::before {
-    content: ''; display: inline-block;
-    width: 22px; height: 3px; border-radius: 2px;
-    background: var(--sb-accent);
+  .brand .brand-icon {
+    font-size: 15px;
+    filter: saturate(1.1);
   }
   .header-actions {
     display: flex; gap: 6px;
@@ -74,14 +76,22 @@
   }
   .icon-btn:hover { background: var(--sb-light); border-color: var(--sb-light); }
   .header h1 {
-    font-size: 24px; margin: 0 0 6px;
+    font-size: 25px; margin: 0 0 8px;
     color: var(--sb-green-dark);
-    font-weight: 700;
-    letter-spacing: -0.4px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
     line-height: 1.25;
+    position: relative;
+    padding-left: 14px;
+  }
+  .header h1::before {
+    content: ''; position: absolute;
+    left: 0; top: 8px; bottom: 8px; width: 4px;
+    background: linear-gradient(180deg, var(--sb-accent) 0%, #b8923f 100%);
+    border-radius: 999px;
   }
   .header p {
-    margin: 0; color: var(--muted);
+    margin: 0 0 0 14px; color: var(--muted);
     font-size: 14px; line-height: 1.5;
   }
   .header p:empty { display: none; }
@@ -90,15 +100,15 @@
     margin-top: 14px;
   }
   .footer {
-    padding: 28px 4px 16px;
-    font-size: 11px; color: var(--muted);
+    padding: 32px 4px 20px;
+    font-size: 12px; color: var(--muted);
     line-height: 1.6;
   }
   .footer .footer-brand {
     color: var(--sb-accent); font-weight: 700;
     letter-spacing: 0.3px;
   }
-  .footer .footer-sep { margin: 0 6px; opacity: 0.5; }
+  .footer .footer-sep { margin: 0 8px; opacity: 0.4; }
   .countdown {
     background: var(--sb-green); color: white;
     padding: 14px 18px; border-radius: 14px;
@@ -124,8 +134,10 @@
   }
   .tab.active { background: var(--sb-green); color: white; }
   .card {
-    background: white; padding: 18px; border-radius: 16px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 14px;
+    background: white; padding: 20px; border-radius: 18px;
+    box-shadow: 0 2px 14px rgba(120, 90, 30, 0.06);
+    margin-bottom: 14px;
+    border: 1px solid #f5efe0;
   }
   label {
     display: flex; align-items: baseline; justify-content: space-between;
@@ -474,11 +486,17 @@
     color: var(--muted);
   }
   .welcome-note {
-    padding: 14px 16px; margin-bottom: 18px;
-    background: var(--sb-light); color: var(--sb-green-dark);
-    border-radius: 12px; font-size: 13px; line-height: 1.55;
+    padding: 16px 18px; margin-bottom: 20px;
+    background: linear-gradient(135deg, var(--sb-light) 0%, var(--sb-accent-soft) 100%);
+    color: var(--sb-green-dark);
+    border-radius: 14px; font-size: 13px; line-height: 1.6;
     font-weight: 500;
-    border: 1px solid #b9d8c9;
+    border: 1px solid #c8d8c0;
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .welcome-note b { font-weight: 700; }
+  .welcome-emoji {
+    font-size: 24px; line-height: 1; flex-shrink: 0;
   }
 
   /* ── 팀원 명단 편집 ── */
@@ -564,7 +582,7 @@
 <div class="container">
   <header class="header">
     <div class="header-top">
-      <span class="brand">커피 골든벨</span>
+      <span class="brand"><span class="brand-icon">☕</span>커피 골든벨</span>
       <div class="header-actions">
         <button type="button" class="icon-btn" id="shareBtn">공유</button>
         <button type="button" class="icon-btn" id="settingsBtn">설정</button>
@@ -666,7 +684,7 @@
   <!-- SUMMARY TAB -->
   <div id="summaryTab" class="hide tab-content">
     <div class="card">
-      <h3>주문 요약 <span class="summary-hint">탭해서 주문 완료 체크</span></h3>
+      <h3>주문 요약 <span class="summary-hint">탭해서 주문 완료 체크해보세요</span></h3>
       <div id="summaryList"></div>
       <button class="copy-btn" id="copyBtn">요약 복사하기</button>
     </div>
@@ -685,8 +703,11 @@
     <div class="modal-handle"></div>
     <h2>설정</h2>
     <div class="welcome-note hide" id="newRoomWelcome">
-      새로운 방이 만들어졌어요.<br>
-      이벤트 이름을 정하고 팀원을 추가하면 바로 시작할 수 있어요.
+      <span class="welcome-emoji">👋</span>
+      <div>
+        <b>새로운 방이 만들어졌어요!</b><br>
+        이벤트 이름과 팀원만 추가하면 바로 시작할 수 있어요.
+      </div>
     </div>
     <div class="guest-note hide" id="settingsGuestNote" style="margin-bottom:16px">
       이 방의 관리자만 설정을 변경할 수 있어요
@@ -989,7 +1010,7 @@ function renderMembersEditor() {
     empty.className = 'members-empty';
     empty.textContent = IS_OWNER
       ? '아래에 팀원 이름을 추가해보세요'
-      : '아직 팀원이 없어요';
+      : '아직 팀원이 없네요';
     container.appendChild(empty);
     return;
   }
@@ -1043,13 +1064,13 @@ document.getElementById('shareBtn').addEventListener('click', async () => {
       await navigator.share({ title: CONFIG.title, text: shareText, url });
     } else {
       await navigator.clipboard.writeText(url);
-      toast('링크가 복사되었어요');
+      toast('링크를 복사했어요!');
     }
   } catch (e) {
     if (e.name === 'AbortError') return;
     try {
       await navigator.clipboard.writeText(url);
-      toast('링크가 복사되었어요');
+      toast('링크를 복사했어요!');
     } catch {
       alert(url);
     }
@@ -1110,7 +1131,7 @@ document.getElementById('cfgSaveBtn').addEventListener('click', async () => {
     const { ref, set } = window._fb;
     await set(ref(db, `rooms/${ROOM_ID}/meta/config`), { title, desc, date, hour, minute });
     settingsModal.classList.add('hide');
-    toast('설정이 저장되었어요');
+    toast('설정을 저장했어요');
     // onValue 구독이 applyConfig 자동 호출
   } catch (e) {
     alert('오류: ' + e.message);
@@ -1278,7 +1299,7 @@ function lockFormIfDeadline() {
   if (!isPastDeadline()) return;
   document.querySelector('#orderTab .card').classList.add('form-locked');
   const btn = document.getElementById('submitBtn');
-  btn.textContent = '주문이 마감되었어요';
+  btn.textContent = '주문이 마감됐어요';
   btn.disabled = true;
 }
 
@@ -1293,7 +1314,7 @@ function updateCountdown() {
   if (diff <= 0) {
     cd.classList.remove('urgent', 'critical');
     cd.classList.add('closed');
-    setCountdownText('마감', '주문이 마감되었어요');
+    setCountdownText('마감', '주문이 마감됐어요');
     lockFormIfDeadline();
     return;
   }
@@ -1467,12 +1488,12 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
     const existingKey = getOrderKeys()[name];
     if (existingKey && currentOrders[existingKey]) {
       await set(ref(db, `rooms/${ROOM_ID}/orders/` + existingKey), order);
-      toast('주문이 수정되었어요');
+      toast('주문을 수정했어요');
     } else {
       const newRef = push(ordersRef);
       await set(newRef, order);
       setOrderKey(name, newRef.key);
-      toast('주문이 완료되었어요');
+      toast('주문이 들어갔어요!');
     }
     lastSyncedName = name;
     savePref(name, order); // 선호 메뉴 저장 (다음 라운드에서 기본값으로 사용)
@@ -1501,7 +1522,7 @@ document.getElementById('deleteBtn').addEventListener('click', async () => {
     document.getElementById('submitBtn').textContent = '주문하기';
     document.getElementById('deleteBtn').classList.add('hide');
     lastSyncedName = name; // 빈 상태로 동기화됨
-    toast('주문이 취소되었어요');
+    toast('주문을 취소했어요');
     renderList();
   } catch (e) {
     alert('오류: ' + e.message);
@@ -1541,7 +1562,7 @@ function renderList() {
   const entries = Object.entries(currentOrders)
     .sort((a, b) => (a[1].ts || 0) - (b[1].ts || 0));
   if (entries.length === 0) {
-    list.innerHTML = '<div class="empty">아직 주문이 없어요</div>';
+    list.innerHTML = '<div class="empty">아직 첫 주문을 기다리고 있어요</div>';
     return;
   }
   list.innerHTML = entries.map(([k, o]) => `
@@ -1608,7 +1629,7 @@ function renderSummary() {
   const list = document.getElementById('summaryList');
   const orders = Object.values(currentOrders);
   if (orders.length === 0) {
-    list.innerHTML = '<div class="empty">아직 주문이 없어요</div>';
+    list.innerHTML = '<div class="empty">아직 첫 주문을 기다리고 있어요</div>';
     return;
   }
   const sortedMenus = buildGroupedOrders(orders);
@@ -1697,7 +1718,7 @@ document.getElementById('copyBtn').addEventListener('click', async () => {
   const text = lines.join('\n').replace(/\n+$/, '');
   try {
     await navigator.clipboard.writeText(text);
-    toast('요약이 복사되었어요');
+    toast('요약을 복사했어요!');
   } catch (e) {
     alert(text);
   }
@@ -1710,7 +1731,7 @@ document.getElementById('resetBtn').addEventListener('click', async () => {
     const { ref, remove } = window._fb;
     await remove(ref(db, `rooms/${ROOM_ID}/orders`));
     localStorage.removeItem(ORDER_KEYS_LS);
-    toast('초기화되었어요. 새 라운드를 시작해주세요');
+    toast('새 라운드를 시작했어요!');
     setTimeout(() => location.reload(), 1500);
   } catch (e) {
     alert('오류: ' + e.message);
