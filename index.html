@@ -62,35 +62,35 @@
     flex-wrap: wrap;
   }
   .brand {
-    display: inline-flex; align-items: center; gap: 9px;
+    display: inline-flex; align-items: center; gap: 10px;
     text-decoration: none;
   }
   .brand-mark {
-    width: 32px; height: 32px;
-    border-radius: 9px;
+    width: 36px; height: 36px;
+    border-radius: 10px;
     background: var(--sb-accent);
     display: inline-flex; align-items: center; justify-content: center;
     flex-shrink: 0;
-    box-shadow: 0 2px 8px rgba(255, 107, 71, 0.25);
+    box-shadow: 0 3px 10px rgba(255, 107, 71, 0.28);
   }
   .brand-mark svg {
-    width: 19px; height: 19px;
+    width: 21px; height: 21px;
     color: white;
   }
   .brand-text {
     display: inline-flex; flex-direction: column;
-    line-height: 1.05;
+    line-height: 1;
+    gap: 3px;
   }
   .brand-text-top {
-    font-size: 9px; font-weight: 700;
+    font-size: 10px; font-weight: 700;
     color: var(--muted);
-    letter-spacing: 1.6px;
-    text-transform: uppercase;
+    letter-spacing: 2.5px;
   }
   .brand-text-main {
-    font-size: 16px; font-weight: 900;
+    font-size: 19px; font-weight: 900;
     color: var(--sb-green-dark);
-    letter-spacing: -0.4px;
+    letter-spacing: -0.5px;
   }
   .header-actions {
     display: flex; gap: 6px; flex-wrap: wrap;
@@ -160,17 +160,24 @@
   .countdown .countdown-time { font-size: 15px; font-weight: 700; }
   .countdown.closed { background: #8a8a8a; box-shadow: none; }
   .tabs {
-    display: flex; gap: 4px; background: white;
-    border-radius: 12px; padding: 4px; margin-bottom: 14px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    display: flex; gap: 2px; background: #eef1f5;
+    border-radius: 12px; padding: 4px; margin-bottom: 18px;
   }
   .tab {
-    flex: 1; text-align: center; padding: 10px 8px;
-    border-radius: 10px; cursor: pointer; font-size: 14px;
-    font-weight: 500; color: var(--muted);
-    transition: all 0.15s;
+    flex: 1; text-align: center; padding: 11px 8px;
+    border-radius: 9px; cursor: pointer; font-size: 13px;
+    font-weight: 600; color: var(--muted);
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
   }
-  .tab.active { background: var(--sb-green); color: white; }
+  .tab:not(.active):hover {
+    color: var(--sb-green-dark);
+  }
+  .tab.active {
+    background: white;
+    color: var(--sb-accent);
+    font-weight: 800;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+  }
   .card {
     background: white; padding: 20px; border-radius: 18px;
     box-shadow: 0 2px 14px rgba(15, 23, 42, 0.05);
@@ -183,6 +190,10 @@
     font-size: 13px; color: var(--sb-green-dark);
   }
   label:first-of-type { margin-top: 0; }
+  .label-optional {
+    font-size: 10px; font-weight: 500; color: var(--muted);
+    margin-left: 3px;
+  }
   .ext-link {
     font-size: 11px; font-weight: 500; color: var(--muted);
     text-decoration: none; padding: 3px 10px;
@@ -438,7 +449,6 @@
   button.ghost:hover { background: #fff0f0; border-color: #f0c2c2; }
   .copy-btn:hover { filter: brightness(1.08); }
   .ext-link:hover { background: var(--sb-light); color: var(--sb-green-dark); }
-  .tab:not(.active):hover { background: var(--sb-light); color: var(--sb-green-dark); }
   .chip:not(.active):hover { border-color: var(--sb-green); color: var(--sb-green); background: #f0f9f5; }
 
   /* ── 트랜지션 ── */
@@ -669,7 +679,7 @@
           </svg>
         </span>
         <span class="brand-text">
-          <span class="brand-text-top">COFFEE</span>
+          <span class="brand-text-top">커피</span>
           <span class="brand-text-main">골든벨</span>
         </span>
       </span>
@@ -816,6 +826,8 @@
     </div>
     <label>이벤트 이름</label>
     <input type="text" id="cfgTitle" placeholder="예) 김과장 승진턱">
+    <label>쏘는 사람 <span class="label-optional">(선택)</span></label>
+    <input type="text" id="cfgHost" placeholder="예) 김과장" maxlength="20">
     <label>부제목</label>
     <input type="text" id="cfgDesc" placeholder="예) 오늘은 제가 쏩니다!">
     <label>카페</label>
@@ -927,8 +939,15 @@ let IS_NEW_ROOM = false;
 // 설정 (⚙️ 버튼으로 웹에서 직접 변경 — 방장만 가능)
 // Firebase 실시간 동기화 — 같은 방 참여자 모두 같은 값을 봅니다.
 // ════════════════════════════════════════════════════════════════
-const DEFAULT_CONFIG = { title: '오늘은 제가 쏩니다', desc: '마음껏 골라주세요', date: '', hour: 8, minute: 40, cafe: 'starbucks' };
-let CONFIG = { ...DEFAULT_CONFIG };
+// 기본 마감시간: 현재 시각 + 1시간 (새 방 시드 및 모달 기본값)
+function getDefaultDeadline() {
+  const d = new Date();
+  d.setHours(d.getHours() + 1);
+  return { hour: d.getHours(), minute: d.getMinutes() };
+}
+
+const DEFAULT_CONFIG = { title: '오늘은 제가 쏩니다', desc: '마음껏 골라주세요', host: '', date: '', hour: 0, minute: 0, cafe: 'starbucks' };
+let CONFIG = { ...DEFAULT_CONFIG, ...getDefaultDeadline() };
 
 // ════════════════════════════════════════════════════════════════
 // 카페별 사이즈 + 브랜드 컬러 프리셋
@@ -1117,7 +1136,8 @@ if (isConfigured) {
       const seeds = {};
       // config 부재 = 진짜 신규 방 (방장이 처음 만든 시점)
       if (!existing.config) {
-        seeds[`rooms/${ROOM_ID}/meta/config`] = { ...DEFAULT_CONFIG };
+        // 새 방: 현재 시각 +1시간으로 마감시간 시드
+        seeds[`rooms/${ROOM_ID}/meta/config`] = { ...DEFAULT_CONFIG, ...getDefaultDeadline() };
         IS_NEW_ROOM = true;
       }
       // 빈 배열은 RTDB가 저장하지 않아 매번 seed가 트리거됨 → DEFAULT_MEMBERS가 있을 때만 시드
@@ -1153,7 +1173,11 @@ document.getElementById('roomCodeLabel').textContent = ROOM_ID;
 // ════════════════════════════════════════════════════════════════
 function applyConfig() {
   document.getElementById('pageTitle').textContent = CONFIG.title;
-  document.getElementById('pageDesc').textContent = CONFIG.desc;
+  // 쏘는 사람이 지정돼있으면 부제목을 자동 생성, 아니면 사용자 desc 사용
+  const subtitle = CONFIG.host && CONFIG.host.trim()
+    ? `오늘은 ${CONFIG.host}님이 쏩니다!`
+    : CONFIG.desc;
+  document.getElementById('pageDesc').textContent = subtitle;
   document.title = `${CONFIG.title} · 커피 골든벨`;
   applyCafeSizes();
   applyCafeMenus();
@@ -1297,7 +1321,10 @@ document.getElementById('newRoomBtn').addEventListener('click', () => {
 
 document.getElementById('shareBtn').addEventListener('click', async () => {
   const url = window.location.href;
-  const shareText = `${CONFIG.title}\n방 코드: ${ROOM_ID}`;
+  const hostLine = CONFIG.host && CONFIG.host.trim()
+    ? `오늘은 ${CONFIG.host}님이 쏩니다!`
+    : '';
+  const shareText = [CONFIG.title, hostLine, `방 코드: ${ROOM_ID}`].filter(Boolean).join('\n');
   try {
     if (navigator.share) {
       await navigator.share({ title: CONFIG.title, text: shareText, url });
@@ -1358,11 +1385,18 @@ function openSettingsModal({ welcome = false } = {}) {
   const isDefault = CONFIG.title === DEFAULT_CONFIG.title && CONFIG.desc === DEFAULT_CONFIG.desc;
   const empty = welcome || isDefault;
   document.getElementById('cfgTitle').value = empty ? '' : CONFIG.title;
+  document.getElementById('cfgHost').value  = CONFIG.host || '';
   document.getElementById('cfgDesc').value  = empty ? '' : CONFIG.desc;
   document.getElementById('cfgCafe').value  = CONFIG.cafe || 'starbucks';
   document.getElementById('cfgDate').value  = CONFIG.date || today;
+  // 시간 기본값: 현재 시각 + 1시간
+  let hh = CONFIG.hour, mm = CONFIG.minute;
+  if (empty) {
+    const def = getDefaultDeadline();
+    hh = def.hour; mm = def.minute;
+  }
   document.getElementById('cfgTime').value  =
-    String(CONFIG.hour).padStart(2, '0') + ':' + String(CONFIG.minute).padStart(2, '0');
+    String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
 
   // 매번 다른 예시 placeholder
   const ex = EXAMPLE_PAIRS[Math.floor(Math.random() * EXAMPLE_PAIRS.length)];
@@ -1394,6 +1428,7 @@ document.getElementById('cfgSaveBtn').addEventListener('click', async () => {
   if (!IS_OWNER) return;
   if (!isConfigured) { alert('Firebase 설정이 필요합니다.'); return; }
   const title  = document.getElementById('cfgTitle').value.trim() || DEFAULT_CONFIG.title;
+  const host   = document.getElementById('cfgHost').value.trim();
   const desc   = document.getElementById('cfgDesc').value.trim()  || DEFAULT_CONFIG.desc;
   const cafeSel = document.getElementById('cfgCafe').value;
   const cafe   = CAFE_PRESETS[cafeSel] ? cafeSel : 'starbucks';
@@ -1405,7 +1440,7 @@ document.getElementById('cfgSaveBtn').addEventListener('click', async () => {
   saveBtn.classList.add('loading'); saveBtn.disabled = true;
   try {
     const { ref, set } = window._fb;
-    await set(ref(db, `rooms/${ROOM_ID}/meta/config`), { title, desc, date, hour, minute, cafe });
+    await set(ref(db, `rooms/${ROOM_ID}/meta/config`), { title, host, desc, date, hour, minute, cafe });
     settingsModal.classList.add('hide');
     toast('설정을 저장했어요');
     // onValue 구독이 applyConfig 자동 호출
