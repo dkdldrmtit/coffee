@@ -767,7 +767,7 @@
     <label>이벤트 이름</label>
     <input type="text" id="cfgTitle" placeholder="예) 김과장 승진턱">
     <label>부제목</label>
-    <input type="text" id="cfgDesc" placeholder="예) 오늘은 제가 쏩니다">
+    <input type="text" id="cfgDesc" placeholder="예) 오늘은 제가 쏩니다!">
     <label>카페</label>
     <select id="cfgCafe"></select>
     <label>마감 날짜</label>
@@ -877,7 +877,7 @@ let IS_NEW_ROOM = false;
 // 설정 (⚙️ 버튼으로 웹에서 직접 변경 — 방장만 가능)
 // Firebase 실시간 동기화 — 같은 방 참여자 모두 같은 값을 봅니다.
 // ════════════════════════════════════════════════════════════════
-const DEFAULT_CONFIG = { title: '오늘의 커피', desc: '마실 메뉴를 골라주세요', date: '', hour: 8, minute: 40, cafe: 'starbucks' };
+const DEFAULT_CONFIG = { title: '오늘은 제가 쏩니다', desc: '마음껏 골라주세요', date: '', hour: 8, minute: 40, cafe: 'starbucks' };
 let CONFIG = { ...DEFAULT_CONFIG };
 
 // ════════════════════════════════════════════════════════════════
@@ -1279,17 +1279,16 @@ const settingsModal = document.getElementById('settingsModal');
 })();
 
 // 설정 모달 placeholder 예시 — 매번 모달 열 때 랜덤으로 노출
+// 모든 예시는 "오늘 누가 한 턱 쏘는 날!" 텐션으로 통일
 const EXAMPLE_PAIRS = [
-  // 직장
-  { title: '김과장 승진턱',     desc: '오늘은 제가 쏩니다' },
-  { title: '프로젝트 마무리',   desc: '다들 수고 많았어요' },
-  { title: '팀장님 생신',       desc: '오래오래 함께해요' },
-  { title: '월요병 극복 커피',  desc: '한 주 시작, 같이 힘내요' },
-  // 일상
-  { title: '친구 생일 축하',    desc: '오늘만큼은 네가 주인공' },
-  { title: '주말 브런치 모임',  desc: '천천히, 여유롭게' },
-  { title: '운동 끝나고 한 잔', desc: '수고했어, 우리 몸' },
-  { title: '시험 끝난 기념',    desc: '이제 진짜 자유다' },
+  { title: '김과장 승진턱',       desc: '오늘은 제가 쏩니다!' },
+  { title: '프로젝트 마무리 자축', desc: '우리 진짜 해냈어요!' },
+  { title: '첫 월급 한 턱',       desc: '첫 월급은 쏴야 제 맛' },
+  { title: '계약 따낸 기념',      desc: '이건 무조건 제가 쏠게요' },
+  { title: '합격 한 턱',          desc: '드디어 통과, 같이 축하해요!' },
+  { title: '생일 한 턱',          desc: '오늘 제 생일, 같이 즐겨요' },
+  { title: '금요일 자축',         desc: 'TGIF, 한 주 진짜 수고했어요' },
+  { title: '보너스 들어온 날',    desc: '기분이다, 한 잔씩!' },
 ];
 
 function openSettingsModal({ welcome = false } = {}) {
