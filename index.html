@@ -31,13 +31,14 @@
     --sb-green-dark: #1e3932;
     --sb-green-rgb: 0, 98, 65;
     --sb-light: #d4e9e2;
-    --sb-accent: #FF6B47;        /* 바이브런트 코랄 — 따뜻하고 활기찬 */
+    --sb-accent: #FF6B47;        /* 코랄 — 포인트 전용 */
     --sb-accent-soft: #FFE5DD;   /* 옅은 피치 */
-    --bg: #f9f5ec;
-    --bg-deep: #f1e9d6;
-    --text: #1e3932;
-    --muted: #6b6b6b;
-    --border: #ece5d4;
+    /* 쿨톤 베이스 */
+    --bg: #f5f7fa;               /* slate-50 */
+    --bg-deep: #e9eef4;          /* deeper slate */
+    --text: #1a2330;             /* cool dark navy */
+    --muted: #64748b;            /* slate-500 */
+    --border: #e2e8f0;           /* slate-200 */
   }
   /* 카페별 브랜드 컬러 오버라이드 — data-cafe 속성으로 전환 */
   /* 이디야: 네이비 블루 (CI 기본색, 공식 hex 미공개라 통용값 사용) */
@@ -179,9 +180,9 @@
   .tab.active { background: var(--sb-green); color: white; }
   .card {
     background: white; padding: 20px; border-radius: 18px;
-    box-shadow: 0 2px 14px rgba(120, 90, 30, 0.06);
+    box-shadow: 0 2px 14px rgba(15, 23, 42, 0.05);
     margin-bottom: 14px;
-    border: 1px solid #f5efe0;
+    border: 1px solid var(--border);
   }
   label {
     display: flex; align-items: baseline; justify-content: space-between;
@@ -298,8 +299,9 @@
   }
   .order-menu { color: #444; font-size: 14px; line-height: 1.45; }
   .order-memo {
-    color: #b8420b; font-size: 12px; margin-top: 4px;
-    padding: 3px 9px; background: #fff8e6;
+    color: #475569; font-size: 12px; margin-top: 4px;
+    padding: 3px 9px; background: #f1f5f9;
+    border: 1px solid #e2e8f0;
     border-radius: 6px; display: inline-block;
   }
   .summary-row {
@@ -364,7 +366,7 @@
   }
   .variant-row.checked { opacity: 0.45; }
   .variant-row.checked .variant-spec { text-decoration: line-through; }
-  .variant-row.checked.has-memo { background: #fffaf5; }
+  .variant-row.checked.has-memo { background: #f8fafc; }
   .variant-spec {
     display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
     font-size: 13px; min-width: 0;
@@ -374,20 +376,20 @@
     border-radius: 999px; font-size: 11px; font-weight: 700;
     letter-spacing: 0.4px;
   }
-  .variant-temp.ice { background: #d6ecff; color: #1e5fa8; }
-  .variant-temp.hot { background: #ffe4d6; color: #b8420b; }
+  .variant-temp.ice { background: #dbeafe; color: #1e40af; }
+  .variant-temp.hot { background: #fde2e2; color: #b91c1c; }
   .variant-size {
     font-weight: 700; color: var(--sb-green-dark); font-size: 13px;
   }
   .variant-addons {
-    font-size: 11px; color: #6b5418;
-    background: #fff8e6; padding: 2px 9px; border-radius: 999px;
-    border: 1px solid #f0d678;
+    font-size: 11px; color: #475569;
+    background: #f1f5f9; padding: 2px 9px; border-radius: 999px;
+    border: 1px solid #cbd5e1;
   }
   .variant-memo {
-    font-size: 11px; color: #b8420b; font-weight: 600;
-    background: #ffeede; padding: 3px 10px; border-radius: 8px;
-    border: 1px solid #ffb380; line-height: 1.4;
+    font-size: 11px; color: #475569; font-weight: 600;
+    background: #f1f5f9; padding: 3px 10px; border-radius: 8px;
+    border: 1px solid #cbd5e1; line-height: 1.4;
     max-width: 100%;
   }
   .variant-row .count {
@@ -396,7 +398,7 @@
     font-size: 12px; flex-shrink: 0;
   }
   .variant-row.has-memo {
-    background: #fffaf5;
+    background: #f8fafc;
     border-radius: 8px;
     margin: 0 -4px;
     padding-left: 12px; padding-right: 12px;
@@ -416,11 +418,11 @@
   }
   .hide { display: none !important; }
   .setup-warning {
-    background: #fff6d6; border: 2px solid #ffc107;
+    background: #f1f5f9; border: 2px solid #cbd5e1;
     padding: 16px; border-radius: 12px; margin-bottom: 14px;
     font-size: 13px; line-height: 1.6;
   }
-  .setup-warning b { color: #b8860b; }
+  .setup-warning b { color: var(--sb-accent); }
   .setup-warning code {
     background: #fff; padding: 1px 5px; border-radius: 3px;
     font-size: 12px;
@@ -539,7 +541,7 @@
   }
   .welcome-note {
     padding: 16px 18px; margin-bottom: 20px;
-    background: linear-gradient(135deg, var(--sb-light) 0%, var(--sb-accent-soft) 100%);
+    background: var(--sb-light);
     color: var(--sb-green-dark);
     border-radius: 14px; font-size: 13px; line-height: 1.6;
     font-weight: 500;
