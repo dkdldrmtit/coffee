@@ -239,31 +239,23 @@
     background: #fff8e6; padding: 2px 9px; border-radius: 999px;
     border: 1px solid #f0d678;
   }
+  .variant-memo {
+    font-size: 11px; color: #b8420b; font-weight: 600;
+    background: #ffeede; padding: 3px 10px; border-radius: 8px;
+    border: 1px solid #ffb380; line-height: 1.4;
+    max-width: 100%;
+  }
   .variant-row .count {
     background: var(--sb-light); padding: 3px 11px;
     border-radius: 999px; font-weight: 700; color: var(--sb-green-dark);
     font-size: 12px; flex-shrink: 0;
   }
-
-  /* ── 특이사항 섹션 ── */
-  .memos-section {
-    margin-top: 16px; padding: 14px;
-    background: #fff8e6; border: 1.5px solid #ffd966;
-    border-radius: 12px;
+  .variant-row.has-memo {
+    background: #fffaf5;
+    border-radius: 8px;
+    margin: 0 -4px;
+    padding-left: 12px; padding-right: 12px;
   }
-  .memos-header {
-    font-size: 13px; font-weight: 700; color: #b8860b;
-    margin-bottom: 10px;
-  }
-  .memo-row {
-    padding: 8px 0; border-top: 1px dashed #f0d678;
-    font-size: 13px; line-height: 1.5;
-  }
-  .memo-row:first-of-type { border-top: none; padding-top: 0; }
-  .memo-row:last-child { padding-bottom: 0; }
-  .memo-row-name { color: var(--sb-green-dark); margin-bottom: 2px; }
-  .memo-row-name b { font-weight: 700; }
-  .memo-row-text { color: #6b5418; padding-left: 4px; }
 
   /* ── 총계 ── */
   .summary-total {
@@ -1529,27 +1521,29 @@ const checkedOrders = new Set(); // 체크리스트 상태 (in-memory)
 const TEMP_ORDER = ['ICE', 'HOT'];
 const SIZE_ORDER = ['Tall', 'Grande', 'Venti'];
 
-// 주문 목록 → 메뉴별로 묶고, 각 메뉴 내부에서 (온도/사이즈/옵션) 변형별로 카운트
-// 스타벅스 주문 흐름(메뉴 → 온도 → 사이즈 → 옵션)에 맞춰 정렬
+// 주문 목록 → 메뉴별로 묶고, 각 메뉴 내부에서 (온도/사이즈/옵션/메모) 변형별로 카운트
+// 스타벅스 주문 흐름(메뉴 → 온도 → 사이즈 → 옵션/요구사항)에 맞춰 정렬
 function buildGroupedOrders(orders) {
-  const groups = {}; // menu → { count, variants: { variantKey → {temp,size,addons,count} } }
+  const groups = {}; // menu → { count, variants: { variantKey → {temp,size,addons,memo,count} } }
   orders.forEach(o => {
     const menu = (o.menu || '').trim() || '기타';
     const temp = o.temp || '';
     const size = o.size || '';
     const addons = Array.isArray(o.addons) ? o.addons.slice() : [];
-    const variantKey = `${temp}|${size}|${addons.join(',')}`;
+    const memo = (o.memo || '').trim();
+    // 메모도 변형 키에 포함 → 같은 메뉴/사이즈라도 메모가 다르면 별도 행
+    const variantKey = `${temp}|${size}|${addons.join(',')}|${memo}`;
     if (!groups[menu]) groups[menu] = { count: 0, variants: {} };
     groups[menu].count++;
     if (!groups[menu].variants[variantKey]) {
-      groups[menu].variants[variantKey] = { temp, size, addons, count: 0 };
+      groups[menu].variants[variantKey] = { temp, size, addons, memo, count: 0 };
     }
     groups[menu].variants[variantKey].count++;
   });
   // 메뉴 정렬: 잔 수 많은 순 → 한글 가나다
   const sortedMenus = Object.entries(groups)
     .sort((a, b) => b[1].count - a[1].count || a[0].localeCompare(b[0], 'ko'));
-  // 각 메뉴 내부의 변형 정렬: 온도 → 사이즈 → 옵션
+  // 각 메뉴 내부의 변형 정렬: 온도 → 사이즈 → 옵션 → 메모
   const idx = (arr, v) => { const i = arr.indexOf(v); return i === -1 ? 999 : i; };
   sortedMenus.forEach(([_, g]) => {
     g.sortedVariants = Object.values(g.variants).sort((a, b) => {
@@ -1557,7 +1551,9 @@ function buildGroupedOrders(orders) {
       if (dt) return dt;
       const ds = idx(SIZE_ORDER, a.size) - idx(SIZE_ORDER, b.size);
       if (ds) return ds;
-      return a.addons.join(',').localeCompare(b.addons.join(','));
+      const da = a.addons.join(',').localeCompare(b.addons.join(','));
+      if (da) return da;
+      return (a.memo || '').localeCompare(b.memo || '');
     });
   });
   return sortedMenus;
@@ -1594,28 +1590,15 @@ function renderGroupedSummary() {
       const sizeText  = v.size ? `<span class="variant-size">${escapeHtml(v.size)}</span>` : '';
       const addonsText = v.addons.length
         ? `<span class="variant-addons">${escapeHtml(v.addons.join(', '))}</span>` : '';
-      html += `<div class="variant-row">
-        <div class="variant-spec">${tempBadge}${sizeText}${addonsText}</div>
+      const memoText  = v.memo
+        ? `<span class="variant-memo">📝 ${escapeHtml(v.memo)}</span>` : '';
+      html += `<div class="variant-row${v.memo ? ' has-memo' : ''}">
+        <div class="variant-spec">${tempBadge}${sizeText}${addonsText}${memoText}</div>
         <span class="count">× ${v.count}</span>
       </div>`;
     });
     html += `</div></div>`;
   });
-
-  // 특이사항 (메모 있는 주문)
-  const memoOrders = orders.filter(o => o.memo && o.memo.trim());
-  if (memoOrders.length > 0) {
-    html += `<div class="memos-section">
-      <div class="memos-header">⚠️ 특이사항 (${memoOrders.length}건)</div>`;
-    memoOrders.forEach(o => {
-      const desc = [o.menu, o.temp, o.size].filter(Boolean).join(' ');
-      html += `<div class="memo-row">
-        <div class="memo-row-name"><b>${escapeHtml(o.name)}</b> · ${escapeHtml(desc)}</div>
-        <div class="memo-row-text">📝 ${escapeHtml(o.memo)}</div>
-      </div>`;
-    });
-    html += `</div>`;
-  }
 
   html += `<div class="summary-total">
     <span>총계</span>
@@ -1687,19 +1670,12 @@ document.getElementById('copyBtn').addEventListener('click', async () => {
     g.sortedVariants.forEach(v => {
       const parts = [v.temp, v.size].filter(Boolean);
       if (v.addons.length) parts.push(v.addons.join(', '));
-      lines.push(`• ${parts.join(' ')} × ${v.count}`);
+      let line = `• ${parts.join(' ')} × ${v.count}`;
+      if (v.memo) line += ` 📝 ${v.memo}`;
+      lines.push(line);
     });
     lines.push('');
   });
-
-  const memoOrders = orders.filter(o => o.memo && o.memo.trim());
-  if (memoOrders.length > 0) {
-    lines.push('⚠️ 특이사항');
-    memoOrders.forEach(o => {
-      const desc = [o.menu, o.temp, o.size].filter(Boolean).join(' ');
-      lines.push(`- ${o.name} (${desc}): ${o.memo.trim()}`);
-    });
-  }
 
   const text = lines.join('\n').replace(/\n+$/, '');
   try {
