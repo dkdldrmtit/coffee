@@ -179,6 +179,127 @@
     border-radius: 10px; font-weight: 700; color: var(--sb-green-dark);
     font-size: 13px;
   }
+
+  /* ── 요약 뷰 토글 ── */
+  .view-toggle {
+    display: flex; gap: 4px; background: #f5f5f5;
+    border-radius: 10px; padding: 4px; margin-bottom: 16px;
+  }
+  .view-toggle-btn {
+    flex: 1; padding: 9px 8px; border: none;
+    background: transparent; color: var(--muted);
+    border-radius: 8px; cursor: pointer; font-size: 13px;
+    font-weight: 600; font-family: inherit;
+    transition: background 0.15s, color 0.15s;
+  }
+  .view-toggle-btn.active {
+    background: white; color: var(--sb-green-dark);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  /* ── 요약: 온도/사이즈 그룹 ── */
+  .temp-group { margin-bottom: 18px; }
+  .temp-group:last-of-type { margin-bottom: 12px; }
+  .temp-group-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px; margin-bottom: 8px;
+    background: var(--sb-green-dark); color: white;
+    border-radius: 10px; font-size: 14px; font-weight: 700;
+  }
+  .temp-group-header .temp-count {
+    background: rgba(255,255,255,0.2); padding: 2px 10px;
+    border-radius: 999px; font-size: 12px; font-weight: 700;
+  }
+  .size-group {
+    margin: 0 4px 10px; padding: 8px 0 4px;
+    border-left: 2px solid var(--sb-light); padding-left: 12px;
+  }
+  .size-label {
+    font-size: 12px; font-weight: 700; color: var(--sb-green);
+    margin-bottom: 6px; letter-spacing: 0.3px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .size-label .size-count {
+    font-size: 10px; color: var(--muted); font-weight: 600;
+  }
+  .item-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 0; font-size: 14px;
+  }
+  .item-row .item-name { color: var(--text); }
+  .item-row .count {
+    background: var(--sb-light); padding: 2px 9px;
+    border-radius: 999px; font-weight: 700; color: var(--sb-green-dark);
+    font-size: 12px;
+  }
+
+  /* ── 특이사항 섹션 ── */
+  .memos-section {
+    margin-top: 16px; padding: 14px;
+    background: #fff8e6; border: 1.5px solid #ffd966;
+    border-radius: 12px;
+  }
+  .memos-header {
+    font-size: 13px; font-weight: 700; color: #b8860b;
+    margin-bottom: 10px;
+  }
+  .memo-row {
+    padding: 8px 0; border-top: 1px dashed #f0d678;
+    font-size: 13px; line-height: 1.5;
+  }
+  .memo-row:first-of-type { border-top: none; padding-top: 0; }
+  .memo-row:last-child { padding-bottom: 0; }
+  .memo-row-name { color: var(--sb-green-dark); margin-bottom: 2px; }
+  .memo-row-name b { font-weight: 700; }
+  .memo-row-text { color: #6b5418; padding-left: 4px; }
+
+  /* ── 총계 ── */
+  .summary-total {
+    margin-top: 14px; padding-top: 14px;
+    border-top: 2px solid var(--sb-green-dark);
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 15px; font-weight: 800; color: var(--sb-green-dark);
+  }
+
+  /* ── 체크리스트 뷰 ── */
+  .checklist-list { display: flex; flex-direction: column; gap: 6px; }
+  .checklist-row {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 12px 14px; background: #fafafa;
+    border-radius: 10px; cursor: pointer;
+    border: 1.5px solid transparent;
+    transition: all 0.15s;
+  }
+  .checklist-row:hover { background: #f0f9f5; }
+  .checklist-row.checked {
+    background: #f0f9f5; border-color: var(--sb-light);
+  }
+  .checklist-row.checked .checklist-name,
+  .checklist-row.checked .checklist-menu {
+    text-decoration: line-through; color: #aaa;
+  }
+  .checklist-row input[type="checkbox"] {
+    width: 20px; height: 20px; margin-top: 2px;
+    accent-color: var(--sb-green); cursor: pointer; flex-shrink: 0;
+  }
+  .checklist-content { flex: 1; min-width: 0; }
+  .checklist-name {
+    font-weight: 700; font-size: 14px;
+    color: var(--sb-green-dark); margin-bottom: 2px;
+  }
+  .checklist-menu { font-size: 13px; color: #444; }
+  .checklist-memo {
+    font-size: 11px; color: #b8860b;
+    margin-top: 4px; padding: 4px 8px;
+    background: #fff8e6; border-radius: 6px;
+    display: inline-block;
+  }
+  .checklist-progress {
+    margin-top: 14px; padding: 12px;
+    background: var(--sb-light); color: var(--sb-green-dark);
+    border-radius: 10px; text-align: center;
+    font-size: 13px; font-weight: 700;
+  }
   .empty {
     text-align: center; color: #aaa; padding: 28px 10px;
     font-size: 14px;
@@ -508,7 +629,10 @@
   <!-- SUMMARY TAB -->
   <div id="summaryTab" class="hide tab-content">
     <div class="card">
-      <h3>메뉴별 집계</h3>
+      <div class="view-toggle">
+        <button type="button" class="view-toggle-btn active" data-view="summary">📊 메뉴 집계</button>
+        <button type="button" class="view-toggle-btn" data-view="checklist">✓ 체크리스트</button>
+      </div>
       <div id="summaryList"></div>
       <button class="copy-btn" id="copyBtn">📋 요약 복사하기</button>
     </div>
@@ -1384,43 +1508,185 @@ function renderList() {
   `).join('');
 }
 
-function renderSummary() {
-  const list = document.getElementById('summaryList');
-  const counts = {};
-  Object.values(currentOrders).forEach(o => {
-    const key = formatOrder(o);
-    counts[key] = (counts[key] || 0) + 1;
+// ════════════════════════════════════════════════════════════════
+// 요약 탭: 메뉴 집계 + 체크리스트 뷰
+// ════════════════════════════════════════════════════════════════
+let summaryViewMode = 'summary'; // 'summary' | 'checklist'
+const checkedOrders = new Set(); // 체크리스트 상태 (in-memory)
+
+const TEMP_ORDER = ['ICE', 'HOT'];
+const SIZE_ORDER = ['Tall', 'Grande', 'Venti'];
+const TEMP_ICON  = { 'ICE': '🧊', 'HOT': '☕️' };
+
+// 주문 목록 → temp/size/item별 그룹
+function buildGroupedOrders(orders) {
+  const groups = {};
+  orders.forEach(o => {
+    const t = o.temp || '기타';
+    const s = o.size || '기타';
+    const item = (o.menu || '') + (o.addons && o.addons.length ? ` (${o.addons.join(', ')})` : '');
+    if (!groups[t]) groups[t] = {};
+    if (!groups[t][s]) groups[t][s] = {};
+    if (!groups[t][s][item]) groups[t][s][item] = 0;
+    groups[t][s][item]++;
   });
-  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-  const total = Object.keys(currentOrders).length;
+  const sortByOrder = (order) => (a, b) => {
+    const ai = order.indexOf(a), bi = order.indexOf(b);
+    return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+  };
+  const sortedTemps = Object.keys(groups).sort(sortByOrder(TEMP_ORDER));
+  const tempCount = (t) => Object.values(groups[t])
+    .reduce((sum, sm) => sum + Object.values(sm).reduce((s, c) => s + c, 0), 0);
+  const sizeCount = (t, s) => Object.values(groups[t][s]).reduce((sum, c) => sum + c, 0);
+  const sortedSizes = (t) => Object.keys(groups[t]).sort(sortByOrder(SIZE_ORDER));
+  return { groups, sortedTemps, sortedSizes, tempCount, sizeCount };
+}
+
+function renderSummary() {
+  if (summaryViewMode === 'checklist') {
+    renderChecklistView();
+  } else {
+    renderGroupedSummary();
+  }
+}
+
+function renderGroupedSummary() {
+  const list = document.getElementById('summaryList');
+  const orders = Object.values(currentOrders);
+  if (orders.length === 0) {
+    list.innerHTML = '<div class="empty">아직 주문이 없어요 ☕️</div>';
+    return;
+  }
+  const { groups, sortedTemps, sortedSizes, tempCount, sizeCount } = buildGroupedOrders(orders);
+
+  let html = '';
+  sortedTemps.forEach(t => {
+    const icon = TEMP_ICON[t] || '🥤';
+    html += `<div class="temp-group">
+      <div class="temp-group-header">
+        <span>${icon} ${escapeHtml(t)}</span>
+        <span class="temp-count">${tempCount(t)}잔</span>
+      </div>`;
+    sortedSizes(t).forEach(s => {
+      html += `<div class="size-group">
+        <div class="size-label">${escapeHtml(s)} <span class="size-count">${sizeCount(t, s)}잔</span></div>`;
+      Object.entries(groups[t][s])
+        .sort((a, b) => b[1] - a[1])
+        .forEach(([item, count]) => {
+          html += `<div class="item-row">
+            <span class="item-name">${escapeHtml(item)}</span>
+            <span class="count">× ${count}</span>
+          </div>`;
+        });
+      html += `</div>`;
+    });
+    html += `</div>`;
+  });
+
+  // 특이사항 (메모 있는 주문)
+  const memoOrders = orders.filter(o => o.memo && o.memo.trim());
+  if (memoOrders.length > 0) {
+    html += `<div class="memos-section">
+      <div class="memos-header">⚠️ 특이사항 (${memoOrders.length}건)</div>`;
+    memoOrders.forEach(o => {
+      const desc = [o.temp, o.size, o.menu].filter(Boolean).join(' ');
+      html += `<div class="memo-row">
+        <div class="memo-row-name"><b>${escapeHtml(o.name)}</b> · ${escapeHtml(desc)}</div>
+        <div class="memo-row-text">📝 ${escapeHtml(o.memo)}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  html += `<div class="summary-total">
+    <span>총계</span>
+    <span>${orders.length}잔</span>
+  </div>`;
+
+  list.innerHTML = html;
+}
+
+function renderChecklistView() {
+  const list = document.getElementById('summaryList');
+  const entries = Object.entries(currentOrders)
+    .sort((a, b) => (a[1].name || '').localeCompare(b[1].name || '', 'ko'));
   if (entries.length === 0) {
     list.innerHTML = '<div class="empty">아직 주문이 없어요 ☕️</div>';
     return;
   }
-  list.innerHTML = entries.map(([k, c]) => `
-    <div class="summary-row">
-      <span>${escapeHtml(k)}</span>
-      <span class="count">× ${c}</span>
-    </div>
-  `).join('') + `
-    <div class="summary-row">
-      <span>총계</span>
-      <span>${total}잔</span>
-    </div>
-  `;
+  let html = '<div class="checklist-list">';
+  entries.forEach(([key, o]) => {
+    const checked = checkedOrders.has(key);
+    html += `<label class="checklist-row${checked ? ' checked' : ''}">
+      <input type="checkbox" data-key="${escapeHtml(key)}"${checked ? ' checked' : ''}>
+      <div class="checklist-content">
+        <div class="checklist-name">${escapeHtml(o.name)}</div>
+        <div class="checklist-menu">${escapeHtml(formatOrder(o))}</div>
+        ${o.memo ? `<div class="checklist-memo">📝 ${escapeHtml(o.memo)}</div>` : ''}
+      </div>
+    </label>`;
+  });
+  const checkedCount = entries.filter(([k]) => checkedOrders.has(k)).length;
+  html += `</div>
+    <div class="checklist-progress">${checkedCount} / ${entries.length} 받음</div>`;
+  list.innerHTML = html;
 }
 
-document.getElementById('copyBtn').addEventListener('click', async () => {
-  const counts = {};
-  Object.values(currentOrders).forEach(o => {
-    const key = formatOrder(o);
-    counts[key] = (counts[key] || 0) + 1;
+// 뷰 토글
+document.querySelectorAll('.view-toggle-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.view-toggle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    summaryViewMode = btn.dataset.view;
+    renderSummary();
   });
-  const lines = Object.entries(counts)
-    .sort((a, b) => b[1] - a[1])
-    .map(([k, c]) => `• ${k} × ${c}`);
-  const total = Object.keys(currentOrders).length;
-  const text = `☕️ 커피 주문 요약 (총 ${total}잔)\n\n` + lines.join('\n');
+});
+
+// 체크리스트 체크박스 변경 → Set 갱신 + 진행률 업데이트
+document.getElementById('summaryList').addEventListener('change', e => {
+  const cb = e.target.closest('input[type="checkbox"]');
+  if (!cb) return;
+  const key = cb.dataset.key;
+  if (cb.checked) checkedOrders.add(key); else checkedOrders.delete(key);
+  // 라벨/진행률 즉시 반영
+  if (summaryViewMode === 'checklist') renderChecklistView();
+});
+
+// ════════════════════════════════════════════════════════════════
+// 요약 복사: 새 포맷 (온도/사이즈 그룹 + 특이사항)
+// ════════════════════════════════════════════════════════════════
+document.getElementById('copyBtn').addEventListener('click', async () => {
+  const orders = Object.values(currentOrders);
+  if (orders.length === 0) { toast('아직 주문이 없어요'); return; }
+  const { groups, sortedTemps, sortedSizes, tempCount, sizeCount } = buildGroupedOrders(orders);
+
+  const lines = [];
+  lines.push(`☕️ ${CONFIG.title} (총 ${orders.length}잔)`);
+  lines.push('');
+  sortedTemps.forEach(t => {
+    const icon = TEMP_ICON[t] || '🥤';
+    lines.push(`━━ ${icon} ${t} (${tempCount(t)}잔) ━━`);
+    sortedSizes(t).forEach(s => {
+      lines.push(`[${s} · ${sizeCount(t, s)}잔]`);
+      Object.entries(groups[t][s])
+        .sort((a, b) => b[1] - a[1])
+        .forEach(([item, count]) => {
+          lines.push(`• ${item} × ${count}`);
+        });
+    });
+    lines.push('');
+  });
+
+  const memoOrders = orders.filter(o => o.memo && o.memo.trim());
+  if (memoOrders.length > 0) {
+    lines.push('⚠️ 특이사항');
+    memoOrders.forEach(o => {
+      const desc = [o.temp, o.size, o.menu].filter(Boolean).join(' ');
+      lines.push(`- ${o.name} (${desc}): ${o.memo.trim()}`);
+    });
+  }
+
+  const text = lines.join('\n').replace(/\n+$/, '');
   try {
     await navigator.clipboard.writeText(text);
     toast('📋 복사 완료!');
