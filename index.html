@@ -69,6 +69,9 @@
   }
   body { transition: background 0.4s ease; }
   * { box-sizing: border-box; }
+  html, body {
+    touch-action: pan-x pan-y;  /* 핀치 줌 차단 (스크롤은 허용) */
+  }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
     background: linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
@@ -607,10 +610,13 @@
   .modal label:first-of-type { margin-top: 0; }
   .modal-divider { border: none; border-top: 1px solid var(--border); margin: 22px 0 16px; }
   input[type=date], input[type=time] {
-    width: 100%; padding: 12px; border: 1.5px solid var(--border);
+    display: block;
+    width: 100%; min-width: 0; max-width: 100%;
+    padding: 12px; border: 1.5px solid var(--border);
     border-radius: 10px; font-size: 15px; font-family: inherit;
     background: white; color: var(--text); transition: border-color 0.15s;
     box-sizing: border-box;
+    appearance: none; -webkit-appearance: none;
   }
   input[type=date]:focus, input[type=time]:focus { outline: none; border-color: var(--sb-green); }
   .time-row { display: flex; gap: 8px; }
@@ -834,6 +840,20 @@ function getOrCreateRoomId() {
   return fresh;
 }
 const ROOM_ID = getOrCreateRoomId();
+
+// 핀치 줌 차단 (트랙패드 ctrl+wheel, 모바일 gesture 이벤트)
+window.addEventListener('wheel', e => {
+  if (e.ctrlKey) e.preventDefault();
+}, { passive: false });
+window.addEventListener('gesturestart', e => e.preventDefault());
+window.addEventListener('gesturechange', e => e.preventDefault());
+window.addEventListener('gestureend', e => e.preventDefault());
+// 키보드 줌(Ctrl +/-/0)도 차단
+window.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && ['=', '+', '-', '0'].includes(e.key)) {
+    e.preventDefault();
+  }
+}, { passive: false });
 
 // ════════════════════════════════════════════════════════════════
 // 👤 사용자 식별 — 디바이스별 고유 ID로 방장 판정에 사용
