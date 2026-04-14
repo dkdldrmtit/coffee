@@ -27,18 +27,18 @@
 
 <style>
   :root {
-    --sb-green: #1e293b;         /* slate-800 — 주 액션 (기존 #006241에서 네이비로) */
-    --sb-green-dark: #0f172a;    /* slate-900 — 제목/헤더 */
-    --sb-green-rgb: 30, 41, 59;
-    --sb-light: #e2e8f0;         /* slate-200 — 옅은 액티브 배경 */
-    --sb-accent: #FF6B47;        /* 코랄 — 포인트 전용 */
-    --sb-accent-soft: #FFE5DD;   /* 옅은 피치 */
-    /* 쿨톤 베이스 */
-    --bg: #f5f7fa;               /* slate-50 */
-    --bg-deep: #e9eef4;          /* deeper slate */
-    --text: #1a2330;             /* cool dark navy */
-    --muted: #64748b;            /* slate-500 */
-    --border: #e2e8f0;           /* slate-200 */
+    --sb-green: #3E3832;         /* 웜 차콜 브라운 — 주 액션 */
+    --sb-green-dark: #2A2420;    /* 딥 웜 다크 — 제목 */
+    --sb-green-rgb: 62, 56, 50;
+    --sb-light: #f0e9db;         /* 웜 크림 라이트 — 액티브 배경 */
+    --sb-accent: #E76F51;        /* 테라코타 코랄 — 포인트 */
+    --sb-accent-soft: #FDEAE1;   /* 부드러운 피치 */
+    /* 웜 미니멀 베이스 */
+    --bg: #faf7f2;               /* 웜 아이보리 크림 */
+    --bg-deep: #f0e9db;          /* 딥 크림 */
+    --text: #2a2420;             /* 웜 다크 텍스트 */
+    --muted: #8a7f75;            /* 웜 뮤트 */
+    --border: #e8e0d0;           /* 웜 크림 보더 */
   }
   body { transition: background 0.4s ease; }
   * { box-sizing: border-box; }
@@ -160,7 +160,7 @@
   .countdown .countdown-time { font-size: 15px; font-weight: 700; }
   .countdown.closed { background: #8a8a8a; box-shadow: none; }
   .tabs {
-    display: flex; gap: 2px; background: #eef1f5;
+    display: flex; gap: 2px; background: var(--bg-deep);
     border-radius: 12px; padding: 4px; margin-bottom: 18px;
   }
   .tab {
@@ -176,11 +176,11 @@
     background: white;
     color: var(--sb-accent);
     font-weight: 800;
-    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+    box-shadow: 0 1px 4px rgba(74, 53, 38, 0.10);
   }
   .card {
     background: white; padding: 20px; border-radius: 18px;
-    box-shadow: 0 2px 14px rgba(15, 23, 42, 0.05);
+    box-shadow: 0 2px 14px rgba(74, 53, 38, 0.06);
     margin-bottom: 14px;
     border: 1px solid var(--border);
   }
@@ -303,9 +303,9 @@
   }
   .order-menu { color: #444; font-size: 14px; line-height: 1.45; }
   .order-memo {
-    color: #475569; font-size: 12px; margin-top: 4px;
-    padding: 3px 9px; background: #f1f5f9;
-    border: 1px solid #e2e8f0;
+    color: #6f5a42; font-size: 12px; margin-top: 4px;
+    padding: 3px 9px; background: #fdf5e6;
+    border: 1px solid #ebdebf;
     border-radius: 6px; display: inline-block;
   }
   .summary-row {
@@ -370,7 +370,7 @@
   }
   .variant-row.checked { opacity: 0.45; }
   .variant-row.checked .variant-spec { text-decoration: line-through; }
-  .variant-row.checked.has-memo { background: #f8fafc; }
+  .variant-row.checked.has-memo { background: #fefbf5; }
   .variant-spec {
     display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
     font-size: 13px; min-width: 0;
@@ -380,20 +380,20 @@
     border-radius: 999px; font-size: 11px; font-weight: 700;
     letter-spacing: 0.4px;
   }
-  .variant-temp.ice { background: #dbeafe; color: #1e40af; }
-  .variant-temp.hot { background: #fde2e2; color: #b91c1c; }
+  .variant-temp.ice { background: #e0f2fe; color: #0c4a6e; }
+  .variant-temp.hot { background: #fde4d4; color: #9a3412; }
   .variant-size {
     font-weight: 700; color: var(--sb-green-dark); font-size: 13px;
   }
   .variant-addons {
-    font-size: 11px; color: #475569;
-    background: #f1f5f9; padding: 2px 9px; border-radius: 999px;
-    border: 1px solid #cbd5e1;
+    font-size: 11px; color: #6f5a42;
+    background: #fdf5e6; padding: 2px 9px; border-radius: 999px;
+    border: 1px solid #ebdebf;
   }
   .variant-memo {
-    font-size: 11px; color: #475569; font-weight: 600;
-    background: #f1f5f9; padding: 3px 10px; border-radius: 8px;
-    border: 1px solid #cbd5e1; line-height: 1.4;
+    font-size: 11px; color: #8b5a2b; font-weight: 600;
+    background: #fdf0e0; padding: 3px 10px; border-radius: 8px;
+    border: 1px solid #f5d9b8; line-height: 1.4;
     max-width: 100%;
   }
   .variant-row .count {
@@ -402,7 +402,7 @@
     font-size: 12px; flex-shrink: 0;
   }
   .variant-row.has-memo {
-    background: #f8fafc;
+    background: #fefbf5;
     border-radius: 8px;
     margin: 0 -4px;
     padding-left: 12px; padding-right: 12px;
@@ -422,7 +422,7 @@
   }
   .hide { display: none !important; }
   .setup-warning {
-    background: #f1f5f9; border: 2px solid #cbd5e1;
+    background: #fdf5e6; border: 2px solid #ebdebf;
     padding: 16px; border-radius: 12px; margin-bottom: 14px;
     font-size: 13px; line-height: 1.6;
   }
@@ -650,7 +650,7 @@
   .modal-info {
     display: flex; align-items: center; justify-content: space-between;
     padding: 12px 16px; margin-bottom: 18px;
-    background: #f1f5f9; border-radius: 10px;
+    background: var(--bg); border-radius: 10px;
     border: 1px solid var(--border);
   }
   .modal-info-label {
