@@ -285,11 +285,53 @@
     margin-top: 8px; font-family: inherit; transition: all 0.15s;
   }
   .reset-btn:hover { background: #fff0f0; color: #c43535; border-color: #f0c2c2; }
+
+  /* ── 설정 버튼 ── */
+  .header { position: relative; }
+  .settings-btn {
+    position: absolute; top: 0; right: 0;
+    background: none; border: none; cursor: pointer;
+    font-size: 20px; padding: 6px; line-height: 1;
+    border-radius: 8px; color: var(--muted); transition: color 0.15s;
+  }
+  .settings-btn:hover { color: var(--sb-green-dark); }
+
+  /* ── 설정 모달 (바텀시트) ── */
+  .modal-backdrop {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.45);
+    display: flex; align-items: flex-end; justify-content: center;
+  }
+  .modal-backdrop.hide { display: none !important; }
+  .modal {
+    background: white; width: 100%; max-width: 560px;
+    border-radius: 20px 20px 0 0;
+    padding: 24px 20px calc(28px + env(safe-area-inset-bottom, 0px));
+    max-height: 88vh; overflow-y: auto;
+  }
+  .modal-handle {
+    width: 36px; height: 4px; background: #ddd;
+    border-radius: 2px; margin: 0 auto 20px;
+  }
+  .modal h2 { font-size: 17px; color: var(--sb-green-dark); margin: 0 0 20px; font-weight: 700; }
+  .modal label { margin-top: 14px; display: block; font-weight: 600; font-size: 13px; color: var(--sb-green-dark); margin-bottom: 8px; }
+  .modal label:first-of-type { margin-top: 0; }
+  .modal-divider { border: none; border-top: 1px solid var(--border); margin: 22px 0 16px; }
+  input[type=date], input[type=time] {
+    width: 100%; padding: 12px; border: 1.5px solid var(--border);
+    border-radius: 10px; font-size: 15px; font-family: inherit;
+    background: white; color: var(--text); transition: border-color 0.15s;
+    box-sizing: border-box;
+  }
+  input[type=date]:focus, input[type=time]:focus { outline: none; border-color: var(--sb-green); }
+  .time-row { display: flex; gap: 8px; }
+  .time-row input { flex: 1; }
 </style>
 </head>
 <body>
 <div class="container">
   <div class="header">
+    <button class="settings-btn" id="settingsBtn" title="설정">⚙️</button>
     <h1 id="pageTitle"></h1>
     <p id="pageDesc"></p>
   </div>
@@ -382,8 +424,26 @@
       <h3>메뉴별 집계</h3>
       <div id="summaryList"></div>
       <button class="copy-btn" id="copyBtn">📋 요약 복사하기</button>
-      <button class="reset-btn" id="resetBtn">🔄 주문 초기화 (새 라운드 시작)</button>
     </div>
+  </div>
+</div>
+
+<!-- 설정 모달 -->
+<div class="modal-backdrop hide" id="settingsModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>⚙️ 설정</h2>
+    <label>이벤트 이름</label>
+    <input type="text" id="cfgTitle" placeholder="예) 5월 회식 기념 커피">
+    <label>부제목</label>
+    <input type="text" id="cfgDesc" placeholder="예) 수고하셨습니다 🙏">
+    <label>마감 날짜</label>
+    <input type="date" id="cfgDate">
+    <label>마감 시각</label>
+    <input type="time" id="cfgTime">
+    <button class="primary" id="cfgSaveBtn" style="margin-top:20px">저장하기</button>
+    <hr class="modal-divider">
+    <button class="reset-btn" id="resetBtn">🔄 주문 초기화 (새 라운드 시작)</button>
   </div>
 </div>
 
@@ -414,30 +474,35 @@ const firebaseConfig = {
 };
 
 // ════════════════════════════════════════════════════════════════
-// ✏️ 새 주문 라운드마다 여기만 수정하세요
+// 설정 (⚙️ 버튼으로 웹에서 직접 변경 — 코드 수정 불필요)
 // ════════════════════════════════════════════════════════════════
-const CONFIG = {
-  title:  '아들 탄생 기념 커피',   // 이벤트 이름
-  desc:   '축하해주셔서 감사합니다 🙏', // 부제목
-  hour:   8,                        // 마감 시각 (24시간제)
-  minute: 40,                       // 마감 분
-};
+const DEFAULT_CONFIG = { title: '커피 주문', desc: '메뉴를 선택해주세요!', date: '', hour: 8, minute: 40 };
+
+function loadConfig() {
+  try {
+    const s = localStorage.getItem('coffee_config');
+    return s ? { ...DEFAULT_CONFIG, ...JSON.parse(s) } : { ...DEFAULT_CONFIG };
+  } catch { return { ...DEFAULT_CONFIG }; }
+}
+let CONFIG = loadConfig();
 
 // ════════════════════════════════════════════════════════════════
-// 마감 시간 (CONFIG 기준)
+// 마감 시간
 // ════════════════════════════════════════════════════════════════
-const DEADLINE = (() => {
-  const d = new Date();
-  d.setHours(CONFIG.hour, CONFIG.minute, 0, 0);
-  return d.getTime();
-})();
-
-const deadlineLabel = (() => {
+let DEADLINE, deadlineLabel;
+function calcDeadline() {
+  const base = CONFIG.date ? new Date(CONFIG.date + 'T00:00:00') : new Date();
+  base.setHours(CONFIG.hour, CONFIG.minute, 0, 0);
+  DEADLINE = base.getTime();
   const ampm = CONFIG.hour < 12 ? '오전' : '오후';
   const h = CONFIG.hour % 12 || 12;
   const m = String(CONFIG.minute).padStart(2, '0');
-  return `오늘 ${ampm} ${h}:${m}`;
-})();
+  const datePrefix = CONFIG.date
+    ? `${base.getMonth() + 1}/${base.getDate()} `
+    : '오늘 ';
+  deadlineLabel = `${datePrefix}${ampm} ${h}:${m}`;
+}
+calcDeadline();
 
 // ════════════════════════════════════════════════════════════════
 // 👥 부서원 명단 (여기를 수정하면 드롭다운이 바뀝니다)
@@ -550,6 +615,36 @@ TEAM_MEMBERS.forEach(name => {
   const opt = document.createElement('option');
   opt.value = name;
   nameList.appendChild(opt);
+});
+
+// ════════════════════════════════════════════════════════════════
+// 설정 모달
+// ════════════════════════════════════════════════════════════════
+const settingsModal = document.getElementById('settingsModal');
+
+document.getElementById('settingsBtn').addEventListener('click', () => {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('cfgTitle').value = CONFIG.title;
+  document.getElementById('cfgDesc').value = CONFIG.desc;
+  document.getElementById('cfgDate').value = CONFIG.date || today;
+  document.getElementById('cfgTime').value =
+    String(CONFIG.hour).padStart(2, '0') + ':' + String(CONFIG.minute).padStart(2, '0');
+  settingsModal.classList.remove('hide');
+});
+
+settingsModal.addEventListener('click', e => {
+  if (e.target === settingsModal) settingsModal.classList.add('hide');
+});
+
+document.getElementById('cfgSaveBtn').addEventListener('click', () => {
+  const title  = document.getElementById('cfgTitle').value.trim() || DEFAULT_CONFIG.title;
+  const desc   = document.getElementById('cfgDesc').value.trim()  || DEFAULT_CONFIG.desc;
+  const date   = document.getElementById('cfgDate').value;
+  const timeParts = document.getElementById('cfgTime').value.split(':').map(Number);
+  const hour   = isNaN(timeParts[0]) ? 8 : timeParts[0];
+  const minute = isNaN(timeParts[1]) ? 0 : timeParts[1];
+  localStorage.setItem('coffee_config', JSON.stringify({ title, desc, date, hour, minute }));
+  location.reload();
 });
 
 // ════════════════════════════════════════════════════════════════
