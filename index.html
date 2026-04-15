@@ -1361,36 +1361,23 @@ document.getElementById('shareBtn').addEventListener('click', async () => {
     : (CONFIG.desc || '오늘은 제가 쏩니다!');
   const cafeName = (CAFE_PRESETS[CONFIG.cafe] || CAFE_PRESETS.starbucks).name;
 
-  // 1순위: Kakao sendDefault — 방별 동적 미리보기 (제목/설명/버튼 커스텀)
+  // 1순위: Kakao sendCustom — 카카오 콘솔에 저장한 메시지 템플릿 사용
+  // 템플릿 ID: 132213 (메시지 템플릿 빌더에서 디자인한 것)
   if (window.Kakao && window.Kakao.isInitialized() && window.Kakao.Share) {
     try {
-      window.Kakao.Share.sendDefault({
-        objectType: 'feed',
-        content: {
+      window.Kakao.Share.sendCustom({
+        templateId: 132213,
+        templateArgs: {
           title: CONFIG.title,
-          description: `${hostLine}\n${cafeName}에서 주문 받는 중`,
-          imageUrl: 'https://goldenbell.coffee/kakao-image.png',
-          imageWidth: 1200,
-          imageHeight: 1200,
-          link: {
-            mobileWebUrl: url,
-            webUrl: url,
-          },
+          host: (CONFIG.host && CONFIG.host.trim()) || '제가',
+          cafe: cafeName,
+          roomCode: ROOM_ID,
         },
-        buttons: [
-          {
-            title: '주문 넣으러 가기',
-            link: {
-              mobileWebUrl: url,
-              webUrl: url,
-            },
-          },
-        ],
       });
       return;
     } catch (e) {
-      console.warn('Kakao sendDefault 실패, sendScrap으로 폴백:', e);
-      // sendDefault 실패 시 sendScrap으로 우회
+      console.warn('Kakao sendCustom 실패, sendScrap으로 폴백:', e);
+      // 폴백: sendScrap (OG 스크랩)
       try {
         window.Kakao.Share.sendScrap({ requestUrl: url });
         return;
