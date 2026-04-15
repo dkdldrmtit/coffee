@@ -29,6 +29,10 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" as="style" crossorigin
       href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<!-- Gaegu — 한국어 손글씨 포인트 폰트 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&display=swap">
 
 <!-- Kakao JavaScript SDK — 카톡 공유 풍부한 미리보기용 -->
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"></script>
@@ -61,6 +65,7 @@
     touch-action: pan-x pan-y;  /* 핀치 줌 차단 (스크롤은 허용) */
   }
   body {
+    --font-hand: 'Gaegu', cursive;   /* 손글씨 포인트 폰트 */
     font-family: 'Pretendard Variable', Pretendard,
                  -apple-system, BlinkMacSystemFont, system-ui,
                  "Apple SD Gothic Neo", "Noto Sans KR",
@@ -108,9 +113,10 @@
     gap: 3px;
   }
   .brand-text-top {
-    font-size: 10px; font-weight: 700;
+    font-size: 11px; font-weight: 700;
+    font-family: var(--font-hand);
     color: var(--muted);
-    letter-spacing: 2.5px;
+    letter-spacing: 1.5px;
   }
   .brand-text-main {
     font-size: 19px; font-weight: 900;
@@ -155,7 +161,8 @@
   }
   .header p {
     margin: 0 0 0 14px; color: var(--muted);
-    font-size: 14px; line-height: 1.5;
+    font-size: 15px; line-height: 1.5;
+    font-family: var(--font-hand);
   }
   .header p:empty { display: none; }
   .header-meta {
@@ -172,6 +179,10 @@
     letter-spacing: 0.3px;
   }
   .footer .footer-sep { margin: 0 8px; opacity: 0.4; }
+  .footer .footer-tagline {
+    font-family: var(--font-hand);
+    font-size: 13px;
+  }
   .countdown {
     background: var(--sb-green); color: white;
     padding: 14px 18px; border-radius: 14px;
@@ -842,7 +853,7 @@
   <footer class="footer">
     <span class="footer-brand">커피 골든벨</span>
     <span class="footer-sep">·</span>
-    <span>오늘 한 잔은 누가 쏘나요?</span>
+    <span class="footer-tagline">오늘 한 잔은 누가 쏘나요?</span>
   </footer>
 </div>
 
