@@ -1154,11 +1154,24 @@ let IS_NEW_ROOM = false;
 // 설정 (⚙️ 버튼으로 웹에서 직접 변경 — 방장만 가능)
 // Firebase 실시간 동기화 — 같은 방 참여자 모두 같은 값을 봅니다.
 // ════════════════════════════════════════════════════════════════
-// 기본 마감시간: 현재 시각 + 1시간 (새 방 시드 및 모달 기본값)
+// 로컬 타임존 기준 YYYY-MM-DD 문자열
+function formatLocalDate(d) {
+  const y  = d.getFullYear();
+  const m  = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
+}
+function todayLocal() { return formatLocalDate(new Date()); }
+
+// 기본 마감시간: 현재 시각 + 1시간 (자정 넘으면 날짜도 자동 롤오버)
 function getDefaultDeadline() {
   const d = new Date();
   d.setHours(d.getHours() + 1);
-  return { hour: d.getHours(), minute: d.getMinutes() };
+  return {
+    date:   formatLocalDate(d),
+    hour:   d.getHours(),
+    minute: d.getMinutes()
+  };
 }
 
 const DEFAULT_CONFIG = { title: '오늘은 제가 쏩니다', desc: '마음껏 골라주세요', host: '', date: '', hour: 0, minute: 0, cafe: 'starbucks' };
@@ -1644,7 +1657,6 @@ const EXAMPLE_PAIRS = [
 ];
 
 function openSettingsModal({ welcome = false } = {}) {
-  const today = new Date().toISOString().split('T')[0];
   // 아직 기본값인 방이면 placeholder 노출(welcome과 동일 처리)
   const isDefault = CONFIG.title === DEFAULT_CONFIG.title && CONFIG.desc === DEFAULT_CONFIG.desc;
   const empty = welcome || isDefault;
@@ -1652,13 +1664,16 @@ function openSettingsModal({ welcome = false } = {}) {
   document.getElementById('cfgHost').value  = CONFIG.host || '';
   document.getElementById('cfgDesc').value  = empty ? '' : CONFIG.desc;
   document.getElementById('cfgCafe').value  = CONFIG.cafe || 'starbucks';
-  document.getElementById('cfgDate').value  = CONFIG.date || today;
-  // 시간 기본값: 현재 시각 + 1시간
+  // 날짜/시간 기본값: 현재 시각 + 1시간 (자정 넘어가면 내일)
+  let dateVal = CONFIG.date || todayLocal();
   let hh = CONFIG.hour, mm = CONFIG.minute;
   if (empty) {
     const def = getDefaultDeadline();
-    hh = def.hour; mm = def.minute;
+    dateVal = def.date;
+    hh = def.hour;
+    mm = def.minute;
   }
+  document.getElementById('cfgDate').value = dateVal;
   document.getElementById('cfgTime').value  =
     String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
 
