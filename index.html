@@ -35,25 +35,41 @@
 
 <style>
   :root {
-    --sb-green: #3E3832;         /* 웜 차콜 브라운 — 주 액션 */
-    --sb-green-dark: #2A2420;    /* 딥 웜 다크 — 제목 */
-    --sb-green-rgb: 62, 56, 50;
-    --sb-light: #f5e5ec;         /* 블러시 핑크 라이트 — 액티브 배경 */
-    --sb-accent: #D97706;        /* 앰버 — 커피/골든벨 포인트 */
-    --sb-accent-rgb: 217, 119, 6;
+    /* ── 잉크(주 액션·텍스트) ── */
+    --ink:       #3E3832;        /* 웜 차콜 — 주 액션 */
+    --ink-dark:  #2A2420;        /* 딥 웜 다크 — 제목 */
+    --ink-rgb:   62, 56, 50;
+    /* ── 블러시/액티브 ── */
+    --sb-light:  #f5e5ec;        /* 블러시 핑크 라이트 — 액티브 배경 */
+    /* ── 액센트(앰버) ── */
+    --sb-accent:      #D97706;   /* 앰버 — 커피/골든벨 포인트 */
+    --sb-accent-rgb:  217, 119, 6;
     --sb-accent-soft: #FEF3C7;   /* 연한 앰버 */
-    /* 골든벨 정체성 복귀 — 벨/축하 모멘트용 */
-    --sb-gold: #D4A853;          /* 골든 옐로 — 골든벨 메인 */
-    --sb-gold-soft: #F7E9C8;     /* 연한 골드 */
-    /* 라벤더 악센트 — 부드러운 축제 분위기 */
-    --sb-lavender: #C9B4D6;      /* 라벤더 */
-    --sb-lavender-soft: #ECE4F0; /* 옅은 라벤더 */
-    /* 웜 블러시 + 라벤더 베이스 (이미지 톤 반영) */
-    --bg: #fdf5f4;               /* 웜 블러시 아이보리 */
-    --bg-deep: #ece2ea;          /* 라벤더 살짝 섞인 크림 */
-    --text: #2a2420;             /* 웜 다크 텍스트 */
-    --muted: #8a7f82;            /* 웜 블러시 뮤트 */
-    --border: #edddde;           /* 블러시 크림 보더 */
+    --sb-accent-deep: #B45309;   /* 딥 앰버 — 그라디언트 끝 */
+    /* ── 긴급도(카운트다운) — 액센트와 명확히 분리 ── */
+    --warn:     #EA580C;         /* 오렌지 — 30분 이하 */
+    --warn-rgb: 234, 88, 12;
+    --danger:   #DC2626;         /* 레드 — 10분 이하 */
+    --danger-rgb: 220, 38, 38;
+    /* ── 메모/옵션 뱃지 (웜 크림) ── */
+    --memo-bg:     #fdf5e6;
+    --memo-border: #ebdebf;
+    --memo-text:   #6f5a42;
+    /* ── 온도 뱃지 ── */
+    --ice-bg:  #e0f2fe;
+    --ice-fg:  #0c4a6e;
+    --hot-bg:  #fee2e2;
+    --hot-fg:  #991b1b;
+    /* ── 위험/취소(고스트 버튼) ── */
+    --ghost-fg:         #c43535;
+    --ghost-border:     #f0c2c2;
+    --ghost-hover-bg:   #fff0f0;
+    /* ── 웜 블러시 + 라벤더 베이스 ── */
+    --bg:       #fdf5f4;
+    --bg-deep:  #ece2ea;
+    --text:     #2a2420;
+    --muted:    #8a7f82;
+    --border:   #edddde;
   }
   body { transition: background 0.4s ease; }
   * { box-sizing: border-box; }
@@ -114,7 +130,7 @@
   }
   .brand-text-main {
     font-size: 19px; font-weight: 900;
-    color: var(--sb-green-dark);
+    color: var(--ink-dark);
     letter-spacing: -0.5px;
   }
   .header-actions {
@@ -122,7 +138,7 @@
   }
   .icon-btn {
     background: white; border: 1px solid var(--border);
-    color: var(--sb-green-dark); padding: 7px 14px;
+    color: var(--ink-dark); padding: 7px 14px;
     border-radius: 999px; font-size: 12px; font-weight: 600;
     cursor: pointer; font-family: inherit;
     transition: background 0.15s, border-color 0.15s, filter 0.15s;
@@ -140,7 +156,7 @@
   }
   .header h1 {
     font-size: 25px; margin: 0 0 8px;
-    color: var(--sb-green-dark);
+    color: var(--ink-dark);
     font-weight: 800;
     letter-spacing: -0.5px;
     line-height: 1.25;
@@ -150,7 +166,7 @@
   .header h1::before {
     content: ''; position: absolute;
     left: 0; top: 8px; bottom: 8px; width: 4px;
-    background: linear-gradient(180deg, var(--sb-accent) 0%, #B45309 100%);
+    background: linear-gradient(180deg, var(--sb-accent) 0%, var(--sb-accent-deep) 100%);
     border-radius: 999px;
   }
   .header p {
@@ -180,11 +196,11 @@
   }
   .footer .footer-sep { margin: 0 8px; opacity: 0.4; }
   .countdown {
-    background: var(--sb-green); color: white;
+    background: var(--ink); color: white;
     padding: 14px 18px; border-radius: 14px;
     font-size: 14px; margin: 8px 0 18px;
     font-weight: 600; letter-spacing: 0.1px;
-    box-shadow: 0 4px 14px rgba(var(--sb-green-rgb), 0.18);
+    box-shadow: 0 4px 14px rgba(var(--ink-rgb), 0.18);
     display: flex; justify-content: space-between; align-items: center;
     gap: 12px;
   }
@@ -202,13 +218,13 @@
     transition: background 0.2s, color 0.2s, box-shadow 0.2s;
   }
   .tab:not(.active):hover {
-    color: var(--sb-green-dark);
+    color: var(--ink-dark);
   }
   .tab.active {
     background: white;
     color: var(--sb-accent);
     font-weight: 800;
-    box-shadow: 0 1px 4px rgba(74, 53, 38, 0.10);
+    box-shadow: 0 1px 4px rgba(var(--ink-rgb), 0.10);
   }
   .card {
     background: white; padding: 20px; border-radius: 18px;
@@ -219,7 +235,7 @@
   label {
     display: flex; align-items: baseline; justify-content: space-between;
     gap: 8px; font-weight: 600; margin: 14px 0 8px;
-    font-size: 13px; color: var(--sb-green-dark);
+    font-size: 13px; color: var(--ink-dark);
   }
   label:first-of-type { margin-top: 0; }
   .label-optional {
@@ -232,7 +248,7 @@
     border: 1px solid var(--border); border-radius: 999px;
     background: white; white-space: nowrap;
   }
-  .ext-link:active { background: var(--sb-light); color: var(--sb-green-dark); }
+  .ext-link:active { background: var(--sb-light); color: var(--ink-dark); }
   .field-hint {
     font-size: 11px; color: var(--muted);
     margin-top: 6px; padding-left: 2px;
@@ -240,13 +256,13 @@
   }
   .order-guide {
     background: var(--sb-accent-soft);
-    color: #7a4a08;
+    color: var(--sb-accent-deep);
     padding: 11px 14px;
     border-radius: 10px;
     font-size: 13px; font-weight: 500;
     margin: -4px 0 16px;
     line-height: 1.5;
-    border: 1px solid #f5e0a8;
+    border: 1px solid #fbe2a4;
   }
   .order-guide b {
     color: var(--sb-accent);
@@ -263,7 +279,7 @@
   details.memo-details > summary {
     display: flex; align-items: center; justify-content: space-between;
     gap: 8px; font-weight: 600; font-size: 13px;
-    color: var(--sb-green-dark);
+    color: var(--ink-dark);
     cursor: pointer; list-style: none;
     padding: 4px 0;
   }
@@ -291,7 +307,7 @@
     font-family: inherit; background: white; color: var(--text);
   }
   input[type=text]:focus, textarea:focus, select:focus {
-    outline: none; border-color: var(--sb-green);
+    outline: none; border-color: var(--ink);
   }
   textarea { resize: vertical; min-height: 50px; }
   select {
@@ -310,20 +326,20 @@
     font-weight: 500;
   }
   .chip.active {
-    background: var(--sb-green); color: white;
-    border-color: var(--sb-green);
+    background: var(--ink); color: white;
+    border-color: var(--ink);
   }
   button.primary {
-    width: 100%; padding: 15px; background: var(--sb-green);
+    width: 100%; padding: 15px; background: var(--ink);
     color: white; border: none; border-radius: 12px;
     font-size: 16px; font-weight: 700; cursor: pointer;
     margin-top: 18px; font-family: inherit;
-    box-shadow: 0 4px 12px rgba(var(--sb-green-rgb), 0.22);
+    box-shadow: 0 4px 12px rgba(var(--ink-rgb), 0.22);
   }
   button.primary:active { transform: translateY(1px); }
   button.ghost {
     width: 100%; padding: 12px; background: transparent;
-    color: #c43535; border: 1.5px solid #f0c2c2; border-radius: 10px;
+    color: var(--ghost-fg); border: 1.5px solid var(--ghost-border); border-radius: 10px;
     font-size: 14px; font-weight: 600; cursor: pointer;
     margin-top: 10px; font-family: inherit;
   }
@@ -340,7 +356,7 @@
   .order-item:first-child { padding-top: 0; }
   .order-name {
     font-weight: 700; font-size: 15px;
-    color: var(--sb-green-dark); margin-bottom: 3px;
+    color: var(--ink-dark); margin-bottom: 3px;
   }
   .order-name .mine {
     display: inline-block; font-size: 10px; background: var(--sb-accent);
@@ -349,9 +365,9 @@
   }
   .order-menu { color: #444; font-size: 14px; line-height: 1.45; }
   .order-memo {
-    color: #6f5a42; font-size: 12px; margin-top: 4px;
-    padding: 3px 9px; background: #fdf5e6;
-    border: 1px solid #ebdebf;
+    color: var(--memo-text); font-size: 12px; margin-top: 4px;
+    padding: 3px 9px; background: var(--memo-bg);
+    border: 1px solid var(--memo-border);
     border-radius: 6px; display: inline-block;
   }
   .summary-row {
@@ -360,13 +376,13 @@
     font-size: 14px;
   }
   .summary-row:last-child {
-    border-bottom: none; border-top: 2px solid var(--sb-green-dark);
+    border-bottom: none; border-top: 2px solid var(--ink-dark);
     font-weight: 800; padding-top: 14px; margin-top: 4px;
     font-size: 15px;
   }
   .summary-row .count {
     background: var(--sb-light); padding: 3px 10px;
-    border-radius: 10px; font-weight: 700; color: var(--sb-green-dark);
+    border-radius: 10px; font-weight: 700; color: var(--ink-dark);
     font-size: 13px;
   }
 
@@ -376,11 +392,11 @@
   }
   .summary-progress {
     margin-bottom: 14px; padding: 11px 14px;
-    background: var(--sb-light); color: var(--sb-green-dark);
+    background: var(--sb-light); color: var(--ink-dark);
     border-radius: 10px; font-size: 13px; font-weight: 700;
   }
   .summary-progress.done {
-    background: var(--sb-green); color: white;
+    background: var(--ink); color: white;
   }
 
   /* ── 요약: 메뉴별 그룹 (스타벅스 주문 흐름과 동일) ── */
@@ -389,7 +405,7 @@
   .menu-group-header {
     display: flex; align-items: center; justify-content: space-between;
     padding: 11px 14px; margin-bottom: 4px;
-    background: var(--sb-green-dark); color: white;
+    background: var(--ink-dark); color: white;
     border-radius: 10px;
   }
   .menu-group-header .menu-name {
@@ -411,7 +427,7 @@
   .variant-row:hover { background: #f9faf8; }
   .variant-row .variant-check {
     width: 20px; height: 20px; flex-shrink: 0;
-    accent-color: var(--sb-green); cursor: pointer;
+    accent-color: var(--ink); cursor: pointer;
     margin: 0;
   }
   .variant-row.checked { opacity: 0.45; }
@@ -427,25 +443,25 @@
     border-radius: 999px; font-size: 11px; font-weight: 700;
     letter-spacing: 0.4px;
   }
-  .variant-temp.ice { background: #e0f2fe; color: #0c4a6e; }
-  .variant-temp.hot { background: #fde4d4; color: #9a3412; }
+  .variant-temp.ice { background: var(--ice-bg); color: var(--ice-fg); }
+  .variant-temp.hot { background: var(--hot-bg); color: var(--hot-fg); }
   .variant-size {
-    font-weight: 700; color: var(--sb-green-dark); font-size: 13px;
+    font-weight: 700; color: var(--ink-dark); font-size: 13px;
   }
   .variant-addons {
-    font-size: 11px; color: #6f5a42;
-    background: #fdf5e6; padding: 2px 9px; border-radius: 999px;
-    border: 1px solid #ebdebf;
+    font-size: 11px; color: var(--memo-text);
+    background: var(--memo-bg); padding: 2px 9px; border-radius: 999px;
+    border: 1px solid var(--memo-border);
   }
   .variant-memo {
-    font-size: 11px; color: #8b5a2b; font-weight: 600;
-    background: #fdf0e0; padding: 3px 10px; border-radius: 8px;
-    border: 1px solid #f5d9b8; line-height: 1.4;
+    font-size: 11px; color: var(--memo-text); font-weight: 600;
+    background: var(--memo-bg); padding: 3px 10px; border-radius: 8px;
+    border: 1px solid var(--memo-border); line-height: 1.4;
     max-width: 100%;
   }
   .variant-row .count {
     background: var(--sb-light); padding: 3px 11px;
-    border-radius: 999px; font-weight: 700; color: var(--sb-green-dark);
+    border-radius: 999px; font-weight: 700; color: var(--ink-dark);
     font-size: 12px; flex-shrink: 0;
   }
   .variant-row.has-memo {
@@ -458,9 +474,9 @@
   /* ── 총계 ── */
   .summary-total {
     margin-top: 14px; padding-top: 14px;
-    border-top: 2px solid var(--sb-green-dark);
+    border-top: 2px solid var(--ink-dark);
     display: flex; justify-content: space-between; align-items: center;
-    font-size: 15px; font-weight: 800; color: var(--sb-green-dark);
+    font-size: 15px; font-weight: 800; color: var(--ink-dark);
   }
 
   .empty {
@@ -469,7 +485,7 @@
   }
   .hide { display: none !important; }
   .setup-warning {
-    background: #fdf5e6; border: 2px solid #ebdebf;
+    background: var(--memo-bg); border: 2px solid var(--memo-border);
     padding: 16px; border-radius: 12px; margin-bottom: 14px;
     font-size: 13px; line-height: 1.6;
   }
@@ -478,11 +494,11 @@
     background: #fff; padding: 1px 5px; border-radius: 3px;
     font-size: 12px;
   }
-  h3 { margin: 0 0 10px; font-size: 16px; color: var(--sb-green-dark); }
+  h3 { margin: 0 0 10px; font-size: 16px; color: var(--ink-dark); }
   .toast {
     position: fixed; bottom: 24px; left: 50%;
     transform: translateX(-50%) translateY(80px);
-    background: var(--sb-green-dark); color: white;
+    background: var(--ink-dark); color: white;
     padding: 12px 22px; border-radius: 999px;
     font-size: 14px; font-weight: 600;
     transition: transform 0.3s; z-index: 100;
@@ -493,10 +509,10 @@
 
   /* ── hover 상태 ── */
   button.primary:hover { filter: brightness(1.12); }
-  button.ghost:hover { background: #fff0f0; border-color: #f0c2c2; }
+  button.ghost:hover { background: var(--ghost-hover-bg); border-color: var(--ghost-border); }
   .copy-btn:hover { filter: brightness(1.08); }
-  .ext-link:hover { background: var(--sb-light); color: var(--sb-green-dark); }
-  .chip:not(.active):hover { border-color: var(--sb-green); color: var(--sb-green); background: #f0f9f5; }
+  .ext-link:hover { background: var(--sb-light); color: var(--ink-dark); }
+  .chip:not(.active):hover { border-color: var(--ink); color: var(--ink); background: var(--sb-accent-soft); }
 
   /* ── 트랜지션 ── */
   button.primary { position: relative; transition: background 0.15s, box-shadow 0.15s; }
@@ -568,7 +584,7 @@
     font-size: 13px; font-weight: 600; cursor: pointer;
     margin-top: 8px; font-family: inherit; transition: all 0.15s;
   }
-  .reset-btn:hover { background: #fff0f0; color: #c43535; border-color: #f0c2c2; }
+  .reset-btn:hover { background: var(--ghost-hover-bg); color: var(--ghost-fg); border-color: var(--ghost-border); }
 
   .room-code {
     display: inline-block;
@@ -617,7 +633,7 @@
   .welcome-note {
     padding: 16px 18px; margin-bottom: 20px;
     background: linear-gradient(135deg, #fde8ec 0%, #f5e5f0 50%, #ece4f0 100%);
-    color: var(--sb-green-dark);
+    color: var(--ink-dark);
     border-radius: 14px; font-size: 13px; line-height: 1.6;
     font-weight: 500;
     border: 1px solid #f2d8e0;
@@ -645,7 +661,7 @@
     background: white; padding: 6px 6px 6px 12px;
     border-radius: 999px; font-size: 13px;
     border: 1px solid var(--border);
-    color: var(--sb-green-dark); font-weight: 500;
+    color: var(--ink-dark); font-weight: 500;
   }
   .member-chip .rm {
     background: #eee; border: none; cursor: pointer;
@@ -655,14 +671,14 @@
     line-height: 1; padding: 0;
     transition: background 0.12s, color 0.12s;
   }
-  .member-chip .rm:hover { background: #c43535; color: white; }
+  .member-chip .rm:hover { background: var(--ghost-fg); color: white; }
   .member-add-row {
     display: flex; gap: 8px; margin-top: 10px;
   }
   .member-add-row input { flex: 1; }
   .member-add-btn {
     width: 48px; flex-shrink: 0;
-    background: var(--sb-green); color: white;
+    background: var(--ink); color: white;
     border: none; border-radius: 10px; cursor: pointer;
     font-size: 22px; font-weight: 700; font-family: inherit;
     line-height: 1; padding: 0;
@@ -694,7 +710,7 @@
     width: 36px; height: 4px; background: #ddd;
     border-radius: 2px; margin: 0 auto 20px;
   }
-  .modal h2 { font-size: 17px; color: var(--sb-green-dark); margin: 0 0 16px; font-weight: 700; }
+  .modal h2 { font-size: 17px; color: var(--ink-dark); margin: 0 0 16px; font-weight: 700; }
   .modal-info {
     display: flex; align-items: center; justify-content: space-between;
     padding: 12px 16px; margin-bottom: 18px;
@@ -706,12 +722,12 @@
   }
   .modal-info-value {
     font-family: ui-monospace, "SF Mono", Menlo, monospace;
-    font-size: 14px; color: var(--sb-green-dark);
+    font-size: 14px; color: var(--ink-dark);
     letter-spacing: 1.5px; font-weight: 700;
     background: white; padding: 4px 12px; border-radius: 6px;
     border: 1px solid var(--border);
   }
-  .modal label { margin-top: 14px; display: block; font-weight: 600; font-size: 13px; color: var(--sb-green-dark); margin-bottom: 8px; }
+  .modal label { margin-top: 14px; display: block; font-weight: 600; font-size: 13px; color: var(--ink-dark); margin-bottom: 8px; }
   .modal label:first-of-type { margin-top: 0; }
   .modal-divider { border: none; border-top: 1px solid var(--border); margin: 22px 0 16px; }
   input[type=date], input[type=time] {
@@ -723,7 +739,7 @@
     box-sizing: border-box;
     appearance: none; -webkit-appearance: none;
   }
-  input[type=date]:focus, input[type=time]:focus { outline: none; border-color: var(--sb-green); }
+  input[type=date]:focus, input[type=time]:focus { outline: none; border-color: var(--ink); }
   .time-row { display: flex; gap: 8px; }
   .time-row input { flex: 1; }
 </style>
