@@ -1360,13 +1360,11 @@ document.getElementById('shareBtn').addEventListener('click', async () => {
     ? `오늘은 ${CONFIG.host}님이 쏩니다!`
     : (CONFIG.desc || '오늘은 제가 쏩니다!');
 
-  // 1순위: Kakao sendScrap — OG 태그를 기반으로 안정적인 미리보기 생성
-  // (sendDefault는 4019 에러가 자주 나서 sendScrap이 더 안정적)
+  // 1순위: Kakao sendScrap — OG 태그 기반 미리보기 (가장 안정적인 공유 방식)
   if (window.Kakao && window.Kakao.isInitialized() && window.Kakao.Share) {
     try {
       window.Kakao.Share.sendScrap({
         requestUrl: url,
-        templateId: undefined, // 기본 OG 스크랩 사용
       });
       return;
     } catch (e) {
