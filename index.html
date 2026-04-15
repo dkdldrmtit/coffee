@@ -33,15 +33,21 @@
     --sb-green: #3E3832;         /* 웜 차콜 브라운 — 주 액션 */
     --sb-green-dark: #2A2420;    /* 딥 웜 다크 — 제목 */
     --sb-green-rgb: 62, 56, 50;
-    --sb-light: #f0e9db;         /* 웜 크림 라이트 — 액티브 배경 */
+    --sb-light: #f5e5ec;         /* 블러시 핑크 라이트 — 액티브 배경 */
     --sb-accent: #E76F51;        /* 테라코타 코랄 — 포인트 */
     --sb-accent-soft: #FDEAE1;   /* 부드러운 피치 */
-    /* 웜 미니멀 베이스 */
-    --bg: #faf7f2;               /* 웜 아이보리 크림 */
-    --bg-deep: #f0e9db;          /* 딥 크림 */
+    /* 골든벨 정체성 복귀 — 벨/축하 모멘트용 */
+    --sb-gold: #D4A853;          /* 골든 옐로 — 골든벨 메인 */
+    --sb-gold-soft: #F7E9C8;     /* 연한 골드 */
+    /* 라벤더 악센트 — 부드러운 축제 분위기 */
+    --sb-lavender: #C9B4D6;      /* 라벤더 */
+    --sb-lavender-soft: #ECE4F0; /* 옅은 라벤더 */
+    /* 웜 블러시 + 라벤더 베이스 (이미지 톤 반영) */
+    --bg: #fdf5f4;               /* 웜 블러시 아이보리 */
+    --bg-deep: #ece2ea;          /* 라벤더 살짝 섞인 크림 */
     --text: #2a2420;             /* 웜 다크 텍스트 */
-    --muted: #8a7f75;            /* 웜 뮤트 */
-    --border: #e8e0d0;           /* 웜 크림 보더 */
+    --muted: #8a7f82;            /* 웜 블러시 뮤트 */
+    --border: #edddde;           /* 블러시 크림 보더 */
   }
   body { transition: background 0.4s ease; }
   * { box-sizing: border-box; }
@@ -50,7 +56,12 @@
   }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
-    background: linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+    background: linear-gradient(165deg,
+      #fef4f4 0%,
+      #fae8ea 35%,
+      #f0e3ec 70%,
+      #ece2ea 100%
+    );
     background-attachment: fixed;
     margin: 0;
     padding: 16px;
@@ -183,7 +194,7 @@
   }
   .card {
     background: white; padding: 20px; border-radius: 18px;
-    box-shadow: 0 2px 14px rgba(74, 53, 38, 0.06);
+    box-shadow: 0 2px 14px rgba(120, 80, 100, 0.07);
     margin-bottom: 14px;
     border: 1px solid var(--border);
   }
@@ -572,12 +583,13 @@
   }
   .welcome-note {
     padding: 16px 18px; margin-bottom: 20px;
-    background: var(--sb-light);
+    background: linear-gradient(135deg, #fde8ec 0%, #f5e5f0 50%, #ece4f0 100%);
     color: var(--sb-green-dark);
     border-radius: 14px; font-size: 13px; line-height: 1.6;
     font-weight: 500;
-    border: 1px solid #c8d8c0;
+    border: 1px solid #f2d8e0;
     display: flex; gap: 12px; align-items: flex-start;
+    box-shadow: 0 2px 10px rgba(201, 180, 214, 0.15);
   }
   .welcome-note b { font-weight: 700; }
   .welcome-emoji {
