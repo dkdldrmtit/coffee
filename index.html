@@ -1359,31 +1359,18 @@ document.getElementById('shareBtn').addEventListener('click', async () => {
   const hostLine = CONFIG.host && CONFIG.host.trim()
     ? `오늘은 ${CONFIG.host}님이 쏩니다!`
     : (CONFIG.desc || '오늘은 제가 쏩니다!');
-  const cafeName = (CAFE_PRESETS[CONFIG.cafe] || CAFE_PRESETS.starbucks).name;
 
-  // 1순위: Kakao JS SDK (풍부한 카톡 공유 미리보기 — 방별 동적 내용)
+  // 1순위: Kakao sendScrap — OG 태그를 기반으로 안정적인 미리보기 생성
+  // (sendDefault는 4019 에러가 자주 나서 sendScrap이 더 안정적)
   if (window.Kakao && window.Kakao.isInitialized() && window.Kakao.Share) {
     try {
-      window.Kakao.Share.sendDefault({
-        objectType: 'feed',
-        content: {
-          title: CONFIG.title,
-          description: `${hostLine}\n${cafeName}에서 주문 받는 중`,
-          imageUrl: 'https://goldenbell.coffee/og-image.png',
-          imageWidth: 1200,
-          imageHeight: 630,
-          link: { mobileWebUrl: url, webUrl: url },
-        },
-        buttons: [
-          {
-            title: '주문 넣으러 가기',
-            link: { mobileWebUrl: url, webUrl: url },
-          },
-        ],
+      window.Kakao.Share.sendScrap({
+        requestUrl: url,
+        templateId: undefined, // 기본 OG 스크랩 사용
       });
       return;
     } catch (e) {
-      console.warn('Kakao Share 실패, 기본 공유로 대체:', e);
+      console.warn('Kakao sendScrap 실패, 기본 공유로 대체:', e);
     }
   }
 
