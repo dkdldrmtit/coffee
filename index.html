@@ -179,11 +179,12 @@
     margin-top: 14px;
   }
   .new-room-wrap {
-    padding: 8px 4px 0;
+    padding: 12px 4px 0;
     display: flex; justify-content: center;
   }
   .new-room-wrap .icon-btn {
-    font-size: 13px; padding: 9px 22px;
+    font-size: 13px; padding: 13px 28px;
+    min-height: 44px;
   }
   .footer {
     padding: 20px 4px 20px;
@@ -1570,13 +1571,18 @@ document.getElementById('cfgSaveBtn').addEventListener('click', async () => {
   const timeParts = document.getElementById('cfgTime').value.split(':').map(Number);
   const hour   = isNaN(timeParts[0]) ? 8 : timeParts[0];
   const minute = isNaN(timeParts[1]) ? 0 : timeParts[1];
+  const cafeChanged = CONFIG.cafe && CONFIG.cafe !== cafe;
   const saveBtn = document.getElementById('cfgSaveBtn');
   saveBtn.classList.add('loading'); saveBtn.disabled = true;
   try {
     const { ref, set } = window._fb;
     await set(ref(db, `rooms/${ROOM_ID}/meta/config`), { title, host, desc, date, hour, minute, cafe });
     settingsModal.classList.add('hide');
-    toast('설정을 저장했어요');
+    if (cafeChanged) {
+      toast(`${CAFE_PRESETS[cafe].name}로 변경했어요 · 사이즈 확인해주세요`);
+    } else {
+      toast('설정을 저장했어요');
+    }
     // onValue 구독이 applyConfig 자동 호출
   } catch (e) {
     alert('오류: ' + e.message);
