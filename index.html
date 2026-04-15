@@ -25,6 +25,11 @@
 <meta name="twitter:description" content="팀원 커피, 다 같이 한 잔!">
 <meta name="twitter:image" content="https://goldenbell.coffee/og-image.png">
 
+<!-- Pretendard 웹폰트 — 한국어 모던 타이포 (토스/당근/배민 표준) -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" as="style" crossorigin
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+
 <!-- Kakao JavaScript SDK — 카톡 공유 풍부한 미리보기용 -->
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"></script>
 
@@ -55,7 +60,12 @@
     touch-action: pan-x pan-y;  /* 핀치 줌 차단 (스크롤은 허용) */
   }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+    font-family: 'Pretendard Variable', Pretendard,
+                 -apple-system, BlinkMacSystemFont, system-ui,
+                 "Apple SD Gothic Neo", "Noto Sans KR",
+                 "Malgun Gothic", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     background: linear-gradient(165deg,
       #fef4f4 0%,
       #fae8ea 35%,
