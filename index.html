@@ -537,14 +537,14 @@
   .tab-badge:empty { display: none; }
 
   /* ── 카운트다운 긴급도 ── */
-  .countdown.urgent  { background: #d97706; box-shadow: 0 4px 14px rgba(217,119,6,0.30); }
+  .countdown.urgent  { background: var(--warn); box-shadow: 0 4px 14px rgba(var(--warn-rgb), 0.30); }
   .countdown.critical {
-    background: #dc2626; box-shadow: 0 4px 14px rgba(220,38,38,0.35);
-    animation: urgentPulse 1.2s ease-in-out infinite;
+    background: var(--danger); box-shadow: 0 4px 14px rgba(var(--danger-rgb), 0.35);
+    animation: criticalFlash 0.6s ease-out 2;
   }
-  @keyframes urgentPulse {
-    0%,100% { transform: scale(1); }
-    50%     { transform: scale(1.012); }
+  @keyframes criticalFlash {
+    0%,100% { filter: brightness(1); }
+    50%     { filter: brightness(1.2); }
   }
 
   /* ── 제출 버튼 로딩 스피너 ── */
