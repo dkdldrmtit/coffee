@@ -39,8 +39,9 @@
     --sb-green-dark: #2A2420;    /* 딥 웜 다크 — 제목 */
     --sb-green-rgb: 62, 56, 50;
     --sb-light: #f5e5ec;         /* 블러시 핑크 라이트 — 액티브 배경 */
-    --sb-accent: #E76F51;        /* 테라코타 코랄 — 포인트 */
-    --sb-accent-soft: #FDEAE1;   /* 부드러운 피치 */
+    --sb-accent: #E85D75;        /* 로즈 핑크 — 포인트 (핑크 배경과 조화) */
+    --sb-accent-rgb: 232, 93, 117;
+    --sb-accent-soft: #FDE4EA;   /* 연한 블러시 */
     /* 골든벨 정체성 복귀 — 벨/축하 모멘트용 */
     --sb-gold: #D4A853;          /* 골든 옐로 — 골든벨 메인 */
     --sb-gold-soft: #F7E9C8;     /* 연한 골드 */
@@ -95,7 +96,7 @@
     background: var(--sb-accent);
     display: inline-flex; align-items: center; justify-content: center;
     flex-shrink: 0;
-    box-shadow: 0 3px 10px rgba(255, 107, 71, 0.28);
+    box-shadow: 0 3px 10px rgba(var(--sb-accent-rgb), 0.28);
   }
   .brand-mark svg {
     width: 21px; height: 21px;
@@ -149,7 +150,7 @@
   .header h1::before {
     content: ''; position: absolute;
     left: 0; top: 8px; bottom: 8px; width: 4px;
-    background: linear-gradient(180deg, var(--sb-accent) 0%, #E04A28 100%);
+    background: linear-gradient(180deg, var(--sb-accent) 0%, #C13E5A 100%);
     border-radius: 999px;
   }
   .header p {
