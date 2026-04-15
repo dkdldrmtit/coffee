@@ -25,6 +25,9 @@
 <meta name="twitter:description" content="팀원 커피, 다 같이 한 잔!">
 <meta name="twitter:image" content="https://goldenbell.coffee/og-image.png">
 
+<!-- Kakao JavaScript SDK — 카톡 공유 풍부한 미리보기용 -->
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"></script>
+
 <style>
   :root {
     --sb-green: #3E3832;         /* 웜 차콜 브라운 — 주 액션 */
@@ -884,6 +887,16 @@
 //      { "rules": { ".read": true, ".write": true } }
 //    테스트 모드는 30일 후 만료되니 위 규칙으로 덮어쓰는 걸 권장
 // ════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
+// 카카오 JS SDK 초기화 (카톡 공유 고도화용)
+// ────────────────────────────────────────────────────────────────
+// JavaScript 키는 공개돼도 괜찮음 — 도메인 화이트리스트로 보호됨
+// ════════════════════════════════════════════════════════════════
+const KAKAO_JS_KEY = '00d33873265012959ee9ffb45eadd571';
+if (window.Kakao && !window.Kakao.isInitialized()) {
+  try { window.Kakao.init(KAKAO_JS_KEY); } catch (e) { console.warn('Kakao init 실패:', e); }
+}
+
 const firebaseConfig = {
   apiKey: "AIzaSyCmc3lh-V6OckBs-0Fd7qozFE2sgjH-drA",
   authDomain: "cm-coffee-order.firebaseapp.com",
@@ -1345,7 +1358,36 @@ document.getElementById('shareBtn').addEventListener('click', async () => {
   const url = window.location.href;
   const hostLine = CONFIG.host && CONFIG.host.trim()
     ? `오늘은 ${CONFIG.host}님이 쏩니다!`
-    : '';
+    : (CONFIG.desc || '오늘은 제가 쏩니다!');
+  const cafeName = (CAFE_PRESETS[CONFIG.cafe] || CAFE_PRESETS.starbucks).name;
+
+  // 1순위: Kakao JS SDK (풍부한 카톡 공유 미리보기 — 방별 동적 내용)
+  if (window.Kakao && window.Kakao.isInitialized() && window.Kakao.Share) {
+    try {
+      window.Kakao.Share.sendDefault({
+        objectType: 'feed',
+        content: {
+          title: CONFIG.title,
+          description: `${hostLine}\n${cafeName}에서 주문 받는 중`,
+          imageUrl: 'https://goldenbell.coffee/og-image.png',
+          imageWidth: 1200,
+          imageHeight: 630,
+          link: { mobileWebUrl: url, webUrl: url },
+        },
+        buttons: [
+          {
+            title: '주문 넣으러 가기',
+            link: { mobileWebUrl: url, webUrl: url },
+          },
+        ],
+      });
+      return;
+    } catch (e) {
+      console.warn('Kakao Share 실패, 기본 공유로 대체:', e);
+    }
+  }
+
+  // 2순위: navigator.share / 클립보드 (카카오 SDK 미로드/미지원 시 폴백)
   const shareText = [CONFIG.title, hostLine, `방 코드: ${ROOM_ID}`].filter(Boolean).join('\n');
   try {
     if (navigator.share) {
