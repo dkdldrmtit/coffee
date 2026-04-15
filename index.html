@@ -1368,10 +1368,16 @@ document.getElementById('shareBtn').addEventListener('click', async () => {
       window.Kakao.Share.sendCustom({
         templateId: 132213,
         templateArgs: {
+          // 메시지 내용 변수 (여러 가능성 대응)
           title: CONFIG.title,
           host: (CONFIG.host && CONFIG.host.trim()) || '제가',
           cafe: cafeName,
+          // 방 코드 변수 (카카오 템플릿 필드명 불일치 대비 여러 이름으로 중복 전달)
           roomCode: ROOM_ID,
+          roomcode: ROOM_ID,
+          room_code: ROOM_ID,
+          room: ROOM_ID,
+          code: ROOM_ID,
         },
       });
       return;
