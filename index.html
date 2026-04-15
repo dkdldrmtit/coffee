@@ -238,6 +238,20 @@
     margin-top: 6px; padding-left: 2px;
     line-height: 1.55;
   }
+  .order-guide {
+    background: var(--sb-accent-soft);
+    color: #7a4a08;
+    padding: 11px 14px;
+    border-radius: 10px;
+    font-size: 13px; font-weight: 500;
+    margin: -4px 0 16px;
+    line-height: 1.5;
+    border: 1px solid #f5e0a8;
+  }
+  .order-guide b {
+    color: var(--sb-accent);
+    font-weight: 700;
+  }
   .field-hint .hint-muted {
     color: #a8a198; font-size: 10.5px;
   }
@@ -751,6 +765,9 @@
   <!-- ORDER TAB -->
   <div id="orderTab" class="tab-content">
     <div class="card">
+      <div class="order-guide">
+        아래 내용을 채우고 <b>주문하기</b> 버튼을 눌러주세요
+      </div>
       <label>이름</label>
       <input type="text" id="nameInput" list="nameList" placeholder="이름 검색 또는 선택" autocomplete="off">
       <datalist id="nameList"></datalist>
