@@ -948,6 +948,7 @@
         <div class="chip" data-val="Grande">Grande</div>
         <div class="chip" data-val="Venti">Venti</div>
       </div>
+      <input type="text" id="sizeCustom" class="hide" placeholder="예) 작게 / 보통 / 1L 등" maxlength="20">
 
       <label>
         메뉴
@@ -1260,7 +1261,7 @@ const CAFE_PRESETS = {
   twosome:   { name: '투썸플레이스', color: '#1a1a1a', sizes: ['레귤러', '라지'] },
   hollys:    { name: '할리스커피',   color: '#D7181F', sizes: ['레귤러', '라지'] },
   paik:      { name: '빽다방',       color: '#001F60', sizes: ['레귤러', '라지'] },
-  other:     { name: '기타',         color: '#64748b', sizes: ['작게', '보통', '크게'] },
+  other:     { name: '기타',         color: '#64748b', sizes: [] },  // 빈 배열 → 사이즈 직접 입력 모드
 };
 const CAFE_ORDER = ['starbucks', 'ediya', 'mega', 'compose', 'twosome', 'hollys', 'paik', 'other'];
 
@@ -1519,6 +1520,7 @@ function applyMembers() {
 }
 
 // 카페 프리셋에 맞춰 사이즈 chip을 재구성 (방장이 설정 바꾸면 실시간 반영)
+// sizes가 빈 배열이면 chip 대신 텍스트 입력 모드로 전환
 function applyCafeSizes() {
   const preset = CAFE_PRESETS[CONFIG.cafe] || CAFE_PRESETS.starbucks;
   // 헤더의 카페 라벨 — 이름 + 브랜드 컬러
@@ -1527,20 +1529,49 @@ function applyCafeSizes() {
     cafeLabel.textContent = preset.name;
     cafeLabel.style.setProperty('--cafe-color', preset.color);
   }
-  const container = document.getElementById('sizeOptions');
-  if (!container) return;
-  const current = container.querySelector('.chip.active')?.dataset.val || '';
-  container.innerHTML = '';
-  preset.sizes.forEach((size, i) => {
-    const chip = document.createElement('div');
-    chip.className = 'chip';
-    chip.dataset.val = size;
-    chip.textContent = size;
-    if (current === size || (!preset.sizes.includes(current) && i === 0)) {
-      chip.classList.add('active');
-    }
-    container.appendChild(chip);
-  });
+  const chipsContainer = document.getElementById('sizeOptions');
+  const customInput    = document.getElementById('sizeCustom');
+  if (!chipsContainer || !customInput) return;
+
+  if (preset.sizes.length === 0) {
+    // 직접 입력 모드
+    chipsContainer.classList.add('hide');
+    chipsContainer.innerHTML = '';
+    customInput.classList.remove('hide');
+  } else {
+    // 프리셋 칩 모드
+    customInput.classList.add('hide');
+    chipsContainer.classList.remove('hide');
+    const current = chipsContainer.querySelector('.chip.active')?.dataset.val || '';
+    chipsContainer.innerHTML = '';
+    preset.sizes.forEach((size, i) => {
+      const chip = document.createElement('div');
+      chip.className = 'chip';
+      chip.dataset.val = size;
+      chip.textContent = size;
+      if (current === size || (!preset.sizes.includes(current) && i === 0)) {
+        chip.classList.add('active');
+      }
+      chipsContainer.appendChild(chip);
+    });
+  }
+}
+
+// 현재 카페에 맞춰 사이즈 읽기/쓰기 (chip 또는 custom input)
+function getSize() {
+  const preset = CAFE_PRESETS[CONFIG.cafe] || CAFE_PRESETS.starbucks;
+  if (preset.sizes.length === 0) {
+    return document.getElementById('sizeCustom').value.trim();
+  }
+  return getSingle('sizeOptions');
+}
+function setSize(val) {
+  const preset = CAFE_PRESETS[CONFIG.cafe] || CAFE_PRESETS.starbucks;
+  if (preset.sizes.length === 0) {
+    document.getElementById('sizeCustom').value = val || '';
+  } else {
+    setSingle('sizeOptions', val);
+  }
 }
 
 // 카페 선택에 맞춰 메뉴 datalist를 재구성 (공통 메뉴 + 카페 시그니처)
@@ -2141,7 +2172,7 @@ function toast(msg) {
 // ════════════════════════════════════════════════════════════════
 function fillFormFromOrder(o) {
   setSingle('tempOptions', o.temp);
-  setSingle('sizeOptions', o.size);
+  setSize(o.size);
   menuInput.value = o.menu || '';
   setMulti('addonOptions', o.addons || []);
   updateAddonCount();
@@ -2157,9 +2188,14 @@ function fillFormFromOrder(o) {
 
 function resetFormFields() {
   setSingle('tempOptions', 'ICE');
-  // 카페에 따라 사이즈가 다르므로 첫 번째 chip을 기본 선택
-  const firstSize = document.querySelector('#sizeOptions .chip')?.dataset.val;
-  if (firstSize) setSingle('sizeOptions', firstSize);
+  // 카페에 따라 사이즈 프리셋이 다름 — 프리셋 있으면 첫 칩, '기타'면 빈 입력
+  const preset = CAFE_PRESETS[CONFIG.cafe] || CAFE_PRESETS.starbucks;
+  if (preset.sizes.length === 0) {
+    document.getElementById('sizeCustom').value = '';
+  } else {
+    const firstSize = document.querySelector('#sizeOptions .chip')?.dataset.val;
+    if (firstSize) setSingle('sizeOptions', firstSize);
+  }
   menuInput.value = '';
   setMulti('addonOptions', []);
   updateAddonCount();
@@ -2261,7 +2297,7 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
   const order = {
     name,
     temp: getSingle('tempOptions'),
-    size: getSingle('sizeOptions'),
+    size: getSize(),
     menu,
     addons: getMulti('addonOptions'),
     memo: document.getElementById('memoInput').value.trim(),
