@@ -318,6 +318,47 @@
     background-position: right 14px center;
     padding-right: 36px;
   }
+  /* ── 이름 선택 칩 (팀원 명단) ── */
+  .name-chips {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    margin-top: 10px;
+  }
+  .name-chip {
+    appearance: none; -webkit-appearance: none;
+    display: inline-flex; align-items: center;
+    padding: 8px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 999px;
+    background: white;
+    font-family: inherit;
+    font-size: 13px; font-weight: 600;
+    color: var(--ink-dark);
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.12s;
+    line-height: 1;
+  }
+  .name-chip:hover {
+    border-color: var(--sb-accent);
+    background: var(--sb-accent-soft);
+  }
+  .name-chip.active {
+    background: var(--sb-accent);
+    color: white;
+    border-color: var(--sb-accent);
+    box-shadow: 0 2px 6px rgba(var(--sb-accent-rgb), 0.3);
+  }
+  .name-chip-more {
+    color: var(--muted);
+    border-style: dashed;
+    font-weight: 500;
+  }
+  .name-chip-more:hover {
+    color: var(--ink-dark);
+    background: var(--bg);
+    border-color: var(--muted);
+  }
+
   .chips { display: flex; flex-wrap: wrap; gap: 6px; }
   .chip {
     display: inline-block; padding: 9px 14px;
@@ -933,8 +974,8 @@
         아래 내용을 채우고 <b>주문하기</b> 버튼을 눌러주세요
       </div>
       <label>이름</label>
-      <input type="text" id="nameInput" list="nameList" placeholder="이름 검색 또는 선택" autocomplete="off">
-      <datalist id="nameList"></datalist>
+      <input type="text" id="nameInput" placeholder="이름 선택 또는 직접 입력" autocomplete="off">
+      <div class="name-chips hide" id="nameChips"></div>
 
       <label>온도</label>
       <div class="chips" id="tempOptions">
@@ -1509,14 +1550,65 @@ function applyConfig() {
 }
 
 function applyMembers() {
-  const list = document.getElementById('nameList');
-  list.innerHTML = '';
-  CURRENT_MEMBERS.forEach(name => {
-    const opt = document.createElement('option');
-    opt.value = name;
-    list.appendChild(opt);
-  });
+  renderNameChips();
   renderMembersEditor();
+}
+
+// ════════════════════════════════════════════════════════════════
+// 이름 선택 칩 리스트 — 팀원 명단을 탭 가능한 칩으로 렌더
+// ────────────────────────────────────────────────────────────────
+// 8명 초과 시 첫 8명만 보이고 '+N명 더보기' 토글로 전체 펼침.
+// 9명(=1명만 추가)인 경우엔 토글 없이 전부 보여줌 (버튼 덜 어색하게).
+// ════════════════════════════════════════════════════════════════
+const NAME_CHIPS_THRESHOLD = 8;
+let nameChipsExpanded = false;
+
+function renderNameChips() {
+  const container = document.getElementById('nameChips');
+  if (!container) return;
+  container.innerHTML = '';
+
+  if (CURRENT_MEMBERS.length === 0) {
+    container.classList.add('hide');
+    return;
+  }
+  container.classList.remove('hide');
+
+  const members = CURRENT_MEMBERS;
+  // 1명 더 보여주는 것보다 그냥 다 보여주는 게 낫다 (+1 더보기 방지)
+  const shouldCollapse = members.length > NAME_CHIPS_THRESHOLD + 1;
+  const visible = (nameChipsExpanded || !shouldCollapse)
+    ? members
+    : members.slice(0, NAME_CHIPS_THRESHOLD);
+
+  visible.forEach(name => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'name-chip';
+    chip.dataset.name = name;
+    chip.textContent = name;
+    container.appendChild(chip);
+  });
+
+  if (shouldCollapse) {
+    const more = document.createElement('button');
+    more.type = 'button';
+    more.className = 'name-chip name-chip-more';
+    more.textContent = nameChipsExpanded
+      ? '접기 ▴'
+      : `+${members.length - NAME_CHIPS_THRESHOLD}명 더보기 ▾`;
+    container.appendChild(more);
+  }
+
+  updateActiveChip();
+}
+
+function updateActiveChip() {
+  const current = (document.getElementById('nameInput').value || '').trim();
+  document.querySelectorAll('#nameChips .name-chip').forEach(c => {
+    if (c.classList.contains('name-chip-more')) return;
+    c.classList.toggle('active', c.dataset.name === current);
+  });
 }
 
 // 카페 프리셋에 맞춰 사이즈 chip을 재구성 (방장이 설정 바꾸면 실시간 반영)
@@ -1724,7 +1816,7 @@ document.getElementById('shareBtn').addEventListener('click', async () => {
 });
 
 // ════════════════════════════════════════════════════════════════
-// 이름 입력 refs — datalist 자체는 applyMembers()가 관리
+// 이름 입력 refs — 팀원 칩 리스트는 applyMembers() → renderNameChips()가 관리
 // ════════════════════════════════════════════════════════════════
 const nameInput = document.getElementById('nameInput');
 
@@ -2248,6 +2340,26 @@ nameInput.addEventListener('change', () => {
   nameInput.value = name; // 앞뒤 공백 정규화
   if (name) localStorage.setItem(LAST_NAME_LS, name);
   lastSyncedName = null;
+  updateActiveChip();
+  syncFormForSelectedName();
+});
+
+// 이름 칩 클릭 — 칩 탭 → input 채움 + 동기화
+document.getElementById('nameChips').addEventListener('click', e => {
+  const moreBtn = e.target.closest('.name-chip-more');
+  if (moreBtn) {
+    nameChipsExpanded = !nameChipsExpanded;
+    renderNameChips();
+    return;
+  }
+  const chip = e.target.closest('.name-chip');
+  if (!chip) return;
+  const name = chip.dataset.name;
+  if (!name) return;
+  nameInput.value = name;
+  localStorage.setItem(LAST_NAME_LS, name);
+  lastSyncedName = null;
+  updateActiveChip();
   syncFormForSelectedName();
 });
 
@@ -2264,6 +2376,7 @@ let nameDebounceTimer;
 nameInput.addEventListener('input', () => {
   clearTimeout(nameDebounceTimer);
   const name = nameInput.value.trim();
+  updateActiveChip();
 
   // 동기화 대상 아닌 이름 → 버튼 즉시 초기화
   if (!isSyncableName(name)) {
@@ -2273,7 +2386,7 @@ nameInput.addEventListener('input', () => {
     return;
   }
 
-  // 유효한 이름 → 250ms debounce 후 동기화 (datalist 선택은 change도 같이 발동)
+  // 유효한 이름 → 250ms debounce 후 동기화
   nameDebounceTimer = setTimeout(() => {
     if (lastSyncedName !== name) {
       localStorage.setItem(LAST_NAME_LS, name);
