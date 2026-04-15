@@ -1832,7 +1832,8 @@ const settingsModal = document.getElementById('settingsModal');
     const opt = document.createElement('option');
     opt.value = id;
     const sizeHint = CAFE_PRESETS[id].sizes.length
-      ? ` (${CAFE_PRESETS[id].sizes.join('/')})` : '';
+      ? ` (${CAFE_PRESETS[id].sizes.join('/')})`
+      : ' (사이즈 직접 입력)';
     opt.textContent = CAFE_PRESETS[id].name + sizeHint;
     sel.appendChild(opt);
   });
