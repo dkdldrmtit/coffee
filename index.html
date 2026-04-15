@@ -696,6 +696,97 @@
     background: #f5f5f5; color: #888; cursor: default;
   }
 
+  /* ── 온보딩 오버레이 ── */
+  .onboard-backdrop {
+    position: fixed; inset: 0; z-index: 300;
+    background: rgba(0,0,0,0.55);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    animation: onboardFade 0.25s ease;
+  }
+  .onboard-backdrop.hide { display: none !important; }
+  @keyframes onboardFade { from { opacity: 0; } to { opacity: 1; } }
+  .onboard-card {
+    background: white;
+    width: 100%; max-width: 360px;
+    border-radius: 20px;
+    padding: 30px 24px 22px;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+  }
+  .onboard-skip {
+    position: absolute; top: 14px; right: 14px;
+    background: transparent; border: none;
+    color: var(--muted); font-size: 12px; font-weight: 500;
+    cursor: pointer; padding: 6px 10px;
+    font-family: inherit; border-radius: 6px;
+  }
+  .onboard-skip:hover { background: var(--bg); color: var(--ink-dark); }
+  .onboard-step {
+    display: none; text-align: center;
+    min-height: 188px;
+    padding: 8px 4px 0;
+  }
+  .onboard-step.active {
+    display: block;
+    animation: onboardStepIn 0.3s ease;
+  }
+  @keyframes onboardStepIn {
+    from { opacity: 0; transform: translateX(12px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  .onboard-emoji {
+    font-size: 52px; line-height: 1;
+    margin-bottom: 18px;
+  }
+  .onboard-title {
+    font-size: 20px; font-weight: 800;
+    color: var(--ink-dark); margin: 0 0 10px;
+    letter-spacing: -0.5px;
+  }
+  .onboard-desc {
+    font-size: 14px; color: var(--muted);
+    line-height: 1.65; margin: 0;
+  }
+  .onboard-desc b {
+    color: var(--sb-accent); font-weight: 800;
+  }
+  .onboard-dots {
+    display: flex; gap: 7px; justify-content: center;
+    margin: 22px 0 18px;
+  }
+  .onboard-dot {
+    width: 7px; height: 7px; border-radius: 999px;
+    background: var(--border);
+    transition: background 0.25s, width 0.25s;
+  }
+  .onboard-dot.active {
+    background: var(--sb-accent);
+    width: 22px;
+  }
+  .onboard-actions {
+    display: flex; gap: 10px;
+  }
+  .onboard-btn-prev,
+  .onboard-btn-next {
+    padding: 13px; border-radius: 12px;
+    font-size: 14px; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+    transition: filter 0.15s, background 0.15s;
+    min-height: 48px;
+  }
+  .onboard-btn-prev {
+    background: transparent; border: 1.5px solid var(--border);
+    color: var(--ink-dark); flex: 1;
+  }
+  .onboard-btn-prev:hover { background: var(--bg); }
+  .onboard-btn-next {
+    background: var(--ink); border: none; color: white;
+    flex: 2;
+    box-shadow: 0 4px 12px rgba(var(--ink-rgb), 0.22);
+  }
+  .onboard-btn-next:hover { filter: brightness(1.15); }
+
   /* ── 설정 모달 (바텀시트) ── */
   .modal-backdrop {
     position: fixed; inset: 0; z-index: 200;
@@ -930,6 +1021,44 @@
 </div>
 
 <div class="toast" id="toast">완료!</div>
+
+<!-- 온보딩 오버레이 (새 방 첫 방문자용) -->
+<div class="onboard-backdrop hide" id="onboardBackdrop">
+  <div class="onboard-card">
+    <button type="button" class="onboard-skip" id="onboardSkipBtn">건너뛰기</button>
+
+    <div class="onboard-step active" data-step="1">
+      <div class="onboard-emoji">👋</div>
+      <h2 class="onboard-title">새 방이 만들어졌어요!</h2>
+      <p class="onboard-desc">3단계만 준비하면<br>팀원들이 바로 주문할 수 있어요</p>
+    </div>
+
+    <div class="onboard-step" data-step="2">
+      <div class="onboard-emoji">⚙️</div>
+      <h2 class="onboard-title">먼저 설정하기</h2>
+      <p class="onboard-desc">이벤트 이름, 카페, 팀원 명단을<br><b>설정</b>에서 입력해주세요</p>
+    </div>
+
+    <div class="onboard-step" data-step="3">
+      <div class="onboard-emoji">📤</div>
+      <h2 class="onboard-title">팀원에게 공유하기</h2>
+      <p class="onboard-desc"><b>공유</b> 버튼을 눌러<br>카카오톡이나 링크로 초대해요</p>
+    </div>
+
+    <div class="onboard-step" data-step="4">
+      <div class="onboard-emoji">📋</div>
+      <h2 class="onboard-title">주문 모으기</h2>
+      <p class="onboard-desc">팀원들이 주문하면<br><b>전체주문</b>과 <b>요약</b> 탭에서 바로 확인</p>
+    </div>
+
+    <div class="onboard-dots" id="onboardDots"></div>
+
+    <div class="onboard-actions">
+      <button type="button" class="onboard-btn-prev hide" id="onboardPrevBtn">이전</button>
+      <button type="button" class="onboard-btn-next" id="onboardNextBtn">다음</button>
+    </div>
+  </div>
+</div>
 
 <script type="module">
 // ════════════════════════════════════════════════════════════════
@@ -1554,9 +1683,68 @@ settingsModal.addEventListener('click', e => {
   if (e.target === settingsModal) settingsModal.classList.add('hide');
 });
 
-// 새로 만든 방의 방장 → 설정 모달 자동 안내
+// ════════════════════════════════════════════════════════════════
+// 온보딩 (새 방 첫 방문자용 4단계 가이드)
+// ────────────────────────────────────────────────────────────────
+// 트리거: 새 방 생성 + 방장 + 아직 온보딩 본 적 없음
+// 완료/건너뛰기 시 localStorage에 표시해 다음부턴 안 뜸
+// ════════════════════════════════════════════════════════════════
+const ONBOARDED_LS = 'coffee_onboarded';
+(function setupOnboarding() {
+  const backdrop = document.getElementById('onboardBackdrop');
+  const steps    = backdrop.querySelectorAll('.onboard-step');
+  const prevBtn  = document.getElementById('onboardPrevBtn');
+  const nextBtn  = document.getElementById('onboardNextBtn');
+  const skipBtn  = document.getElementById('onboardSkipBtn');
+  const dotsWrap = document.getElementById('onboardDots');
+  const total    = steps.length;
+  let current    = 0;
+
+  // 점 인디케이터 생성
+  for (let i = 0; i < total; i++) {
+    const dot = document.createElement('span');
+    dot.className = 'onboard-dot';
+    dotsWrap.appendChild(dot);
+  }
+  const dots = dotsWrap.querySelectorAll('.onboard-dot');
+
+  function render() {
+    steps.forEach((s, i) => s.classList.toggle('active', i === current));
+    dots.forEach((d, i) => d.classList.toggle('active', i === current));
+    prevBtn.classList.toggle('hide', current === 0);
+    nextBtn.textContent = (current === total - 1) ? '시작하기' : '다음';
+  }
+
+  function finish({ openSettings = false } = {}) {
+    localStorage.setItem(ONBOARDED_LS, '1');
+    backdrop.classList.add('hide');
+    if (openSettings) openSettingsModal({ welcome: true });
+  }
+
+  nextBtn.addEventListener('click', () => {
+    if (current < total - 1) { current++; render(); }
+    else finish({ openSettings: true });
+  });
+  prevBtn.addEventListener('click', () => {
+    if (current > 0) { current--; render(); }
+  });
+  skipBtn.addEventListener('click', () => finish({ openSettings: false }));
+
+  // 배경 클릭으로 닫히진 않게 (실수 방지)
+  window.showOnboarding = () => {
+    current = 0;
+    render();
+    backdrop.classList.remove('hide');
+  };
+})();
+
+// 새로 만든 방의 방장 → 온보딩 또는 설정 모달
 if (IS_NEW_ROOM && IS_OWNER) {
-  openSettingsModal({ welcome: true });
+  if (!localStorage.getItem(ONBOARDED_LS)) {
+    window.showOnboarding();
+  } else {
+    openSettingsModal({ welcome: true });
+  }
 }
 
 document.getElementById('cfgSaveBtn').addEventListener('click', async () => {
