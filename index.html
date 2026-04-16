@@ -2042,6 +2042,7 @@ function normalizeMenuTemp(val) {
 menuInput.addEventListener('change', () => {
   const normalized = normalizeMenuTemp(menuInput.value.trim());
   menuInput.value = normalized;
+  updateDetailSummary();
 });
 
 // ════════════════════════════════════════════════════════════════
