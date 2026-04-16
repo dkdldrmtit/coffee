@@ -852,6 +852,9 @@ gtag('config', 'G-9VCP0RKBY0');
       <div id="summaryList"></div>
       <button class="copy-btn" id="copyBtn">요약 복사하기</button>
     </div>
+    <div class="new-room-wrap hide" id="retryWrap">
+      <button type="button" class="icon-btn icon-btn-accent" id="retryBtn">다시 쏘기</button>
+    </div>
   </div>
 
   <div class="new-room-wrap">
@@ -1870,6 +1873,7 @@ function lockFormIfDeadline() {
   document.querySelector('.tabs').classList.add('hide');
   document.getElementById('orderTab').classList.add('hide');
   document.getElementById('statusTab').classList.remove('hide');
+  if (IS_OWNER) document.getElementById('retryWrap').classList.remove('hide');
 }
 
 function setCountdownText(label, time) {
@@ -2380,6 +2384,10 @@ document.getElementById('resetBtn').addEventListener('click', async () => {
   } catch (e) {
     alert('오류: ' + e.message);
   }
+});
+
+document.getElementById('retryBtn').addEventListener('click', () => {
+  document.getElementById('resetBtn').click();
 });
 
 function escapeHtml(s) {
