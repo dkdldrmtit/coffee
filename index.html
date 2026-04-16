@@ -1293,18 +1293,20 @@ function applyConfig() {
   applyCafeMenus();
   calcDeadline();
   updateCountdown();
-  // 마감시간이 연장되면 잠금 풀기, 단축되면 잠금
-  const card = document.querySelector('#orderTab .card');
+  // 마감시간이 연장되면 복원, 단축되면 마감 뷰
+  const tabs = document.querySelector('.tabs');
   const submitBtn = document.getElementById('submitBtn');
   if (isPastDeadline()) {
-    card.classList.add('form-locked');
-    submitBtn.textContent = '주문이 마감됐어요';
-    submitBtn.disabled = true;
-  } else if (card.classList.contains('form-locked')) {
-    card.classList.remove('form-locked');
+    tabs.classList.add('hide');
+    document.getElementById('orderTab').classList.add('hide');
+    document.getElementById('statusTab').classList.remove('hide');
+  } else if (tabs.classList.contains('hide')) {
+    // 마감 연장 → 다시 탭+폼 복원
+    tabs.classList.remove('hide');
+    document.getElementById('orderTab').classList.remove('hide');
+    document.getElementById('statusTab').classList.add('hide');
     submitBtn.disabled = false;
     submitBtn.textContent = '주문하기';
-    // 이름이 선택돼있다면 "주문 수정하기"/"주문하기" 상태를 다시 맞춤
     lastSyncedName = null;
     if (typeof syncFormForSelectedName === 'function') syncFormForSelectedName();
   }
@@ -1864,10 +1866,10 @@ function isPastDeadline() { return Date.now() > DEADLINE; }
 
 function lockFormIfDeadline() {
   if (!isPastDeadline()) return;
-  document.querySelector('#orderTab .card').classList.add('form-locked');
-  const btn = document.getElementById('submitBtn');
-  btn.textContent = '주문이 마감됐어요';
-  btn.disabled = true;
+  // 마감: 탭+폼 숨기고 주문현황만 표시
+  document.querySelector('.tabs').classList.add('hide');
+  document.getElementById('orderTab').classList.add('hide');
+  document.getElementById('statusTab').classList.remove('hide');
 }
 
 function setCountdownText(label, time) {
