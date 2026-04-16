@@ -1923,105 +1923,11 @@ function openSettingsModal({ welcome = false } = {}) {
 }
 document.getElementById('settingsBtn').addEventListener('click', () => openSettingsModal());
 
-// 설정 모달 상단 '사용법 다시 보기' 카드 → 온보딩 재실행
-document.getElementById('onboardRetriggerBtn').addEventListener('click', () => {
-  settingsModal.classList.add('hide');
-  if (typeof window.showOnboarding === 'function') window.showOnboarding();
-});
-
 settingsModal.addEventListener('click', e => {
   if (e.target === settingsModal) settingsModal.classList.add('hide');
 });
 
-// ════════════════════════════════════════════════════════════════
-// 온보딩 (새 방 첫 방문자용 5단계 가이드)
-// ────────────────────────────────────────────────────────────────
-// 트리거: 새 방 생성 + 방장 + 아직 온보딩 본 적 없음
-// 재진입: 설정 모달 상단 '사용법 다시 보기' 카드에서 언제든 재실행
-// 완료/건너뛰기 시 localStorage에 표시해 자동 노출은 1회로 제한
-// ════════════════════════════════════════════════════════════════
-const ONBOARDED_LS = 'coffee_onboarded';
-(function setupOnboarding() {
-  const backdrop = document.getElementById('onboardBackdrop');
-  const steps    = backdrop.querySelectorAll('.onboard-step');
-  const prevBtn  = document.getElementById('onboardPrevBtn');
-  const nextBtn  = document.getElementById('onboardNextBtn');
-  const skipBtn  = document.getElementById('onboardSkipBtn');
-  const dotsWrap = document.getElementById('onboardDots');
-  const total    = steps.length;
-  let current    = 0;
-
-  // 점 인디케이터 생성
-  for (let i = 0; i < total; i++) {
-    const dot = document.createElement('span');
-    dot.className = 'onboard-dot';
-    dotsWrap.appendChild(dot);
-  }
-  const dots = dotsWrap.querySelectorAll('.onboard-dot');
-
-  function render() {
-    steps.forEach((s, i) => s.classList.toggle('active', i === current));
-    dots.forEach((d, i) => d.classList.toggle('active', i === current));
-    prevBtn.classList.toggle('hide', current === 0);
-    nextBtn.textContent = (current === total - 1) ? '시작하기' : '다음';
-  }
-
-  function finish({ openSettings = false } = {}) {
-    localStorage.setItem(ONBOARDED_LS, '1');
-    backdrop.classList.add('hide');
-    if (openSettings) openSettingsModal({ welcome: true });
-  }
-
-  // 인라인 CTA (스텝 내부의 '지금 설정하기' 같은 보조 버튼)
-  backdrop.addEventListener('click', e => {
-    const cta = e.target.closest('.onboard-inline-cta');
-    if (!cta) return;
-    if (cta.dataset.action === 'open-settings') {
-      finish({ openSettings: true });
-    }
-  });
-
-  nextBtn.addEventListener('click', () => {
-    if (current < total - 1) { current++; render(); }
-    else finish({ openSettings: true });
-  });
-  prevBtn.addEventListener('click', () => {
-    if (current > 0) { current--; render(); }
-  });
-  skipBtn.addEventListener('click', () => finish({ openSettings: false }));
-
-  // 스와이프 지원 (좌→우: 이전, 우→좌: 다음)
-  const card = backdrop.querySelector('.onboard-card');
-  let touchStartX = null;
-  let touchStartY = null;
-  const SWIPE_THRESHOLD = 45;
-  card.addEventListener('touchstart', e => {
-    if (e.touches.length !== 1) return;
-    touchStartX = e.touches[0].clientX;
-    touchStartY = e.touches[0].clientY;
-  }, { passive: true });
-  card.addEventListener('touchend', e => {
-    if (touchStartX === null) return;
-    const endTouch = e.changedTouches[0];
-    const dx = endTouch.clientX - touchStartX;
-    const dy = endTouch.clientY - touchStartY;
-    touchStartX = null;
-    touchStartY = null;
-    // 버튼/CTA 탭이거나 세로 스와이프(스크롤 의도)면 무시
-    if (e.target.closest('button')) return;
-    if (Math.abs(dy) > Math.abs(dx)) return;
-    if (Math.abs(dx) < SWIPE_THRESHOLD) return;
-    if (dx < 0 && current < total - 1) { current++; render(); }
-    else if (dx > 0 && current > 0)    { current--; render(); }
-  }, { passive: true });
-
-  // 배경 클릭으로 닫히진 않게 (실수 방지)
-  window.showOnboarding = () => {
-    current = 0;
-    render();
-    backdrop.classList.remove('hide');
-  };
-})();
+// 온보딩 제거됨 — 설정 모달이 직관적이므로 별도 가이드 불필요
 
 // 새로 만든 방의 방장 → 온보딩 또는 설정 모달
 // 새 방 생성 시 바로 설정 모달 (온보딩 제거됨)
