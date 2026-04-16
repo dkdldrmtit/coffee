@@ -1883,7 +1883,7 @@ function updateCountdown() {
   if (diff <= 0) {
     cd.classList.remove('urgent', 'critical');
     cd.classList.add('closed');
-    setCountdownText('마감', '주문이 마감됐어요');
+    setCountdownText(`${deadlineLabel} 마감`, '주문이 마감됐어요');
     lockFormIfDeadline();
     return;
   }
