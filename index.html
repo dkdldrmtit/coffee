@@ -546,11 +546,12 @@
     background: var(--ink-dark); color: white;
     padding: 12px 22px; border-radius: 999px;
     font-size: 14px; font-weight: 600;
-    transition: transform 0.3s; z-index: 100;
+    transition: transform 0.3s, background 0.3s; z-index: 100;
     box-shadow: 0 6px 20px rgba(0,0,0,0.25);
   }
   .toast.show { transform: translateX(-50%) translateY(0); }
   .toast { bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
+  .toast.warn { background: var(--warn); }
 
   /* ── hover 상태 ── */
   button.primary:hover { filter: brightness(1.12); }
@@ -2034,7 +2035,7 @@ if (IS_NEW_ROOM && IS_OWNER) {
 
 document.getElementById('cfgSaveBtn').addEventListener('click', async () => {
   if (!IS_OWNER) return;
-  if (!isConfigured) { alert('Firebase 설정이 필요합니다.'); return; }
+  if (!isConfigured) { toast('Firebase 설정이 필요합니다', 'warn'); return; }
   const title  = document.getElementById('cfgTitle').value.trim() || DEFAULT_CONFIG.title;
   const host   = document.getElementById('cfgHost').value.trim();
   const desc   = document.getElementById('cfgDesc').value.trim()  || DEFAULT_CONFIG.desc;
@@ -2287,11 +2288,13 @@ if (lastName) {
   nameInput.value = lastName;
 }
 
-function toast(msg) {
+function toast(msg, type) {
   const t = document.getElementById('toast');
   t.textContent = msg;
+  t.classList.remove('warn');
+  if (type === 'warn') t.classList.add('warn');
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 1800);
+  setTimeout(() => t.classList.remove('show', 'warn'), 2200);
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -2435,17 +2438,17 @@ nameInput.addEventListener('input', () => {
 // 제출 / 취소
 // ════════════════════════════════════════════════════════════════
 document.getElementById('submitBtn').addEventListener('click', async () => {
-  if (!isConfigured) { alert('Firebase 설정이 필요합니다. 파일 상단 주석을 확인해주세요.'); return; }
+  if (!isConfigured) { toast('서버 설정이 필요합니다', 'warn'); return; }
   const name = nameInput.value.trim();
-  if (!name) { alert('이름을 입력해주세요'); return; }
-  if (name.length > 20) { alert('이름은 20자까지 입력할 수 있어요'); return; }
-  if (isPastDeadline()) { alert('주문이 마감되었습니다 😢'); return; }
+  if (!name) { toast('이름을 입력해주세요', 'warn'); return; }
+  if (name.length > 20) { toast('이름은 20자까지 입력할 수 있어요', 'warn'); return; }
+  if (isPastDeadline()) { toast('주문이 마감되었습니다', 'warn'); return; }
   const menu = menuInput.value.trim();
-  if (!menu) { alert('메뉴를 선택하거나 직접 입력해주세요'); return; }
-  if (menu.length > 50) { alert('메뉴는 50자까지 입력할 수 있어요'); return; }
+  if (!menu) { toast('메뉴를 선택하거나 직접 입력해주세요', 'warn'); return; }
+  if (menu.length > 50) { toast('메뉴는 50자까지 입력할 수 있어요', 'warn'); return; }
 
   const memo = document.getElementById('memoInput').value.trim();
-  if (memo.length > 200) { alert('메모는 200자까지 입력할 수 있어요'); return; }
+  if (memo.length > 200) { toast('메모는 200자까지 입력할 수 있어요', 'warn'); return; }
 
   const order = {
     name,
@@ -2713,7 +2716,7 @@ document.getElementById('copyBtn').addEventListener('click', async () => {
 });
 
 document.getElementById('resetBtn').addEventListener('click', async () => {
-  if (!isConfigured) { alert('Firebase 설정이 필요합니다.'); return; }
+  if (!isConfigured) { toast('서버 설정이 필요합니다', 'warn'); return; }
   if (!confirm(`모든 주문을 초기화하고 새 라운드를 시작할까요?\n이 작업은 되돌릴 수 없습니다.`)) return;
   try {
     const { ref, remove } = window._fb;
