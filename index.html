@@ -542,6 +542,36 @@ gtag('config', 'G-9VCP0RKBY0');
     font-size: 12px;
   }
   h3 { margin: 0 0 10px; font-size: 16px; color: var(--ink-dark); }
+
+  /* ── 방장 대시보드 ── */
+  #hostDashboard { text-align: center; margin-bottom: 18px; }
+  .host-share-btn {
+    width: 100%; padding: 16px; border: none; border-radius: 12px;
+    background: var(--sb-accent); color: white;
+    font-size: 16px; font-weight: 700; cursor: pointer;
+    font-family: inherit; margin-bottom: 18px;
+    box-shadow: 0 4px 14px rgba(var(--sb-accent-rgb), 0.3);
+    transition: filter 0.15s;
+  }
+  .host-share-btn:hover { filter: brightness(1.08); }
+  .host-share-btn:active { transform: translateY(1px); }
+  .host-empty {
+    color: var(--muted); font-size: 14px;
+    padding: 20px 0 8px; margin: 0;
+  }
+  .host-order-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0; font-size: 13px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .host-order-item:last-child { border-bottom: none; }
+  .host-order-name { font-weight: 600; color: var(--ink-dark); }
+  .host-order-menu { color: var(--muted); }
+  .host-count {
+    font-size: 15px; font-weight: 700; color: var(--ink-dark);
+    margin-bottom: 12px;
+  }
+
   .toast {
     position: fixed; bottom: 24px; left: 50%;
     transform: translateX(-50%) translateY(80px);
@@ -774,6 +804,14 @@ gtag('config', 'G-9VCP0RKBY0');
     <code>coffee.html</code> 상단의 <code>firebaseConfig</code>에 본인 프로젝트 설정을 붙여넣어주세요.
   </div>
 
+  <!-- 방장 대시보드 -->
+  <div class="card hide" id="hostDashboard">
+    <button class="host-share-btn" id="hostShareBtn">팀원에게 링크 보내기 📤</button>
+    <div id="hostDashContent">
+      <p class="host-empty">링크를 공유하면 여기에 주문이 하나씩 쌓여요</p>
+    </div>
+  </div>
+
   <div class="tabs">
     <div class="tab active" data-tab="order">주문하기</div>
     <div class="tab" data-tab="status">주문현황 <span id="orderCount" class="tab-badge"></span></div>
@@ -870,6 +908,10 @@ gtag('config', 'G-9VCP0RKBY0');
     <h2>설정</h2>
     <!-- JS 참조용 (화면 비노출) -->
     <code class="hide" id="roomCodeLabel"></code>
+    <div class="guest-note hide" id="settingsValueProp" style="margin-bottom:16px">
+      카페와 마감시간만 정하고 링크를 보내세요.<br>
+      팀원들이 각자 고르면, 요약을 복사해서 바로 주문할 수 있어요.
+    </div>
     <div class="guest-note hide" id="settingsGuestNote" style="margin-bottom:16px">
       이 방의 관리자만 설정을 변경할 수 있어요
     </div>
@@ -1475,15 +1517,17 @@ function applyOwnerUI() {
   document.getElementById('shareBtn').classList.toggle('hide', !IS_OWNER);
   document.getElementById('settingsBtn').classList.toggle('hide', !IS_OWNER);
   document.querySelector('.header-top').classList.toggle('hide', !IS_OWNER);
+  document.getElementById('hostDashboard').classList.toggle('hide', !IS_OWNER);
   document.getElementById('resetBtn').classList.toggle('hide', !IS_OWNER);
   document.getElementById('resetGuestNote').classList.toggle('hide', IS_OWNER);
   document.getElementById('settingsGuestNote').classList.toggle('hide', IS_OWNER);
+  document.getElementById('settingsValueProp').classList.toggle('hide', !IS_OWNER);
   document.getElementById('cfgSaveBtn').classList.toggle('hide', !IS_OWNER);
   document.getElementById('summaryCard').classList.toggle('hide', !IS_OWNER);
   ['cfgTitle','cfgHost','cfgCafe','cfgDate','cfgTime'].forEach(id => {
     document.getElementById(id).disabled = !IS_OWNER;
   });
-  renderMembersEditor(); // × 버튼 가시성 재계산
+  renderMembersEditor();
 }
 
 applyConfig();
@@ -1565,6 +1609,7 @@ async function doShare() {
 }
 document.getElementById('shareBtn').addEventListener('click', doShare);
 document.getElementById('guestShareBtn').addEventListener('click', doShare);
+document.getElementById('hostShareBtn').addEventListener('click', doShare);
 
 // ════════════════════════════════════════════════════════════════
 // 이름 입력 refs — 팀원 칩 리스트는 applyMembers() → renderNameChips()가 관리
@@ -2154,17 +2199,45 @@ document.getElementById('deleteBtn').addEventListener('click', async () => {
 // ════════════════════════════════════════════════════════════════
 // 실시간 수신 & 렌더
 // ════════════════════════════════════════════════════════════════
+let prevOrderCount = 0;
+
+function renderHostDashboard() {
+  const container = document.getElementById('hostDashContent');
+  if (!container || !IS_OWNER) return;
+  const entries = Object.values(currentOrders).sort((a, b) => (b.ts || 0) - (a.ts || 0));
+  if (entries.length === 0) {
+    container.innerHTML = '<p class="host-empty">링크를 공유하면 여기에 주문이 하나씩 쌓여요</p>';
+    return;
+  }
+  let html = `<div class="host-count">${entries.length}명 주문 완료</div>`;
+  entries.forEach(o => {
+    const menu = [o.temp, o.size, o.menu].filter(Boolean).join(' ');
+    html += `<div class="host-order-item">
+      <span class="host-order-name">${escapeHtml(o.name)}</span>
+      <span class="host-order-menu">${escapeHtml(menu)}</span>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
 if (isConfigured) {
   const { onValue } = window._fb;
   onValue(ordersRef, snap => {
     currentOrders = snap.val() || {};
     firebaseDataLoaded = true;
+    const n = Object.keys(currentOrders).length;
+    // 실시간 알림 (방장에게만)
+    if (IS_OWNER && n > prevOrderCount && prevOrderCount > 0) {
+      const newest = Object.values(currentOrders).sort((a, b) => (b.ts || 0) - (a.ts || 0))[0];
+      if (newest) toast(`${newest.name}님이 ${newest.menu}를 주문했어요`);
+    }
+    prevOrderCount = n;
     renderList();
     renderSummary();
-    const n = Object.keys(currentOrders).length;
+    renderHostDashboard();
     document.getElementById('orderCount').textContent = n ? `(${n})` : '';
     document.title = n ? `(${n}) ${CONFIG.title} · 커피 골든벨` : `${CONFIG.title} · 커피 골든벨`;
-    syncFormForSelectedName(); // 선택된 이름에 맞춰 폼 동기화 시도
+    syncFormForSelectedName();
   });
 }
 
