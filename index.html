@@ -994,67 +994,58 @@ gtag('config', 'G-9VCP0RKBY0');
   <!-- ORDER TAB -->
   <div id="orderTab" class="tab-content">
     <div class="card">
-      <div class="order-guide">
-        아래 내용을 채우고 <b>주문하기</b> 버튼을 눌러주세요
-      </div>
       <label>이름</label>
       <input type="text" id="nameInput" placeholder="이름 선택 또는 직접 입력" autocomplete="off" maxlength="20">
       <div class="name-chips hide" id="nameChips"></div>
 
-      <label>온도</label>
-      <div class="chips" id="tempOptions">
-        <div class="chip active" data-val="ICE">ICE</div>
-        <div class="chip" data-val="HOT">HOT</div>
-      </div>
-
-      <label>사이즈</label>
-      <div class="chips" id="sizeOptions">
-        <div class="chip active" data-val="Tall">Tall</div>
-        <div class="chip" data-val="Grande">Grande</div>
-        <div class="chip" data-val="Venti">Venti</div>
-      </div>
-      <input type="text" id="sizeCustom" class="hide" placeholder="예) 작게 / 보통 / 1L 등" maxlength="20">
-
       <label>
         메뉴
-        <a class="ext-link" id="sbuxMenuLink" href="https://www.starbucks.co.kr/menu/drink_list.do" target="_blank" rel="noopener">스타벅스 메뉴 보기</a>
+        <a class="ext-link" id="sbuxMenuLink" href="https://www.starbucks.co.kr/menu/drink_list.do" target="_blank" rel="noopener">메뉴 보기</a>
       </label>
-      <input id="menuInput" type="text" list="menuList" placeholder="메뉴 검색 또는 직접 입력" autocomplete="off" maxlength="50">
+      <input id="menuInput" type="text" list="menuList" placeholder="예) 아메리카노, 바닐라 라떼" autocomplete="off" maxlength="50">
       <datalist id="menuList"></datalist>
-      <div class="field-hint">
-        예) 아메리카노, 카페라떼, 바닐라 라떼<br>
-        <span class="hint-muted">시즌·신메뉴는 목록에 없을 수 있어요 — 직접 입력하셔도 돼요</span>
-      </div>
 
-      <details class="addon-details">
+      <details class="addon-details" id="detailOptions">
         <summary>
-          <span>추가옵션 (선택) <span class="addon-count" id="addonCount"></span></span>
+          <span>상세 설정 <span class="addon-count" id="detailSummaryText"></span></span>
         </summary>
-        <div class="chips" id="addonOptions">
-          <div class="chip" data-val="샷추가">샷추가</div>
-          <div class="chip" data-val="시럽추가">시럽추가</div>
-          <div class="chip" data-val="휘핑추가" data-group="whip">휘핑추가</div>
-          <div class="chip" data-val="휘핑빼기" data-group="whip">휘핑빼기</div>
-          <div class="chip" data-val="디카페인">디카페인</div>
-          <div class="chip" data-val="연하게">연하게</div>
-          <div class="chip" data-val="얼음적게" data-group="ice">얼음적게</div>
-          <div class="chip" data-val="얼음많이" data-group="ice">얼음많이</div>
+        <div style="padding-top:10px">
+          <label>온도</label>
+          <div class="chips" id="tempOptions">
+            <div class="chip active" data-val="ICE">ICE</div>
+            <div class="chip" data-val="HOT">HOT</div>
+          </div>
+
+          <label>사이즈</label>
+          <div class="chips" id="sizeOptions">
+            <div class="chip active" data-val="Tall">Tall</div>
+            <div class="chip" data-val="Grande">Grande</div>
+            <div class="chip" data-val="Venti">Venti</div>
+          </div>
+          <input type="text" id="sizeCustom" class="hide" placeholder="예) 작게 / 보통 / 1L 등" maxlength="20">
+
+          <label>추가옵션 <span class="addon-count" id="addonCount"></span></label>
+          <div class="chips" id="addonOptions">
+            <div class="chip" data-val="샷추가">샷추가</div>
+            <div class="chip" data-val="시럽추가">시럽추가</div>
+            <div class="chip" data-val="휘핑추가" data-group="whip">휘핑추가</div>
+            <div class="chip" data-val="휘핑빼기" data-group="whip">휘핑빼기</div>
+            <div class="chip" data-val="디카페인">디카페인</div>
+            <div class="chip" data-val="연하게">연하게</div>
+            <div class="chip" data-val="얼음적게" data-group="ice">얼음적게</div>
+            <div class="chip" data-val="얼음많이" data-group="ice">얼음많이</div>
+          </div>
+
+          <label>메모 <span class="memo-indicator" id="memoIndicator"></span></label>
+          <textarea id="memoInput" rows="2" placeholder="예) 시럽 반만, 얼음 조금만" maxlength="200"></textarea>
         </div>
-      </details>
-
-      <details class="memo-details">
-        <summary>
-          <span>메모 (선택) <span class="memo-indicator" id="memoIndicator"></span></span>
-        </summary>
-        <textarea id="memoInput" rows="2" placeholder="예) 시럽 반만, 얼음 조금만" maxlength="200"></textarea>
       </details>
 
       <button class="primary" id="submitBtn">주문하기</button>
       <button class="ghost hide" id="deleteBtn">내 주문 취소하기</button>
 
       <div class="field-hint hide" id="orderEditHint" style="margin-top:14px; line-height:1.7;">
-        <b>변경</b> — 이름을 다시 선택하면 기존 메뉴가 자동으로 채워져요<br>
-        <b>취소</b> — ‘내 주문 취소하기’를 눌러주세요
+        이름을 다시 선택하면 기존 메뉴를 수정할 수 있어요
       </div>
     </div>
   </div>
@@ -2230,6 +2221,7 @@ function setupChips(containerId, multi = false) {
       c.querySelectorAll('.chip').forEach(x => x.classList.remove('active'));
       chip.classList.add('active');
     }
+    if (typeof updateDetailSummary === 'function') updateDetailSummary();
   });
 }
 setupChips('tempOptions');
@@ -2241,9 +2233,22 @@ const addonContainer = document.getElementById('addonOptions');
 const addonCountEl = document.getElementById('addonCount');
 function updateAddonCount() {
   const count = addonContainer.querySelectorAll('.chip.active').length;
-  addonCountEl.textContent = count > 0 ? `· ${count}개 선택됨` : '';
+  addonCountEl.textContent = count > 0 ? `· ${count}개` : '';
+  updateDetailSummary();
 }
 addonContainer.addEventListener('click', updateAddonCount);
+
+function updateDetailSummary() {
+  const temp = getSingle('tempOptions');
+  const size = getSize();
+  const addons = addonContainer.querySelectorAll('.chip.active').length;
+  const memo = document.getElementById('memoInput')?.value.trim();
+  const parts = [temp, size].filter(Boolean);
+  if (addons) parts.push(`옵션 ${addons}개`);
+  if (memo) parts.push('메모');
+  const el = document.getElementById('detailSummaryText');
+  if (el) el.textContent = parts.length ? `· ${parts.join(' · ')}` : '';
+}
 
 function getSingle(id) {
   return document.querySelector(`#${id} .chip.active`)?.dataset.val || '';
@@ -2406,6 +2411,7 @@ function resetFormFields() {
 function updateMemoIndicator() {
   const has = document.getElementById('memoInput').value.trim().length > 0;
   document.getElementById('memoIndicator').textContent = has ? '· 작성됨' : '';
+  updateDetailSummary();
 }
 document.getElementById('memoInput').addEventListener('input', updateMemoIndicator);
 
