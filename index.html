@@ -2033,8 +2033,8 @@ const menuInput = document.getElementById('menuInput');
 // 예) "아이스아메리카노" → ICE 자동 선택 + "아메리카노"
 // 예) "핫아메리카노" → HOT 자동 선택 + "아메리카노"
 function normalizeMenuTemp(val) {
-  const iceMatch = val.match(/^아이스\s*/);
-  const hotMatch = val.match(/^(핫|따뜻한?)\s*/);
+  const iceMatch = val.match(/^(아이스|차가운|시원한|찬)\s*/);
+  const hotMatch = val.match(/^(핫|따뜻한?|따듯한?|뜨거운?)\s*/);
   if (iceMatch) { setSingle('tempOptions', 'ICE'); return val.slice(iceMatch[0].length); }
   if (hotMatch) { setSingle('tempOptions', 'HOT'); return val.slice(hotMatch[0].length); }
   return val;
