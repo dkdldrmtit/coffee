@@ -34,6 +34,15 @@
 <!-- Kakao JavaScript SDK — 카톡 공유 풍부한 미리보기용 -->
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"></script>
 
+<!-- Google Analytics 4 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-9VCP0RKBY0"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-9VCP0RKBY0');
+</script>
+
 <style>
   :root {
     /* ── 잉크(주 액션·텍스트) ── */
@@ -1512,6 +1521,7 @@ if (isConfigured) {
         // 새 방: 현재 시각 +1시간으로 마감시간 시드
         seeds[`rooms/${ROOM_ID}/meta/config`] = { ...DEFAULT_CONFIG, ...getDefaultDeadline() };
         IS_NEW_ROOM = true;
+        if (typeof gtag === 'function') gtag('event', 'room_created');
       }
       // 빈 배열은 RTDB가 저장하지 않아 매번 seed가 트리거됨 → DEFAULT_MEMBERS가 있을 때만 시드
       if (!existing.members && DEFAULT_MEMBERS.length > 0) {
@@ -1794,6 +1804,7 @@ document.getElementById('newRoomBtn').addEventListener('click', () => {
 });
 
 async function doShare() {
+  if (typeof gtag === 'function') gtag('event', 'share_clicked');
   const url = window.location.href;
   const hostLine = CONFIG.host && CONFIG.host.trim()
     ? `오늘은 ${CONFIG.host}님이 쏩니다!`
@@ -2474,11 +2485,13 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
     if (existingKey && currentOrders[existingKey]) {
       await set(ref(db, `rooms/${ROOM_ID}/orders/` + existingKey), order);
       toast('주문을 수정했어요');
+      if (typeof gtag === 'function') gtag('event', 'order_modified', { cafe: CONFIG.cafe });
     } else {
       const newRef = push(ordersRef);
       await set(newRef, order);
       setOrderKey(name, newRef.key);
       toast('주문이 들어갔어요!');
+      if (typeof gtag === 'function') gtag('event', 'order_submitted', { cafe: CONFIG.cafe });
     }
     lastSyncedName = name;
     savePref(name, order); // 선호 메뉴 저장 (다음 라운드에서 기본값으로 사용)
@@ -2512,6 +2525,7 @@ document.getElementById('deleteBtn').addEventListener('click', async () => {
     document.getElementById('orderEditHint').classList.add('hide');
     lastSyncedName = name; // 빈 상태로 동기화됨
     toast('주문을 취소했어요');
+    if (typeof gtag === 'function') gtag('event', 'order_cancelled');
     renderList();
   } catch (e) {
     alert('오류: ' + e.message);
@@ -2727,6 +2741,7 @@ document.getElementById('resetBtn').addEventListener('click', async () => {
     await remove(ref(db, `rooms/${ROOM_ID}/orders`));
     localStorage.removeItem(ORDER_KEYS_LS);
     toast('새 라운드를 시작했어요!');
+    if (typeof gtag === 'function') gtag('event', 'round_reset');
     setTimeout(() => location.reload(), 1500);
   } catch (e) {
     alert('오류: ' + e.message);
