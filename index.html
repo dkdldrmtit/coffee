@@ -1054,18 +1054,13 @@ gtag('config', 'G-9VCP0RKBY0');
   <!-- STATUS TAB (전체주문 + 요약 통합) -->
   <div id="statusTab" class="hide tab-content">
     <div class="card">
-      <h3>주문 목록</h3>
       <div id="orderList">
         <div class="skeleton-line" style="width:65%"></div>
         <div class="skeleton-line" style="width:80%"></div>
         <div class="skeleton-line" style="width:50%"></div>
       </div>
     </div>
-    <div class="card">
-      <h3>요약</h3>
-      <div class="summary-hint-row hide" id="summaryHintRow">
-        탭해서 주문 완료 체크해보세요
-      </div>
+    <div class="card hide" id="summaryCard">
       <div id="summaryList"></div>
       <button class="copy-btn" id="copyBtn">요약 복사하기</button>
     </div>
@@ -1093,18 +1088,8 @@ gtag('config', 'G-9VCP0RKBY0');
   <div class="modal">
     <div class="modal-handle"></div>
     <h2>설정</h2>
-    <div class="modal-info">
-      <span class="modal-info-label">방 코드</span>
-      <code class="modal-info-value" id="roomCodeLabel"></code>
-    </div>
-    <button type="button" class="onboard-retrigger" id="onboardRetriggerBtn">
-      <span class="onboard-retrigger-icon">👋</span>
-      <span class="onboard-retrigger-text">
-        <b>사용법 다시 보기</b>
-        <small>5단계 가이드 · 약 30초</small>
-      </span>
-      <span class="onboard-retrigger-arrow">→</span>
-    </button>
+    <!-- JS 참조용 (화면 비노출) -->
+    <code class="hide" id="roomCodeLabel"></code>
     <div class="guest-note hide" id="settingsGuestNote" style="margin-bottom:16px">
       이 방의 관리자만 설정을 변경할 수 있어요
     </div>
@@ -1146,60 +1131,8 @@ gtag('config', 'G-9VCP0RKBY0');
 
 <div class="toast" id="toast">완료!</div>
 
-<!-- 온보딩 오버레이 (새 방 첫 방문자용 · 설정에서 '사용법 다시 보기'로 재진입 가능) -->
-<div class="onboard-backdrop hide" id="onboardBackdrop">
-  <div class="onboard-card">
-    <button type="button" class="onboard-skip" id="onboardSkipBtn">건너뛰기</button>
-
-    <!-- STEP 1 — 환영 -->
-    <div class="onboard-step active" data-step="1">
-      <div class="onboard-icon-frame"><span class="onboard-emoji">🔔</span></div>
-      <div class="onboard-meta">1 / 5 · 약 30초면 끝나요</div>
-      <h2 class="onboard-title">커피 골든벨에 오신 걸 환영해요</h2>
-      <p class="onboard-desc">링크 하나로 팀원 커피 주문을<br>가장 쉽게 모으는 방법이에요.<br>5단계만 알아두면 돼요.</p>
-    </div>
-
-    <!-- STEP 2 — 이벤트 정보 입력 -->
-    <div class="onboard-step" data-step="2">
-      <div class="onboard-icon-frame"><span class="onboard-emoji">✏️</span></div>
-      <div class="onboard-meta">2 / 5 · 10초</div>
-      <h2 class="onboard-title">이벤트 정보 입력</h2>
-      <p class="onboard-desc">이벤트 이름, 카페, 마감 시간을<br>정해두면 팀원들이 <b>어떤 상황에서</b><br><b>언제까지</b> 주문해야 할지 한눈에 보여요.</p>
-      <button type="button" class="onboard-inline-cta" data-action="open-settings">지금 설정하기 →</button>
-    </div>
-
-    <!-- STEP 3 — 팀원 명단 추가 -->
-    <div class="onboard-step" data-step="3">
-      <div class="onboard-icon-frame"><span class="onboard-emoji">👥</span></div>
-      <div class="onboard-meta">3 / 5 · 10초</div>
-      <h2 class="onboard-title">팀원 명단 추가</h2>
-      <p class="onboard-desc">같은 설정 화면에서 팀원 이름을<br>미리 추가해두면, 주문할 때<br><b>탭 한 번</b>으로 이름을 고를 수 있어요.</p>
-    </div>
-
-    <!-- STEP 4 — 공유 -->
-    <div class="onboard-step" data-step="4">
-      <div class="onboard-icon-frame"><span class="onboard-emoji">📤</span></div>
-      <div class="onboard-meta">4 / 5 · 5초</div>
-      <h2 class="onboard-title">팀원에게 링크 공유</h2>
-      <p class="onboard-desc">설정 옆 <b>공유</b> 버튼을 눌러<br>카카오톡·단톡방에 바로 전달하세요.<br>받은 사람은 누르기만 하면 돼요.</p>
-    </div>
-
-    <!-- STEP 5 — 주문 확인 -->
-    <div class="onboard-step" data-step="5">
-      <div class="onboard-icon-frame"><span class="onboard-emoji">📋</span></div>
-      <div class="onboard-meta">5 / 5 · 자동</div>
-      <h2 class="onboard-title">주문 모으고 정리</h2>
-      <p class="onboard-desc"><b>전체주문</b> 탭에서 누가 뭐 시켰는지,<br><b>요약</b> 탭에선 카페에 바로 전달할<br>깔끔한 리스트를 확인할 수 있어요.</p>
-    </div>
-
-    <div class="onboard-dots" id="onboardDots"></div>
-
-    <div class="onboard-actions">
-      <button type="button" class="onboard-btn-prev hide" id="onboardPrevBtn">이전</button>
-      <button type="button" class="onboard-btn-next" id="onboardNextBtn">다음</button>
-    </div>
-  </div>
-</div>
+<!-- 온보딩 제거됨 — 설정 모달이 직관적이므로 별도 가이드 불필요 -->
+<div class="hide" id="onboardBackdrop"></div>
 
 <script type="module">
 // ════════════════════════════════════════════════════════════════
@@ -1811,6 +1744,7 @@ function applyOwnerUI() {
   document.getElementById('settingsGuestNote').classList.toggle('hide', IS_OWNER);
   document.getElementById('cfgSaveBtn').classList.toggle('hide', !IS_OWNER);
   document.getElementById('memberAddRow').classList.toggle('hide', !IS_OWNER);
+  document.getElementById('summaryCard').classList.toggle('hide', !IS_OWNER);
   ['cfgTitle','cfgHost','cfgDesc','cfgCafe','cfgDate','cfgTime'].forEach(id => {
     document.getElementById(id).disabled = !IS_OWNER;
   });
@@ -2090,12 +2024,9 @@ const ONBOARDED_LS = 'coffee_onboarded';
 })();
 
 // 새로 만든 방의 방장 → 온보딩 또는 설정 모달
+// 새 방 생성 시 바로 설정 모달 (온보딩 제거됨)
 if (IS_NEW_ROOM && IS_OWNER) {
-  if (!localStorage.getItem(ONBOARDED_LS)) {
-    window.showOnboarding();
-  } else {
-    openSettingsModal({ welcome: true });
-  }
+  openSettingsModal({ welcome: true });
 }
 
 document.getElementById('cfgSaveBtn').addEventListener('click', async () => {
@@ -2695,16 +2626,13 @@ function buildGroupedOrders(orders) {
 
 function renderSummary() {
   const list = document.getElementById('summaryList');
-  const hintRow = document.getElementById('summaryHintRow');
   const copyBtn = document.getElementById('copyBtn');
   const orders = Object.values(currentOrders);
   if (orders.length === 0) {
     list.innerHTML = '<div class="empty">아직 첫 주문을 기다리고 있어요</div>';
-    hintRow.classList.add('hide');
     copyBtn.classList.add('hide');
     return;
   }
-  hintRow.classList.remove('hide');
   copyBtn.classList.remove('hide');
   const sortedMenus = buildGroupedOrders(orders);
 
