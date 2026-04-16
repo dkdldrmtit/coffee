@@ -406,6 +406,13 @@ gtag('config', 'G-9VCP0RKBY0');
   }
   .order-item {
     padding: 12px 0; border-bottom: 1px solid #f0f0f0;
+    transition: background 0.3s;
+  }
+  .order-item.is-mine {
+    background: var(--sb-accent-soft);
+    margin: 0 -20px; padding: 12px 20px;
+    border-radius: 10px;
+    border-bottom-color: transparent;
   }
   .order-item:last-child { border-bottom: none; }
   .order-item:first-child { padding-top: 0; }
@@ -2471,13 +2478,14 @@ function renderList() {
     list.innerHTML = '<div class="empty">아직 첫 주문을 기다리고 있어요</div>';
     return;
   }
-  list.innerHTML = entries.map(([k, o]) => `
-    <div class="order-item">
-      <div class="order-name">${escapeHtml(o.name)}${k === myKey ? '<span class="mine">내 주문</span>' : ''}</div>
+  list.innerHTML = entries.map(([k, o]) => {
+    const isMine = k === myKey;
+    return `<div class="order-item${isMine ? ' is-mine' : ''}">
+      <div class="order-name">${escapeHtml(o.name)}${isMine ? '<span class="mine">내 주문</span>' : ''}</div>
       <div class="order-menu">${escapeHtml(formatOrder(o))}</div>
       ${o.memo ? `<div class="order-memo">${escapeHtml(o.memo)}</div>` : ''}
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
 // ════════════════════════════════════════════════════════════════
