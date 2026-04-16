@@ -783,15 +783,14 @@ gtag('config', 'G-9VCP0RKBY0');
   <div id="orderTab" class="tab-content">
     <div class="card">
       <label>이름</label>
-      <input type="text" id="nameInput" placeholder="이름 선택 또는 직접 입력" autocomplete="off" maxlength="20">
-      <div class="name-chips hide" id="nameChips"></div>
+      <input type="text" id="nameInput" placeholder="이름을 입력해주세요" autocomplete="off" maxlength="20">
+      <div class="hide" id="nameChips"></div>
 
       <label>
         메뉴
         <a class="ext-link" id="sbuxMenuLink" href="https://www.starbucks.co.kr/menu/drink_list.do" target="_blank" rel="noopener">메뉴 보기</a>
       </label>
-      <input id="menuInput" type="text" list="menuList" placeholder="예) 아메리카노, 바닐라 라떼" autocomplete="off" maxlength="50">
-      <datalist id="menuList"></datalist>
+      <input id="menuInput" type="text" placeholder="예) 아이스 아메리카노" autocomplete="off" maxlength="50">
 
       <details class="addon-details" id="detailOptions">
         <summary>
@@ -886,13 +885,12 @@ gtag('config', 'G-9VCP0RKBY0');
       <input type="time" id="cfgTime">
     </div>
 
-    <label style="margin-top:18px">팀원 명단</label>
-    <div class="members-chips" id="membersChips"></div>
-    <div class="member-add-row" id="memberAddRow">
-      <input type="text" id="memberAddInput" placeholder="이름 추가 후 Enter" maxlength="20">
-      <button type="button" class="member-add-btn" id="memberAddBtn" aria-label="팀원 추가">+</button>
+    <!-- JS 참조용 (화면 미노출) -->
+    <div class="hide" id="membersChips"></div>
+    <div class="hide" id="memberAddRow">
+      <input type="text" id="memberAddInput" maxlength="20">
+      <button type="button" id="memberAddBtn">+</button>
     </div>
-    <!-- 부제목: 화면 미노출, JS 참조용 -->
     <input type="hidden" id="cfgDesc" value="">
 
     <button class="primary" id="cfgSaveBtn" style="margin-top:20px">저장하기</button>
@@ -1432,23 +1430,8 @@ function setSize(val) {
   }
 }
 
-// 카페 선택에 맞춰 메뉴 datalist를 재구성 (공통 메뉴 + 카페 시그니처)
 function applyCafeMenus() {
   const cafeId = CAFE_MENUS[CONFIG.cafe] ? CONFIG.cafe : 'starbucks';
-  const specials = CAFE_MENUS[cafeId] || [];
-  const list = document.getElementById('menuList');
-  if (!list) return;
-  list.innerHTML = '';
-  // 공통 + 카페 시그니처, 중복 제거
-  const seen = new Set();
-  [...COMMON_MENUS, ...specials].forEach(m => {
-    if (seen.has(m)) return;
-    seen.add(m);
-    const opt = document.createElement('option');
-    opt.value = m;
-    list.appendChild(opt);
-  });
-  // 스타벅스 메뉴 외부 링크는 스벅일 때만 노출
   const sbuxLink = document.getElementById('sbuxMenuLink');
   if (sbuxLink) sbuxLink.classList.toggle('hide', cafeId !== 'starbucks');
 }
@@ -1762,7 +1745,6 @@ document.getElementById('sbuxMenuLink').addEventListener('click', e => {
 });
 
 const menuInput = document.getElementById('menuInput');
-// datalist 자체는 applyCafeMenus()가 관리
 
 // 메뉴에 온도 접두어가 포함된 경우 자동 분리
 // 예) "아이스아메리카노" → ICE 자동 선택 + "아메리카노"
