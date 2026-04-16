@@ -630,6 +630,16 @@ gtag('config', 'G-9VCP0RKBY0');
     from { background-position: 200% 0; }
     to   { background-position: -200% 0; }
   }
+  .recent-room {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 0; border-bottom: 1px solid #f0f0f0;
+    cursor: pointer; text-decoration: none; color: inherit;
+    transition: opacity 0.15s;
+  }
+  .recent-room:last-child { border-bottom: none; }
+  .recent-room:hover { opacity: 0.7; }
+  .recent-room-title { font-size: 14px; font-weight: 600; color: var(--ink-dark); }
+  .recent-room-date { font-size: 12px; color: var(--muted); flex-shrink: 0; }
   .skeleton-line {
     height: 14px; border-radius: 6px; margin: 10px 0;
     background: linear-gradient(90deg, #f0f0f0 25%, #e4e4e4 50%, #f0f0f0 75%);
@@ -1076,6 +1086,11 @@ gtag('config', 'G-9VCP0RKBY0');
     <button type="button" class="icon-btn icon-btn-accent" id="newRoomBtn">나도 쏘기</button>
   </div>
 
+  <div class="card hide" id="recentRoomsCard" style="margin-top:14px">
+    <h3 style="font-size:14px">최근 방</h3>
+    <div id="recentRoomsList"></div>
+  </div>
+
   <footer class="footer">
     <span class="footer-brand">커피 골든벨</span>
     <span class="footer-sep">·</span>
@@ -1270,6 +1285,23 @@ function getOrCreateRoomId() {
   return fresh;
 }
 const ROOM_ID = getOrCreateRoomId();
+
+// ════════════════════════════════════════════════════════════════
+// 📋 최근 방 목록 — localStorage에 방문 기록 저장 (최대 10개)
+// ════════════════════════════════════════════════════════════════
+const RECENT_ROOMS_LS = 'coffee_recent_rooms';
+function getRecentRooms() {
+  try { return JSON.parse(localStorage.getItem(RECENT_ROOMS_LS) || '[]'); }
+  catch { return []; }
+}
+function saveRecentRoom(roomId, title) {
+  let rooms = getRecentRooms().filter(r => r.id !== roomId);
+  rooms.unshift({ id: roomId, title: title || '', ts: Date.now() });
+  if (rooms.length > 10) rooms = rooms.slice(0, 10);
+  localStorage.setItem(RECENT_ROOMS_LS, JSON.stringify(rooms));
+}
+// 현재 방을 목록에 기록 (CONFIG 로드 후 title이 갱신되면 다시 저장)
+saveRecentRoom(ROOM_ID, '');
 
 // 핀치 줌 차단 (트랙패드 ctrl+wheel, 모바일 gesture 이벤트)
 window.addEventListener('wheel', e => {
@@ -1566,6 +1598,7 @@ function applyConfig() {
   document.getElementById('pageTitle').textContent = CONFIG.title;
   document.getElementById('pageDesc').textContent = CONFIG.desc;
   document.title = `${CONFIG.title} · 커피 골든벨`;
+  saveRecentRoom(ROOM_ID, CONFIG.title);
   // 쏘는 사람 라벨 — 설정돼있을 때만 노출
   const hostLabel = document.getElementById('hostLabel');
   if (hostLabel) {
@@ -1790,6 +1823,24 @@ function applyOwnerUI() {
 applyConfig();
 applyMembers();
 applyOwnerUI();
+
+// 최근 방 목록 렌더 (현재 방 제외, 나머지만 표시)
+(function renderRecentRooms() {
+  const rooms = getRecentRooms().filter(r => r.id !== ROOM_ID && r.title);
+  const card = document.getElementById('recentRoomsCard');
+  if (rooms.length === 0) return;
+  card.classList.remove('hide');
+  const list = document.getElementById('recentRoomsList');
+  list.innerHTML = rooms.map(r => {
+    const d = new Date(r.ts);
+    const dateStr = `${d.getMonth()+1}/${d.getDate()}`;
+    const url = `${window.location.pathname}?room=${r.id}`;
+    return `<a class="recent-room" href="${url}">
+      <span class="recent-room-title">${escapeHtml(r.title)}</span>
+      <span class="recent-room-date">${dateStr}</span>
+    </a>`;
+  }).join('');
+})();
 
 // ════════════════════════════════════════════════════════════════
 // 🔗 링크 공유 버튼 — 현재 방 URL을 공유/복사
@@ -2546,6 +2597,7 @@ if (isConfigured) {
     renderSummary();
     const n = Object.keys(currentOrders).length;
     document.getElementById('orderCount').textContent = n ? `(${n})` : '';
+    document.title = n ? `(${n}) ${CONFIG.title} · 커피 골든벨` : `${CONFIG.title} · 커피 골든벨`;
     syncFormForSelectedName(); // 선택된 이름에 맞춰 폼 동기화 시도
   });
 }
@@ -2735,11 +2787,31 @@ document.getElementById('copyBtn').addEventListener('click', async () => {
   }
 });
 
+// TODO: 주문 히스토리 기능 (다음 세션에서 구현)
+// ────────────────────────────────────────────────────────────────
+// 1. 초기화 시 기존 주문을 삭제하지 않고 rooms/$roomId/history/에 아카이브
+// 2. 히스토리 열람 UI (과거 라운드 목록 + 상세)
+// 3. "이전 주문 가져오기" — 새 라운드 시작 시 직전 주문을 복사해서
+//    팀원들이 확인/수정만 하면 되게 하는 플로우
+// 4. 활용 예시: "저번에 시켰던 것처럼 시키려고 하는데 수정하실분은
+//    언제까지 수정해주세요!" 같은 재주문 시나리오
+// ────────────────────────────────────────────────────────────────
 document.getElementById('resetBtn').addEventListener('click', async () => {
   if (!isConfigured) { toast('서버 설정이 필요합니다', 'warn'); return; }
   if (!confirm(`모든 주문을 초기화하고 새 라운드를 시작할까요?\n이 작업은 되돌릴 수 없습니다.`)) return;
   try {
-    const { ref, remove } = window._fb;
+    const { ref, remove, set, get } = window._fb;
+    // 기존 주문을 히스토리에 아카이브 (데이터 보존)
+    const snap = await get(ref(db, `rooms/${ROOM_ID}/orders`));
+    if (snap.exists()) {
+      const archiveKey = Date.now();
+      await set(ref(db, `rooms/${ROOM_ID}/history/${archiveKey}`), {
+        orders: snap.val(),
+        archivedAt: archiveKey,
+        cafe: CONFIG.cafe,
+        title: CONFIG.title,
+      });
+    }
     await remove(ref(db, `rooms/${ROOM_ID}/orders`));
     localStorage.removeItem(ORDER_KEYS_LS);
     toast('새 라운드를 시작했어요!');
