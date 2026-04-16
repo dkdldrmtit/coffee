@@ -204,16 +204,6 @@ gtag('config', 'G-9VCP0RKBY0');
     font-size: 13px; padding: 13px 28px;
     min-height: 44px;
   }
-  .footer {
-    padding: 20px 4px 20px;
-    font-size: 12px; color: var(--muted);
-    line-height: 1.6;
-  }
-  .footer .footer-brand {
-    color: var(--sb-accent); font-weight: 700;
-    letter-spacing: 0.3px;
-  }
-  .footer .footer-sep { margin: 0 8px; opacity: 0.4; }
   .countdown {
     background: var(--ink); color: white;
     padding: 14px 18px; border-radius: 14px;
@@ -272,20 +262,6 @@ gtag('config', 'G-9VCP0RKBY0');
     font-size: 11px; color: var(--muted);
     margin-top: 6px; padding-left: 2px;
     line-height: 1.55;
-  }
-  .order-guide {
-    background: var(--sb-accent-soft);
-    color: var(--sb-accent-deep);
-    padding: 11px 14px;
-    border-radius: 10px;
-    font-size: 13px; font-weight: 500;
-    margin: -4px 0 16px;
-    line-height: 1.5;
-    border: 1px solid #fbe2a4;
-  }
-  .order-guide b {
-    color: var(--sb-accent);
-    font-weight: 700;
   }
   .field-hint .hint-muted {
     color: #a8a198; font-size: 10.5px;
@@ -398,10 +374,12 @@ gtag('config', 'G-9VCP0RKBY0');
   }
   button.primary:active { transform: translateY(1px); }
   button.ghost {
-    width: 100%; padding: 12px; background: transparent;
-    color: var(--ghost-fg); border: 1.5px solid var(--ghost-border); border-radius: 10px;
-    font-size: 14px; font-weight: 600; cursor: pointer;
-    margin-top: 10px; font-family: inherit;
+    width: 100%; padding: 10px; background: transparent;
+    color: var(--muted); border: none; border-radius: 10px;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    margin-top: 6px; font-family: inherit;
+    text-decoration: underline;
+    text-underline-offset: 3px;
   }
   .copy-btn {
     padding: 13px; background: var(--sb-accent); color: white;
@@ -664,37 +642,6 @@ gtag('config', 'G-9VCP0RKBY0');
     font-family: ui-monospace, "SF Mono", Menlo, monospace;
     letter-spacing: 1.2px;
   }
-  .cafe-label {
-    display: inline-block;
-    font-size: 11px; font-weight: 700;
-    color: white;
-    background: var(--cafe-color, var(--muted));
-    padding: 4px 11px;
-    border-radius: 999px;
-    letter-spacing: 0.2px;
-    border: none;
-  }
-  .cafe-label:empty { display: none; }
-  .host-label {
-    display: inline-block;
-    padding: 4px 11px;
-    background: white; border: 1px solid var(--border);
-    border-radius: 999px;
-    font-size: 11px; font-weight: 500;
-    color: var(--muted);
-    letter-spacing: 0.2px;
-  }
-  .host-label strong {
-    color: var(--sb-accent);
-    font-weight: 800;
-    margin-left: 2px;
-  }
-  .owner-badge {
-    display: inline-block;
-    padding: 4px 11px; font-size: 11px; font-weight: 700;
-    background: var(--sb-accent); color: white;
-    border-radius: 999px; letter-spacing: 0.2px;
-  }
   .guest-note {
     padding: 12px 14px; background: #f5f5f5;
     border-radius: 10px; font-size: 12px; line-height: 1.5;
@@ -746,166 +693,6 @@ gtag('config', 'G-9VCP0RKBY0');
   .modal input:disabled,
   .modal select:disabled {
     background: #f5f5f5; color: #888; cursor: default;
-  }
-
-  /* ── 온보딩 오버레이 ── */
-  .onboard-backdrop {
-    position: fixed; inset: 0; z-index: 300;
-    background: rgba(0,0,0,0.55);
-    display: flex; align-items: center; justify-content: center;
-    padding: 20px;
-    animation: onboardFade 0.25s ease;
-  }
-  .onboard-backdrop.hide { display: none !important; }
-  @keyframes onboardFade { from { opacity: 0; } to { opacity: 1; } }
-  .onboard-card {
-    background: white;
-    width: 100%; max-width: 360px;
-    border-radius: 20px;
-    padding: 30px 24px 22px;
-    position: relative;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.35);
-  }
-  .onboard-skip {
-    position: absolute; top: 14px; right: 14px;
-    background: transparent; border: none;
-    color: var(--muted); font-size: 12px; font-weight: 500;
-    cursor: pointer; padding: 6px 10px;
-    font-family: inherit; border-radius: 6px;
-  }
-  .onboard-skip:hover { background: var(--bg); color: var(--ink-dark); }
-  .onboard-step {
-    display: none; text-align: center;
-    min-height: 280px;
-    padding: 4px 4px 0;
-  }
-  .onboard-step.active {
-    display: block;
-    animation: onboardStepIn 0.3s ease;
-  }
-  @keyframes onboardStepIn {
-    from { opacity: 0; transform: translateX(12px); }
-    to   { opacity: 1; transform: translateX(0); }
-  }
-  .onboard-icon-frame {
-    width: 82px; height: 82px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--sb-accent-soft) 0%, #fbe2a4 100%);
-    display: inline-flex; align-items: center; justify-content: center;
-    margin: 0 auto 14px;
-    border: 2px solid #fbe2a4;
-    box-shadow: 0 8px 20px rgba(var(--sb-accent-rgb), 0.18);
-  }
-  .onboard-emoji {
-    font-size: 42px; line-height: 1;
-  }
-  .onboard-meta {
-    font-size: 11px;
-    color: var(--muted);
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    margin-bottom: 8px;
-    text-transform: uppercase;
-  }
-  .onboard-title {
-    font-size: 20px; font-weight: 800;
-    color: var(--ink-dark); margin: 0 0 10px;
-    letter-spacing: -0.5px;
-  }
-  .onboard-desc {
-    font-size: 14px; color: var(--muted);
-    line-height: 1.65; margin: 0;
-  }
-  .onboard-desc b {
-    color: var(--sb-accent); font-weight: 800;
-  }
-  .onboard-inline-cta {
-    margin-top: 16px;
-    padding: 10px 20px;
-    background: transparent;
-    border: 1.5px solid var(--sb-accent);
-    color: var(--sb-accent);
-    border-radius: 999px;
-    font-size: 13px; font-weight: 700;
-    cursor: pointer;
-    font-family: inherit;
-    transition: background 0.15s, transform 0.1s;
-  }
-  .onboard-inline-cta:hover { background: var(--sb-accent-soft); }
-  .onboard-inline-cta:active { transform: scale(0.97); }
-  .onboard-dots {
-    display: flex; gap: 7px; justify-content: center;
-    margin: 22px 0 18px;
-  }
-  .onboard-dot {
-    width: 7px; height: 7px; border-radius: 999px;
-    background: var(--border);
-    transition: background 0.25s, width 0.25s;
-  }
-  .onboard-dot.active {
-    background: var(--sb-accent);
-    width: 22px;
-  }
-  .onboard-actions {
-    display: flex; gap: 10px;
-  }
-  .onboard-btn-prev,
-  .onboard-btn-next {
-    padding: 13px; border-radius: 12px;
-    font-size: 14px; font-weight: 700;
-    cursor: pointer; font-family: inherit;
-    transition: filter 0.15s, background 0.15s;
-    min-height: 48px;
-  }
-  .onboard-btn-prev {
-    background: transparent; border: 1.5px solid var(--border);
-    color: var(--ink-dark); flex: 1;
-  }
-  .onboard-btn-prev:hover { background: var(--bg); }
-  .onboard-btn-next {
-    background: var(--ink); border: none; color: white;
-    flex: 2;
-    box-shadow: 0 4px 12px rgba(var(--ink-rgb), 0.22);
-  }
-  .onboard-btn-next:hover { filter: brightness(1.15); }
-
-  /* ── 온보딩 재진입 카드 (설정 모달 내) ── */
-  .onboard-retrigger {
-    width: 100%;
-    display: flex; align-items: center; gap: 14px;
-    padding: 16px 18px; margin-bottom: 18px;
-    background: linear-gradient(135deg, #fde8ec 0%, #f5e5f0 50%, #ece4f0 100%);
-    border: 1px solid #f2d8e0;
-    border-radius: 14px;
-    cursor: pointer;
-    font-family: inherit;
-    text-align: left;
-    box-shadow: 0 2px 10px rgba(201, 180, 214, 0.15);
-    transition: filter 0.15s, transform 0.1s, box-shadow 0.15s;
-  }
-  .onboard-retrigger:hover {
-    filter: brightness(1.03);
-    box-shadow: 0 4px 14px rgba(201, 180, 214, 0.25);
-  }
-  .onboard-retrigger:active { transform: scale(0.99); }
-  .onboard-retrigger-icon {
-    font-size: 24px; line-height: 1; flex-shrink: 0;
-  }
-  .onboard-retrigger-text {
-    flex: 1; display: flex; flex-direction: column; gap: 3px;
-    line-height: 1.35;
-  }
-  .onboard-retrigger-text b {
-    font-size: 14px; font-weight: 700;
-    color: var(--ink-dark);
-  }
-  .onboard-retrigger-text small {
-    font-size: 12px; font-weight: 500;
-    color: var(--muted);
-  }
-  .onboard-retrigger-arrow {
-    color: var(--ink-dark); font-size: 18px;
-    flex-shrink: 0; opacity: 0.55;
   }
 
   /* ── 설정 모달 (바텀시트) ── */
@@ -1072,11 +859,6 @@ gtag('config', 'G-9VCP0RKBY0');
     <button type="button" class="icon-btn icon-btn-accent" id="newRoomBtn">나도 쏘기</button>
   </div>
 
-  <footer class="footer">
-    <span class="footer-brand">커피 골든벨</span>
-    <span class="footer-sep">·</span>
-    <span class="footer-tagline">오늘 한 잔은 누가 쏘나요?</span>
-  </footer>
 </div>
 
 <!-- 설정 모달 -->
@@ -1703,8 +1485,9 @@ function renderMembersEditor() {
 // ════════════════════════════════════════════════════════════════
 function applyOwnerUI() {
   document.getElementById('shareBtn').classList.toggle('hide', !IS_OWNER);
-  document.getElementById('settingsBtn').classList.toggle('hide', !IS_OWNER);
-  document.querySelector('.header-top').classList.toggle('hide', !IS_OWNER);
+  // 설정 버튼: 모두에게 보임 (비방장은 읽기 전용)
+  document.getElementById('settingsBtn').classList.remove('hide');
+  document.querySelector('.header-top').classList.remove('hide');
   document.getElementById('resetBtn').classList.toggle('hide', !IS_OWNER);
   document.getElementById('resetGuestNote').classList.toggle('hide', IS_OWNER);
   document.getElementById('settingsGuestNote').classList.toggle('hide', IS_OWNER);
@@ -2086,6 +1869,7 @@ function lockFormIfDeadline() {
   const btn = document.getElementById('submitBtn');
   btn.textContent = '주문이 마감됐어요';
   btn.disabled = true;
+  switchTab('status');
 }
 
 function setCountdownText(label, time) {
