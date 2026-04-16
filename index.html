@@ -1091,6 +1091,8 @@ gtag('config', 'G-9VCP0RKBY0');
     </div>
     <label>이벤트 이름</label>
     <input type="text" id="cfgTitle" placeholder="예) 김과장 승진턱">
+    <label>쏘는 사람 <span class="label-optional">(선택)</span></label>
+    <input type="text" id="cfgHost" placeholder="예) 김과장" maxlength="20">
     <label>카페</label>
     <select id="cfgCafe"></select>
     <label>마감</label>
@@ -1105,16 +1107,8 @@ gtag('config', 'G-9VCP0RKBY0');
       <input type="text" id="memberAddInput" placeholder="이름 추가 후 Enter" maxlength="20">
       <button type="button" class="member-add-btn" id="memberAddBtn" aria-label="팀원 추가">+</button>
     </div>
-
-    <details class="addon-details" style="margin-top:18px">
-      <summary><span>추가 설정</span></summary>
-      <div style="padding-top:10px">
-        <label>쏘는 사람 <span class="label-optional">(선택)</span></label>
-        <input type="text" id="cfgHost" placeholder="예) 김과장" maxlength="20">
-        <label>부제목 <span class="label-optional">(선택)</span></label>
-        <input type="text" id="cfgDesc" placeholder="예) 오늘은 제가 쏩니다!">
-      </div>
-    </details>
+    <!-- 부제목: 화면 미노출, JS 참조용 -->
+    <input type="hidden" id="cfgDesc" value="">
 
     <button class="primary" id="cfgSaveBtn" style="margin-top:20px">저장하기</button>
     <hr class="modal-divider">
@@ -1717,7 +1711,7 @@ function applyOwnerUI() {
   document.getElementById('cfgSaveBtn').classList.toggle('hide', !IS_OWNER);
   document.getElementById('memberAddRow').classList.toggle('hide', !IS_OWNER);
   document.getElementById('summaryCard').classList.toggle('hide', !IS_OWNER);
-  ['cfgTitle','cfgHost','cfgDesc','cfgCafe','cfgDate','cfgTime'].forEach(id => {
+  ['cfgTitle','cfgHost','cfgCafe','cfgDate','cfgTime'].forEach(id => {
     document.getElementById(id).disabled = !IS_OWNER;
   });
   renderMembersEditor(); // × 버튼 가시성 재계산
@@ -2497,20 +2491,8 @@ function renderSummary() {
   }
   copyBtn.classList.remove('hide');
   const sortedMenus = buildGroupedOrders(orders);
-
-  // 체크된 잔 수 계산 (진행률 표시용)
-  let checkedCups = 0;
-  sortedMenus.forEach(([menu, g]) => {
-    g.sortedVariants.forEach(v => {
-      if (checkedVariants.has(makeVariantKey(menu, v))) checkedCups += v.count;
-    });
-  });
-
   const total = orders.length;
-  const allDone = checkedCups === total && total > 0;
-  let html = `<div class="summary-progress${allDone ? ' done' : ''}">
-    ${allDone ? '모든 주문 완료' : `${checkedCups} / ${total}잔 주문 완료`}
-  </div>`;
+  let html = `<div class="summary-progress">총 ${total}잔</div>`;
 
   sortedMenus.forEach(([menu, g]) => {
     html += `<div class="menu-group">
@@ -2520,21 +2502,14 @@ function renderSummary() {
       </div>
       <div class="menu-variants">`;
     g.sortedVariants.forEach(v => {
-      const vk = makeVariantKey(menu, v);
-      const checked = checkedVariants.has(vk);
-      const tempCls = v.temp === 'ICE' ? 'ice' : v.temp === 'HOT' ? 'hot' : '';
-      const tempBadge = v.temp ? `<span class="variant-temp ${tempCls}">${escapeHtml(v.temp)}</span>` : '';
-      const sizeText  = v.size ? `<span class="variant-size">${escapeHtml(v.size)}</span>` : '';
-      const addonsText = v.addons.length
-        ? `<span class="variant-addons">${escapeHtml(v.addons.join(', '))}</span>` : '';
-      const memoText  = v.memo
-        ? `<span class="variant-memo">${escapeHtml(v.memo)}</span>` : '';
-      const classes = `variant-row${v.memo ? ' has-memo' : ''}${checked ? ' checked' : ''}`;
-      html += `<label class="${classes}">
-        <input type="checkbox" class="variant-check" data-vkey="${escapeHtml(vk)}"${checked ? ' checked' : ''}>
-        <div class="variant-spec">${tempBadge}${sizeText}${addonsText}${memoText}</div>
-        <span class="count">× ${v.count}</span>
-      </label>`;
+      const parts = [v.temp, v.size].filter(Boolean);
+      if (v.addons.length) parts.push(v.addons.join(', '));
+      let line = parts.join(' ');
+      if (v.memo) line += ` <span style="color:var(--muted);font-size:11px">(${escapeHtml(v.memo)})</span>`;
+      html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 8px;font-size:13px;">
+        <span>${line}</span>
+        <span style="font-weight:700;color:var(--ink-dark)">× ${v.count}</span>
+      </div>`;
     });
     html += `</div></div>`;
   });
