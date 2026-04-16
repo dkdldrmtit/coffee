@@ -1479,7 +1479,6 @@ function applyOwnerUI() {
   document.getElementById('resetGuestNote').classList.toggle('hide', IS_OWNER);
   document.getElementById('settingsGuestNote').classList.toggle('hide', IS_OWNER);
   document.getElementById('cfgSaveBtn').classList.toggle('hide', !IS_OWNER);
-  document.getElementById('memberAddRow').classList.toggle('hide', !IS_OWNER);
   document.getElementById('summaryCard').classList.toggle('hide', !IS_OWNER);
   ['cfgTitle','cfgHost','cfgCafe','cfgDate','cfgTime'].forEach(id => {
     document.getElementById(id).disabled = !IS_OWNER;
