@@ -186,6 +186,11 @@ gtag('config', 'G-9VCP0RKBY0');
     font-size: 14px; line-height: 1.5;
   }
   .header p:empty { display: none; }
+  .header-sub {
+    font-size: 13px; font-weight: 500;
+    color: var(--muted); margin: 6px 0 0 14px;
+    letter-spacing: 0.2px;
+  }
   .header-meta {
     display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
     margin-top: 14px;
@@ -964,13 +969,12 @@ gtag('config', 'G-9VCP0RKBY0');
       </div>
     </div>
     <h1 id="pageTitle"></h1>
-    <div class="header-meta">
-      <span class="cafe-label" id="cafeLabel"></span>
-    </div>
-    <!-- 숨김 처리: JS에서 참조하므로 DOM에는 유지 -->
+    <p class="header-sub" id="headerSub"></p>
+    <!-- 숨김: JS 참조용 -->
     <p id="pageDesc" class="hide"></p>
-    <span class="host-label hide" id="hostLabel"></span>
-    <span class="owner-badge hide" id="ownerBadge"></span>
+    <span class="hide" id="cafeLabel"></span>
+    <span class="hide" id="hostLabel"></span>
+    <span class="hide" id="ownerBadge"></span>
   </header>
 
   <div class="countdown" id="countdown">
@@ -1503,17 +1507,12 @@ function applyConfig() {
   document.getElementById('pageTitle').textContent = CONFIG.title;
   document.getElementById('pageDesc').textContent = CONFIG.desc;
   document.title = `${CONFIG.title} · 커피 골든벨`;
-  // 쏘는 사람 라벨 — 설정돼있을 때만 노출
-  const hostLabel = document.getElementById('hostLabel');
-  if (hostLabel) {
-    const host = (CONFIG.host || '').trim();
-    if (host) {
-      hostLabel.innerHTML = `쏘는 사람 · <strong>${escapeHtml(host)}</strong>`;
-      hostLabel.classList.remove('hide');
-    } else {
-      hostLabel.classList.add('hide');
-    }
-  }
+  // 헤더 부제: 카페명 + 쏘는 사람을 한 줄로
+  const preset = CAFE_PRESETS[CONFIG.cafe] || CAFE_PRESETS.starbucks;
+  const host = (CONFIG.host || '').trim();
+  const subParts = [preset.name];
+  if (host) subParts.push(`${host}님이 쏩니다`);
+  document.getElementById('headerSub').textContent = subParts.join(' · ');
   applyCafeSizes();
   applyCafeMenus();
   calcDeadline();
