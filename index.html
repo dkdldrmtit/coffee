@@ -967,12 +967,13 @@ gtag('config', 'G-9VCP0RKBY0');
       </div>
     </div>
     <h1 id="pageTitle"></h1>
-    <p id="pageDesc"></p>
     <div class="header-meta">
       <span class="cafe-label" id="cafeLabel"></span>
-      <span class="host-label hide" id="hostLabel"></span>
-      <span class="owner-badge hide" id="ownerBadge">관리자</span>
     </div>
+    <!-- 숨김 처리: JS에서 참조하므로 DOM에는 유지 -->
+    <p id="pageDesc" class="hide"></p>
+    <span class="host-label hide" id="hostLabel"></span>
+    <span class="owner-badge hide" id="ownerBadge"></span>
   </header>
 
   <div class="countdown" id="countdown">
@@ -987,8 +988,7 @@ gtag('config', 'G-9VCP0RKBY0');
 
   <div class="tabs">
     <div class="tab active" data-tab="order">주문하기</div>
-    <div class="tab" data-tab="list">전체주문 <span id="orderCount" class="tab-badge"></span></div>
-    <div class="tab" data-tab="summary">요약</div>
+    <div class="tab" data-tab="status">주문현황 <span id="orderCount" class="tab-badge"></span></div>
   </div>
 
   <!-- ORDER TAB -->
@@ -1051,19 +1051,18 @@ gtag('config', 'G-9VCP0RKBY0');
   </div>
 
   <!-- LIST TAB -->
-  <div id="listTab" class="hide tab-content">
+  <!-- STATUS TAB (전체주문 + 요약 통합) -->
+  <div id="statusTab" class="hide tab-content">
     <div class="card">
+      <h3>주문 목록</h3>
       <div id="orderList">
         <div class="skeleton-line" style="width:65%"></div>
         <div class="skeleton-line" style="width:80%"></div>
         <div class="skeleton-line" style="width:50%"></div>
       </div>
     </div>
-  </div>
-
-  <!-- SUMMARY TAB -->
-  <div id="summaryTab" class="hide tab-content">
     <div class="card">
+      <h3>요약</h3>
       <div class="summary-hint-row hide" id="summaryHintRow">
         탭해서 주문 완료 체크해보세요
       </div>
@@ -1111,16 +1110,13 @@ gtag('config', 'G-9VCP0RKBY0');
     </div>
     <label>이벤트 이름</label>
     <input type="text" id="cfgTitle" placeholder="예) 김과장 승진턱">
-    <label>쏘는 사람 <span class="label-optional">(선택)</span></label>
-    <input type="text" id="cfgHost" placeholder="예) 김과장" maxlength="20">
-    <label>부제목</label>
-    <input type="text" id="cfgDesc" placeholder="예) 오늘은 제가 쏩니다!">
     <label>카페</label>
     <select id="cfgCafe"></select>
-    <label>마감 날짜</label>
-    <input type="date" id="cfgDate">
-    <label>마감 시각</label>
-    <input type="time" id="cfgTime">
+    <label>마감</label>
+    <div class="time-row">
+      <input type="date" id="cfgDate">
+      <input type="time" id="cfgTime">
+    </div>
 
     <label style="margin-top:18px">팀원 명단</label>
     <div class="members-chips" id="membersChips"></div>
@@ -1128,6 +1124,16 @@ gtag('config', 'G-9VCP0RKBY0');
       <input type="text" id="memberAddInput" placeholder="이름 추가 후 Enter" maxlength="20">
       <button type="button" class="member-add-btn" id="memberAddBtn" aria-label="팀원 추가">+</button>
     </div>
+
+    <details class="addon-details" style="margin-top:18px">
+      <summary><span>추가 설정</span></summary>
+      <div style="padding-top:10px">
+        <label>쏘는 사람 <span class="label-optional">(선택)</span></label>
+        <input type="text" id="cfgHost" placeholder="예) 김과장" maxlength="20">
+        <label>부제목 <span class="label-optional">(선택)</span></label>
+        <input type="text" id="cfgDesc" placeholder="예) 오늘은 제가 쏩니다!">
+      </div>
+    </details>
 
     <button class="primary" id="cfgSaveBtn" style="margin-top:20px">저장하기</button>
     <hr class="modal-divider">
@@ -2277,8 +2283,7 @@ function switchTab(target) {
     t.classList.toggle('active', t.dataset.tab === target);
   });
   document.getElementById('orderTab').classList.toggle('hide', target !== 'order');
-  document.getElementById('listTab').classList.toggle('hide', target !== 'list');
-  document.getElementById('summaryTab').classList.toggle('hide', target !== 'summary');
+  document.getElementById('statusTab').classList.toggle('hide', target !== 'status');
 }
 document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => switchTab(tab.dataset.tab));
@@ -2558,7 +2563,7 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
     document.getElementById('deleteBtn').classList.remove('hide');
     document.getElementById('orderEditHint').classList.remove('hide');
     // 주문 완료 → 전체주문 탭으로 자동 전환 (다음 액션 유도)
-    switchTab('list');
+    switchTab('status');
     renderList();
   } catch (e) {
     submitBtn.textContent = origText;
