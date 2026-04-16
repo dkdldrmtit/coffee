@@ -181,7 +181,8 @@
   }
   .new-room-wrap {
     padding: 12px 4px 0;
-    display: flex; justify-content: center;
+    display: flex; justify-content: center; gap: 8px;
+    flex-wrap: wrap;
   }
   .new-room-wrap .icon-btn {
     font-size: 13px; padding: 13px 28px;
@@ -1060,6 +1061,7 @@
   </div>
 
   <div class="new-room-wrap">
+    <button type="button" class="icon-btn" id="guestShareBtn">다른 사람에게도 공유</button>
     <button type="button" class="icon-btn icon-btn-accent" id="newRoomBtn">나도 쏘기</button>
   </div>
 
@@ -1791,7 +1793,7 @@ document.getElementById('newRoomBtn').addEventListener('click', () => {
   window.location.href = window.location.pathname;
 });
 
-document.getElementById('shareBtn').addEventListener('click', async () => {
+async function doShare() {
   const url = window.location.href;
   const hostLine = CONFIG.host && CONFIG.host.trim()
     ? `오늘은 ${CONFIG.host}님이 쏩니다!`
@@ -1848,7 +1850,9 @@ document.getElementById('shareBtn').addEventListener('click', async () => {
       alert(url);
     }
   }
-});
+}
+document.getElementById('shareBtn').addEventListener('click', doShare);
+document.getElementById('guestShareBtn').addEventListener('click', doShare);
 
 // ════════════════════════════════════════════════════════════════
 // 이름 입력 refs — 팀원 칩 리스트는 applyMembers() → renderNameChips()가 관리
