@@ -557,19 +557,11 @@ gtag('config', 'G-9VCP0RKBY0');
   .host-share-btn:active { transform: translateY(1px); }
   .host-empty {
     color: var(--muted); font-size: 14px;
-    padding: 20px 0 8px; margin: 0;
+    padding: 12px 0 4px; margin: 0;
   }
-  .host-order-item {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 8px 0; font-size: 13px;
-    border-bottom: 1px solid #f0f0f0;
-  }
-  .host-order-item:last-child { border-bottom: none; }
-  .host-order-name { font-weight: 600; color: var(--ink-dark); }
-  .host-order-menu { color: var(--muted); }
   .host-count {
     font-size: 15px; font-weight: 700; color: var(--ink-dark);
-    margin-bottom: 12px;
+    padding: 8px 0 4px;
   }
 
   .toast {
@@ -2212,20 +2204,12 @@ let prevOrderCount = 0;
 function renderHostDashboard() {
   const container = document.getElementById('hostDashContent');
   if (!container || !IS_OWNER) return;
-  const entries = Object.values(currentOrders).sort((a, b) => (b.ts || 0) - (a.ts || 0));
-  if (entries.length === 0) {
+  const count = Object.keys(currentOrders).length;
+  if (count === 0) {
     container.innerHTML = '<p class="host-empty">링크를 공유하면 여기에 주문이 하나씩 쌓여요</p>';
     return;
   }
-  let html = `<div class="host-count">${entries.length}명 주문 완료</div>`;
-  entries.forEach(o => {
-    const menu = [o.temp, o.size, o.menu].filter(Boolean).join(' ');
-    html += `<div class="host-order-item">
-      <span class="host-order-name">${escapeHtml(o.name)}</span>
-      <span class="host-order-menu">${escapeHtml(menu)}</span>
-    </div>`;
-  });
-  container.innerHTML = html;
+  container.innerHTML = `<div class="host-count">${count}명 주문 완료</div>`;
 }
 
 if (isConfigured) {
