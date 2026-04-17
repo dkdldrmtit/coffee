@@ -254,7 +254,7 @@
       </label>
       <input id="menuInput" type="text" list="menuList" placeholder="메뉴 검색 또는 직접 입력" autocomplete="off">
       <datalist id="menuList"></datalist>
-      <div class="field-hint">예) 아이스아메리카노 디카페인 · 라벤더 라떼 · 돌체라떼 연하게</div>
+      <div class="field-hint">줄임말 OK: 아아 · 따아 · 따라 · 아바라 · 콜브 …<br>예) 아이스아메리카노 디카페인 · 돌체라떼 연하게</div>
 
       <details class="addon-details">
         <summary>
@@ -413,6 +413,37 @@ const MENUS = [
 ];
 
 // ════════════════════════════════════════════════════════════════
+// 📝 줄임말 → 풀 메뉴 + 온도 매핑
+// "아아" 같이 입력하면 메뉴를 "아메리카노", 온도를 "ICE"로 자동 설정합니다.
+// 여기에 추가하면 자동완성 드롭다운에도 같이 노출됩니다.
+// ════════════════════════════════════════════════════════════════
+const MENU_SHORTCUTS = {
+  '아아':   { menu: '아메리카노',            temp: 'ICE' },
+  '따아':   { menu: '아메리카노',            temp: 'HOT' },
+  '뜨아':   { menu: '아메리카노',            temp: 'HOT' },
+  '아라':   { menu: '카페라떼',              temp: 'ICE' },
+  '따라':   { menu: '카페라떼',              temp: 'HOT' },
+  '뜨라':   { menu: '카페라떼',              temp: 'HOT' },
+  '아바라': { menu: '바닐라 라떼',           temp: 'ICE' },
+  '따바라': { menu: '바닐라 라떼',           temp: 'HOT' },
+  '아카라': { menu: '카라멜 마키아또',       temp: 'ICE' },
+  '따카라': { menu: '카라멜 마키아또',       temp: 'HOT' },
+  '아모카': { menu: '카페모카',              temp: 'ICE' },
+  '따모카': { menu: '카페모카',              temp: 'HOT' },
+  '아돌라': { menu: '돌체 라떼',             temp: 'ICE' },
+  '따돌라': { menu: '돌체 라떼',             temp: 'HOT' },
+  '콜브':   { menu: '콜드브루',              temp: 'ICE' },
+  '바크콜': { menu: '바닐라 크림 콜드브루',  temp: 'ICE' },
+  '돌콜':   { menu: '돌체 콜드브루',         temp: 'ICE' },
+  '자프':   { menu: '자바칩 프라푸치노',     temp: 'ICE' },
+  '카프':   { menu: '카라멜 프라푸치노',     temp: 'ICE' },
+  '디아':   { menu: '디카페인 아메리카노',   temp: 'ICE' },
+  '따디아': { menu: '디카페인 아메리카노',   temp: 'HOT' },
+  '디라':   { menu: '디카페인 카페라떼',     temp: 'ICE' },
+  '따디라': { menu: '디카페인 카페라떼',     temp: 'HOT' },
+};
+
+// ════════════════════════════════════════════════════════════════
 // Firebase 초기화
 // ════════════════════════════════════════════════════════════════
 let db = null, ordersRef = null;
@@ -442,10 +473,38 @@ TEAM_MEMBERS.forEach(name => {
 
 const menuInput = document.getElementById('menuInput');
 const menuList = document.getElementById('menuList');
+
+// 줄임말 먼저: 자동완성 상단에 노출되게 하고, 풀 이름을 힌트로 같이 보여줌
+Object.entries(MENU_SHORTCUTS).forEach(([shortcut, { menu, temp }]) => {
+  const opt = document.createElement('option');
+  opt.value = shortcut;
+  const tempLabel = temp === 'ICE' ? '아이스 ' : temp === 'HOT' ? '따뜻한 ' : '';
+  opt.label = '→ ' + tempLabel + menu;
+  opt.textContent = tempLabel + menu;
+  menuList.appendChild(opt);
+});
+
 MENUS.forEach(m => {
   const opt = document.createElement('option');
   opt.value = m;
   menuList.appendChild(opt);
+});
+
+// "아아" → "아메리카노" + ICE 처럼 줄임말을 풀어쓰기
+function expandMenuShortcut() {
+  const val = menuInput.value.trim();
+  const expansion = MENU_SHORTCUTS[val];
+  if (!expansion) return false;
+  menuInput.value = expansion.menu;
+  if (expansion.temp) setSingle('tempOptions', expansion.temp);
+  return true;
+}
+
+// datalist 선택 or 타이핑 후 포커스 이동 시 자동 풀이
+menuInput.addEventListener('change', expandMenuShortcut);
+// 엔터로 바로 제출하는 경우에도 풀이가 반영되도록
+menuInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') expandMenuShortcut();
 });
 
 // ════════════════════════════════════════════════════════════════
@@ -631,6 +690,7 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
   const name = nameInput.value.trim();
   if (!name) { alert('이름을 선택해주세요'); return; }
   if (isPastDeadline()) { alert('주문이 마감되었습니다 😢'); return; }
+  expandMenuShortcut();
   const menu = menuInput.value.trim();
   if (!menu) { alert('메뉴를 선택하거나 직접 입력해주세요'); return; }
 
