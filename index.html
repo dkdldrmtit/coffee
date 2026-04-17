@@ -292,6 +292,26 @@ gtag('config', 'G-9VCP0RKBY0');
   }
   details.addon-details > .chips { margin-top: 10px; }
   details.memo-details > textarea { margin-top: 10px; }
+
+  /* 요약 상세 접기/펼치기 */
+  details.summary-details {
+    margin: 12px 0;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #fafafa;
+  }
+  details.summary-details > summary {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 14px; cursor: pointer; list-style: none;
+    font-weight: 600; font-size: 13px; color: var(--ink-dark);
+  }
+  details.summary-details > summary::-webkit-details-marker { display: none; }
+  details.summary-details > summary::after {
+    content: "▼"; font-size: 9px; color: var(--muted);
+    transition: transform 0.2s ease;
+  }
+  details.summary-details[open] > summary::after { transform: rotate(180deg); }
+  details.summary-details > .summary-details-body { padding: 0 12px 12px; }
   .addon-count, .memo-indicator {
     font-size: 11px; font-weight: 500; color: var(--sb-accent);
     margin-left: 4px;
@@ -2326,7 +2346,12 @@ function renderSummary() {
   copyBtn.classList.remove('hide');
   const sortedMenus = buildGroupedOrders(orders);
   const total = orders.length;
-  let html = `<div class="summary-progress">총 ${total}잔</div>`;
+  const prev = list.querySelector('details.summary-details');
+  const wasOpen = prev ? prev.open : false;
+  let html = `<div class="summary-progress">총 ${total}잔</div>
+  <details class="summary-details"${wasOpen ? ' open' : ''}>
+    <summary><span>주문할 때 펼쳐서 확인하기</span></summary>
+    <div class="summary-details-body">`;
 
   sortedMenus.forEach(([menu, g]) => {
     html += `<div class="menu-group">
@@ -2348,7 +2373,9 @@ function renderSummary() {
     html += `</div></div>`;
   });
 
-  html += `<div class="summary-total">
+  html += `    </div>
+  </details>
+  <div class="summary-total">
     <span>총계</span>
     <span>${total}잔</span>
   </div>`;
