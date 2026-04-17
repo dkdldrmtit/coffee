@@ -2087,12 +2087,14 @@ function buildMenuDropdownEntries(filter) {
     });
   });
 
-  // 동일 (menu + temp) 중복 제거, priority 낮은 쪽 유지
+  // 동일 (menu + temp) 조합은 한 번만 표시.
+  // 줄임말(priority 0/1)이 일반 메뉴(priority 2)보다 먼저 오므로
+  // 줄임말 태그가 붙은 항목이 살아남고, 중복된 일반 항목은 제거됨.
   entries.sort((a, b) => a.priority - b.priority);
   const seen = new Set();
   const dedup = [];
   entries.forEach(e => {
-    const key = e.kind + '|' + e.menu + '|' + (e.temp || '');
+    const key = e.menu + '|' + (e.temp || '');
     if (seen.has(key)) return;
     seen.add(key);
     dedup.push(e);
