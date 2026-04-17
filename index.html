@@ -1087,7 +1087,7 @@ function getDefaultDeadline() {
   };
 }
 
-const DEFAULT_CONFIG = { title: '오늘은 제가 쏩니다', desc: '마음껏 골라주세요', host: '', date: '', hour: 0, minute: 0, cafe: 'starbucks' };
+const DEFAULT_CONFIG = { title: '커피 주문받아요', desc: '마감 전까지 골라주세요', host: '', date: '', hour: 0, minute: 0, cafe: 'starbucks' };
 let CONFIG = { ...DEFAULT_CONFIG, ...getDefaultDeadline() };
 
 // ════════════════════════════════════════════════════════════════
@@ -1550,45 +1550,53 @@ document.getElementById('newRoomBtn').addEventListener('click', () => {
 
 async function doShare() {
   if (typeof gtag === 'function') gtag('event', 'share_clicked');
+
+  // 방장이 마감시간을 안 정했으면 공유 막고 설정 모달 열기
+  if (IS_OWNER && !CONFIG.date) {
+    toast('먼저 마감시간을 정해주세요');
+    openSettingsModal();
+    return;
+  }
+
   const url = window.location.href;
-  const hostLine = CONFIG.host && CONFIG.host.trim()
-    ? `오늘은 ${CONFIG.host}님이 쏩니다!`
-    : (CONFIG.desc || '오늘은 제가 쏩니다!');
+  const hasHost = !!(CONFIG.host && CONFIG.host.trim());
+  const hostLine = hasHost
+    ? `${CONFIG.host}님이 쏩니다!`
+    : (CONFIG.desc || '');
   const cafeName = (CAFE_PRESETS[CONFIG.cafe] || CAFE_PRESETS.starbucks).name;
 
-  // 1순위: Kakao sendCustom — 카카오 콘솔에 저장한 메시지 템플릿 사용
-  // 템플릿 ID: 132213 (메시지 템플릿 빌더에서 디자인한 것)
+  // 1순위: Kakao sendCustom — host가 있을 때만 "님이 쏩니다" 템플릿 사용
+  // host 없으면 sendScrap(OG 스크랩)으로 중립 카드 전송
   if (window.Kakao && window.Kakao.isInitialized() && window.Kakao.Share) {
-    try {
-      window.Kakao.Share.sendCustom({
-        templateId: 132213,
-        templateArgs: {
-          // 메시지 내용 변수 (여러 가능성 대응)
-          title: CONFIG.title,
-          host: (CONFIG.host && CONFIG.host.trim()) || '제가',
-          cafe: cafeName,
-          // 방 코드 변수 (카카오 템플릿 필드명 불일치 대비 여러 이름으로 중복 전달)
-          roomCode: ROOM_ID,
-          roomcode: ROOM_ID,
-          room_code: ROOM_ID,
-          room: ROOM_ID,
-          code: ROOM_ID,
-        },
-      });
-      return;
-    } catch (e) {
-      console.warn('Kakao sendCustom 실패, sendScrap으로 폴백:', e);
-      // 폴백: sendScrap (OG 스크랩)
+    if (hasHost) {
       try {
-        window.Kakao.Share.sendScrap({ requestUrl: url });
+        window.Kakao.Share.sendCustom({
+          templateId: 132213,
+          templateArgs: {
+            title: CONFIG.title,
+            host: CONFIG.host.trim(),
+            cafe: cafeName,
+            roomCode: ROOM_ID,
+            roomcode: ROOM_ID,
+            room_code: ROOM_ID,
+            room: ROOM_ID,
+            code: ROOM_ID,
+          },
+        });
         return;
-      } catch (e2) {
-        console.warn('Kakao sendScrap도 실패, 기본 공유로 대체:', e2);
+      } catch (e) {
+        console.warn('Kakao sendCustom 실패, sendScrap으로 폴백:', e);
       }
+    }
+    try {
+      window.Kakao.Share.sendScrap({ requestUrl: url });
+      return;
+    } catch (e2) {
+      console.warn('Kakao sendScrap 실패, 기본 공유로 대체:', e2);
     }
   }
 
-  // 2순위: navigator.share / 클립보드 (카카오 SDK 미로드/미지원 시 폴백)
+  // 2순위: navigator.share / 클립보드
   const shareText = [CONFIG.title, hostLine, `방 코드: ${ROOM_ID}`].filter(Boolean).join('\n');
   try {
     if (navigator.share) {
