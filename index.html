@@ -2119,9 +2119,6 @@ function renderMenuDropdown(filter = '') {
   menuDropdown.innerHTML = entries.map((e, i) => {
     const displayName = menuDisplayName(e.menu, e.temp);
     const sub = (e.temp || 'ICE') + (firstSize ? ' · ' + firstSize : '');
-    const tag = e.kind === 'shortcut'
-      ? `<span class="shortcut-tag">${escapeHtml(e.shortcut)}</span>`
-      : '';
     return `
       <div class="menu-item" data-idx="${i}" role="option">
         <div class="menu-thumb">
@@ -2130,7 +2127,7 @@ function renderMenuDropdown(filter = '') {
                onerror="window._menuImgFallback(this)">
         </div>
         <div class="menu-text">
-          <div class="menu-name">${tag}${escapeHtml(displayName)}</div>
+          <div class="menu-name">${escapeHtml(displayName)}</div>
           <div class="menu-sub">${escapeHtml(sub)}</div>
         </div>
       </div>`;
