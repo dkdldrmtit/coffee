@@ -74,6 +74,60 @@
     margin-top: 6px; padding-left: 2px;
     line-height: 1.45;
   }
+  .cafe-badge {
+    font-size: 11px; font-weight: 600; color: white;
+    background: var(--sb-green); padding: 3px 10px;
+    border-radius: 999px; white-space: nowrap;
+  }
+  .menu-picker { position: relative; }
+  .menu-dropdown {
+    position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+    background: white; border-radius: 12px;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.14), 0 2px 6px rgba(0, 0, 0, 0.06);
+    max-height: 320px; overflow-y: auto; z-index: 20;
+    padding: 4px; -webkit-overflow-scrolling: touch;
+  }
+  .menu-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 8px; border-radius: 10px;
+    cursor: pointer; transition: background 0.1s;
+  }
+  .menu-item:active,
+  .menu-item.highlighted { background: var(--sb-light); }
+  .menu-thumb {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: #f5f1ea; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .menu-thumb img {
+    width: 100%; height: 100%; object-fit: cover;
+    display: block;
+  }
+  .menu-thumb-fallback {
+    font-size: 22px; line-height: 1;
+  }
+  .menu-text { min-width: 0; flex: 1; }
+  .menu-name {
+    font-weight: 600; font-size: 14px;
+    color: var(--sb-green-dark);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .menu-name .shortcut-tag {
+    display: inline-block; font-size: 10px; font-weight: 700;
+    color: var(--sb-accent);
+    background: rgba(203, 162, 88, 0.12);
+    padding: 1px 6px; border-radius: 4px;
+    margin-right: 6px; vertical-align: middle;
+  }
+  .menu-sub {
+    font-size: 11px; color: var(--muted); margin-top: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .menu-empty {
+    text-align: center; color: #aaa; padding: 20px 10px;
+    font-size: 13px;
+  }
   details.addon-details {
     margin: 14px 0 8px;
   }
@@ -211,7 +265,7 @@
 <div class="container">
   <div class="header">
     <h1>☕️ 아들 탄생 기념 커피 한 잔 ☕️</h1>
-    <p>축하해주셔서 감사합니다 🙏<br>메뉴 선택해주세요!</p>
+    <p id="headerSubtitle">축하해주셔서 감사합니다 🙏<br>메뉴 선택해주세요!</p>
   </div>
 
   <div class="countdown" id="countdown">⏰ 마감까지 --:--:--</div>
@@ -250,11 +304,13 @@
 
       <label>
         메뉴
-        <a class="ext-link" href="https://www.starbucks.co.kr/menu/drink_list.do" target="_blank" rel="noopener">📱 스벅 메뉴 보기</a>
+        <span class="cafe-badge" id="cafeBadge"></span>
       </label>
-      <input id="menuInput" type="text" list="menuList" placeholder="메뉴 검색 또는 직접 입력" autocomplete="off">
-      <datalist id="menuList"></datalist>
-      <div class="field-hint">줄임말 OK: 아아 · 따아 · 따라 · 아바라 · 콜브 …<br>예) 아이스아메리카노 디카페인 · 돌체라떼 연하게</div>
+      <div class="menu-picker" id="menuPicker">
+        <input id="menuInput" type="text" placeholder="메뉴 또는 줄임말 (예: 아아)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        <div class="menu-dropdown hide" id="menuDropdown" role="listbox"></div>
+      </div>
+      <div class="field-hint">줄임말 OK: 아아 · 따아 · 따라 · 아바라 · 콜브 …</div>
 
       <details class="addon-details">
         <summary>
@@ -355,93 +411,209 @@ const TEAM_MEMBERS = [
 ];
 
 // ════════════════════════════════════════════════════════════════
-// ☕️ 스타벅스 메뉴 (평균적인 인기순 — 위로 갈수록 많이 시킴)
-// 여기에 없는 시즌/신메뉴는 입력란에 직접 타이핑하면 주문 가능합니다.
+// ☕️ 카페별 메뉴 카탈로그
+// - 새 카페 추가 = 이 객체에 한 덩어리 더 붙이면 됩니다.
+// - 각 메뉴의 id는 이미지 파일명과 매칭: ./images/{cafeId}/{id}.webp
+//   이미지 파일이 없으면 자동으로 카테고리 이모지로 폴백됩니다.
+// - defaultTemp 는 드롭다운 서브텍스트(ICE · Tall) 기본값
 // ════════════════════════════════════════════════════════════════
-const MENUS = [
-  // 스테디 셀러 (가장 많이 시키는 메뉴)
-  "아메리카노",
-  "카페라떼",
-  "바닐라 라떼",
-  "카라멜 마키아또",
-  "카페모카",
-  "돌체 라떼",
-  "콜드브루",
-  "바닐라 크림 콜드브루",
-  "자바칩 프라푸치노",
-  "카라멜 프라푸치노",
-  "디카페인 아메리카노",
-  "카푸치노",
-  "제주 유기농 말차로 만든 라떼",
-  "헤이즐넛 라떼",
-  "디카페인 카페라떼",
-  // 중간 인기
-  "돌체 콜드브루",
-  "모카 프라푸치노",
-  "화이트 초콜릿 모카",
-  "차이 티 라떼",
-  "자몽 허니 블랙 티",
-  "그린 티 크림 프라푸치노",
-  "딸기 딜라이트 요거트 블렌디드",
-  "망고 바나나 블렌디드",
-  "바닐라 크림 프라푸치노",
-  "핫초콜릿",
-  "카라멜 모카",
-  "플랫 화이트",
-  // 가끔 시키는 메뉴
-  "나이트로 콜드브루",
-  "나이트로 바닐라 크림",
-  "벨벳 다크 모카 나이트로",
-  "화이트 초콜릿 모카 프라푸치노",
-  "자바칩 민트 초콜릿 프라푸치노",
-  "에스프레소 프라푸치노",
-  "피치 요거트 블렌디드",
-  "유자 민트 티",
-  "잉글리쉬 브렉퍼스트 티",
-  "얼 그레이 티",
-  "캐모마일 티",
-  "히비스커스 블렌드 티",
-  "민트 블렌드 티",
-  "화이트 핫초콜릿",
-  "쿨 라임 피지오",
-  "블랙 티 레모네이드 피지오",
-  "패션 탱고 티 레모네이드 피지오",
-  // 에스프레소 매니아용
-  "에스프레소",
-  "에스프레소 마키아또",
-  "에스프레소 콘파나",
-];
+const CATEGORY_EMOJI = {
+  coffee:      '☕',
+  latte:       '🥛',
+  coldbrew:    '🧊',
+  frappuccino: '🥤',
+  tea:         '🍵',
+  chocolate:   '🍫',
+  fizzio:      '🍋',
+  blended:     '🥭',
+  espresso:    '☕',
+  smoothie:    '🥤',
+  ade:         '🍋',
+};
+
+const CAFES = {
+  starbucks: {
+    name: '스타벅스',
+    theme: { primary: '#006241', light: '#d4e9e2', dark: '#1e3932' },
+    imageDir: './images/starbucks/',
+    menus: [
+      { id: 'americano',              name: '카페 아메리카노',              category: 'coffee',      defaultTemp: 'ICE' },
+      { id: 'latte',                  name: '카페라떼',                     category: 'latte',       defaultTemp: 'ICE' },
+      { id: 'vanilla_latte',          name: '바닐라 라떼',                  category: 'latte',       defaultTemp: 'ICE' },
+      { id: 'caramel_macchiato',      name: '카라멜 마키아또',              category: 'latte',       defaultTemp: 'ICE' },
+      { id: 'cafe_mocha',             name: '카페모카',                     category: 'chocolate',   defaultTemp: 'ICE' },
+      { id: 'dolce_latte',            name: '돌체 라떼',                    category: 'latte',       defaultTemp: 'ICE' },
+      { id: 'coldbrew',               name: '콜드브루',                     category: 'coldbrew',    defaultTemp: 'ICE' },
+      { id: 'vanilla_cream_coldbrew', name: '바닐라 크림 콜드브루',         category: 'coldbrew',    defaultTemp: 'ICE' },
+      { id: 'javachip_frappuccino',   name: '자바칩 프라푸치노',            category: 'frappuccino', defaultTemp: 'ICE' },
+      { id: 'caramel_frappuccino',    name: '카라멜 프라푸치노',            category: 'frappuccino', defaultTemp: 'ICE' },
+      { id: 'decaf_americano',        name: '디카페인 카페 아메리카노',     category: 'coffee',      defaultTemp: 'ICE' },
+      { id: 'cappuccino',             name: '카푸치노',                     category: 'latte',       defaultTemp: 'HOT' },
+      { id: 'green_tea_latte',        name: '제주 유기농 말차로 만든 라떼', category: 'latte',       defaultTemp: 'ICE' },
+      { id: 'hazelnut_latte',         name: '헤이즐넛 라떼',                category: 'latte',       defaultTemp: 'ICE' },
+      { id: 'decaf_latte',            name: '디카페인 카페라떼',            category: 'latte',       defaultTemp: 'ICE' },
+      { id: 'dolce_coldbrew',         name: '돌체 콜드브루',                category: 'coldbrew',    defaultTemp: 'ICE' },
+      { id: 'mocha_frappuccino',      name: '모카 프라푸치노',              category: 'frappuccino', defaultTemp: 'ICE' },
+      { id: 'white_choco_mocha',      name: '화이트 초콜릿 모카',           category: 'chocolate',   defaultTemp: 'ICE' },
+      { id: 'chai_tea_latte',         name: '차이 티 라떼',                 category: 'tea',         defaultTemp: 'ICE' },
+      { id: 'grapefruit_honey_tea',   name: '자몽 허니 블랙 티',            category: 'tea',         defaultTemp: 'ICE' },
+      { id: 'green_tea_cream_frap',   name: '그린 티 크림 프라푸치노',      category: 'frappuccino', defaultTemp: 'ICE' },
+      { id: 'strawberry_yogurt',      name: '딸기 딜라이트 요거트 블렌디드', category: 'blended',    defaultTemp: 'ICE' },
+      { id: 'mango_banana_blended',   name: '망고 바나나 블렌디드',         category: 'blended',     defaultTemp: 'ICE' },
+      { id: 'vanilla_cream_frap',     name: '바닐라 크림 프라푸치노',       category: 'frappuccino', defaultTemp: 'ICE' },
+      { id: 'hot_chocolate',          name: '핫초콜릿',                     category: 'chocolate',   defaultTemp: 'HOT' },
+      { id: 'caramel_mocha',          name: '카라멜 모카',                  category: 'chocolate',   defaultTemp: 'ICE' },
+      { id: 'flat_white',             name: '플랫 화이트',                  category: 'latte',       defaultTemp: 'HOT' },
+      { id: 'nitro_coldbrew',         name: '나이트로 콜드브루',            category: 'coldbrew',    defaultTemp: 'ICE' },
+      { id: 'nitro_vanilla_cream',    name: '나이트로 바닐라 크림',         category: 'coldbrew',    defaultTemp: 'ICE' },
+      { id: 'velvet_dark_mocha',      name: '벨벳 다크 모카 나이트로',      category: 'coldbrew',    defaultTemp: 'ICE' },
+      { id: 'white_choco_mocha_frap', name: '화이트 초콜릿 모카 프라푸치노', category: 'frappuccino', defaultTemp: 'ICE' },
+      { id: 'javachip_mint_frap',     name: '자바칩 민트 초콜릿 프라푸치노', category: 'frappuccino', defaultTemp: 'ICE' },
+      { id: 'espresso_frappuccino',   name: '에스프레소 프라푸치노',        category: 'frappuccino', defaultTemp: 'ICE' },
+      { id: 'peach_yogurt',           name: '피치 요거트 블렌디드',         category: 'blended',     defaultTemp: 'ICE' },
+      { id: 'yuja_mint_tea',          name: '유자 민트 티',                 category: 'tea',         defaultTemp: 'HOT' },
+      { id: 'english_breakfast_tea',  name: '잉글리쉬 브렉퍼스트 티',       category: 'tea',         defaultTemp: 'HOT' },
+      { id: 'earl_grey_tea',          name: '얼 그레이 티',                 category: 'tea',         defaultTemp: 'HOT' },
+      { id: 'chamomile_tea',          name: '캐모마일 티',                  category: 'tea',         defaultTemp: 'HOT' },
+      { id: 'hibiscus_tea',           name: '히비스커스 블렌드 티',         category: 'tea',         defaultTemp: 'HOT' },
+      { id: 'mint_blend_tea',         name: '민트 블렌드 티',               category: 'tea',         defaultTemp: 'HOT' },
+      { id: 'white_hot_chocolate',    name: '화이트 핫초콜릿',              category: 'chocolate',   defaultTemp: 'HOT' },
+      { id: 'cool_lime_fizzio',       name: '쿨 라임 피지오',               category: 'fizzio',      defaultTemp: 'ICE' },
+      { id: 'black_tea_lemonade',     name: '블랙 티 레모네이드 피지오',    category: 'fizzio',      defaultTemp: 'ICE' },
+      { id: 'passion_tango_lemonade', name: '패션 탱고 티 레모네이드 피지오', category: 'fizzio',    defaultTemp: 'ICE' },
+      { id: 'espresso',               name: '에스프레소',                   category: 'espresso',    defaultTemp: 'HOT' },
+      { id: 'espresso_macchiato',     name: '에스프레소 마키아또',          category: 'espresso',    defaultTemp: 'HOT' },
+      { id: 'espresso_conpana',       name: '에스프레소 콘파나',            category: 'espresso',    defaultTemp: 'HOT' },
+    ],
+    shortcuts: {
+      '아아':   { menuId: 'americano',              temp: 'ICE' },
+      '따아':   { menuId: 'americano',              temp: 'HOT' },
+      '뜨아':   { menuId: 'americano',              temp: 'HOT' },
+      '아라':   { menuId: 'latte',                  temp: 'ICE' },
+      '따라':   { menuId: 'latte',                  temp: 'HOT' },
+      '뜨라':   { menuId: 'latte',                  temp: 'HOT' },
+      '아바라': { menuId: 'vanilla_latte',          temp: 'ICE' },
+      '따바라': { menuId: 'vanilla_latte',          temp: 'HOT' },
+      '아카라': { menuId: 'caramel_macchiato',      temp: 'ICE' },
+      '따카라': { menuId: 'caramel_macchiato',      temp: 'HOT' },
+      '아모카': { menuId: 'cafe_mocha',             temp: 'ICE' },
+      '따모카': { menuId: 'cafe_mocha',             temp: 'HOT' },
+      '아돌라': { menuId: 'dolce_latte',            temp: 'ICE' },
+      '따돌라': { menuId: 'dolce_latte',            temp: 'HOT' },
+      '콜브':   { menuId: 'coldbrew',               temp: 'ICE' },
+      '바크콜': { menuId: 'vanilla_cream_coldbrew', temp: 'ICE' },
+      '돌콜':   { menuId: 'dolce_coldbrew',         temp: 'ICE' },
+      '자프':   { menuId: 'javachip_frappuccino',   temp: 'ICE' },
+      '카프':   { menuId: 'caramel_frappuccino',    temp: 'ICE' },
+      '디아':   { menuId: 'decaf_americano',        temp: 'ICE' },
+      '따디아': { menuId: 'decaf_americano',        temp: 'HOT' },
+      '디라':   { menuId: 'decaf_latte',            temp: 'ICE' },
+      '따디라': { menuId: 'decaf_latte',            temp: 'HOT' },
+    },
+  },
+
+  mega: {
+    name: '메가MGC커피',
+    theme: { primary: '#FEB60D', light: '#fff4d0', dark: '#4a3b00' },
+    imageDir: './images/mega/',
+    menus: [
+      { id: 'americano',         name: '아메리카노',           category: 'coffee',      defaultTemp: 'ICE' },
+      { id: 'latte',             name: '카페라떼',             category: 'latte',       defaultTemp: 'ICE' },
+      { id: 'vanilla_latte',     name: '바닐라 라떼',          category: 'latte',       defaultTemp: 'ICE' },
+      { id: 'caramel_latte',     name: '카라멜 라떼',          category: 'latte',       defaultTemp: 'ICE' },
+      { id: 'choco_latte',       name: '초코 라떼',            category: 'chocolate',   defaultTemp: 'ICE' },
+      { id: 'mint_choco_latte',  name: '민트 초코 라떼',       category: 'chocolate',   defaultTemp: 'ICE' },
+      { id: 'dolce_latte',       name: '돌체 라떼',            category: 'latte',       defaultTemp: 'ICE' },
+      { id: 'coldbrew',          name: '콜드브루',             category: 'coldbrew',    defaultTemp: 'ICE' },
+      { id: 'mega_coffee',       name: '메가 커피',            category: 'coffee',      defaultTemp: 'ICE' },
+      { id: 'mega_shake',        name: '메가 쉐이크',          category: 'frappuccino', defaultTemp: 'ICE' },
+      { id: 'strawberry_latte',  name: '딸기 라떼',            category: 'blended',     defaultTemp: 'ICE' },
+      { id: 'strawberry_smoothie', name: '딸기 스무디',        category: 'smoothie',    defaultTemp: 'ICE' },
+      { id: 'mango_smoothie',    name: '망고 스무디',          category: 'smoothie',    defaultTemp: 'ICE' },
+      { id: 'blueberry_smoothie', name: '블루베리 스무디',     category: 'smoothie',    defaultTemp: 'ICE' },
+      { id: 'lemon_ade',         name: '레몬 에이드',          category: 'ade',         defaultTemp: 'ICE' },
+      { id: 'grapefruit_ade',    name: '자몽 에이드',          category: 'ade',         defaultTemp: 'ICE' },
+      { id: 'peach_ade',         name: '복숭아 에이드',        category: 'ade',         defaultTemp: 'ICE' },
+      { id: 'lemon_tea',         name: '레몬 티',              category: 'tea',         defaultTemp: 'ICE' },
+      { id: 'peach_tea',         name: '복숭아 티',            category: 'tea',         defaultTemp: 'ICE' },
+      { id: 'green_tea_latte',   name: '그린 티 라떼',         category: 'tea',         defaultTemp: 'ICE' },
+      { id: 'hot_chocolate',     name: '핫 초콜릿',            category: 'chocolate',   defaultTemp: 'HOT' },
+    ],
+    shortcuts: {
+      '아아':   { menuId: 'americano',        temp: 'ICE' },
+      '따아':   { menuId: 'americano',        temp: 'HOT' },
+      '뜨아':   { menuId: 'americano',        temp: 'HOT' },
+      '아라':   { menuId: 'latte',            temp: 'ICE' },
+      '따라':   { menuId: 'latte',            temp: 'HOT' },
+      '아바라': { menuId: 'vanilla_latte',    temp: 'ICE' },
+      '따바라': { menuId: 'vanilla_latte',    temp: 'HOT' },
+      '아카라': { menuId: 'caramel_latte',    temp: 'ICE' },
+      '따카라': { menuId: 'caramel_latte',    temp: 'HOT' },
+      '아초':   { menuId: 'choco_latte',      temp: 'ICE' },
+      '따초':   { menuId: 'choco_latte',      temp: 'HOT' },
+      '콜브':   { menuId: 'coldbrew',         temp: 'ICE' },
+    },
+  },
+
+  compose: {
+    name: '컴포즈커피',
+    theme: { primary: '#442D1F', light: '#eee4d9', dark: '#2a1a0e' },
+    imageDir: './images/compose/',
+    menus: [
+      { id: 'americano',         name: '아메리카노',           category: 'coffee',      defaultTemp: 'ICE' },
+      { id: 'latte',             name: '카페라떼',             category: 'latte',       defaultTemp: 'ICE' },
+      { id: 'vanilla_latte',     name: '바닐라 라떼',          category: 'latte',       defaultTemp: 'ICE' },
+      { id: 'caramel_latte',     name: '카라멜 라떼',          category: 'latte',       defaultTemp: 'ICE' },
+      { id: 'connect_latte',     name: '컨넥트 라떼',          category: 'latte',       defaultTemp: 'ICE' },
+      { id: 'dolce_latte',       name: '돌체 라떼',            category: 'latte',       defaultTemp: 'ICE' },
+      { id: 'cafe_mocha',        name: '카페 모카',            category: 'chocolate',   defaultTemp: 'ICE' },
+      { id: 'coldbrew',          name: '콜드브루',             category: 'coldbrew',    defaultTemp: 'ICE' },
+      { id: 'coldbrew_latte',    name: '콜드브루 라떼',        category: 'coldbrew',    defaultTemp: 'ICE' },
+      { id: 'einspanner',        name: '아인슈페너',           category: 'coffee',      defaultTemp: 'ICE' },
+      { id: 'strawberry_latte',  name: '딸기 라떼',            category: 'blended',     defaultTemp: 'ICE' },
+      { id: 'strawberry_smoothie', name: '딸기 스무디',        category: 'smoothie',    defaultTemp: 'ICE' },
+      { id: 'mango_smoothie',    name: '망고 스무디',          category: 'smoothie',    defaultTemp: 'ICE' },
+      { id: 'yogurt_smoothie',   name: '플레인 요거트 스무디', category: 'smoothie',    defaultTemp: 'ICE' },
+      { id: 'lemon_ade',         name: '레몬 에이드',          category: 'ade',         defaultTemp: 'ICE' },
+      { id: 'grapefruit_ade',    name: '자몽 에이드',          category: 'ade',         defaultTemp: 'ICE' },
+      { id: 'green_tea_latte',   name: '녹차 라떼',            category: 'tea',         defaultTemp: 'ICE' },
+      { id: 'milk_tea',          name: '밀크 티',              category: 'tea',         defaultTemp: 'ICE' },
+      { id: 'hot_chocolate',     name: '핫 초콜릿',            category: 'chocolate',   defaultTemp: 'HOT' },
+    ],
+    shortcuts: {
+      '아아':   { menuId: 'americano',        temp: 'ICE' },
+      '따아':   { menuId: 'americano',        temp: 'HOT' },
+      '뜨아':   { menuId: 'americano',        temp: 'HOT' },
+      '아라':   { menuId: 'latte',            temp: 'ICE' },
+      '따라':   { menuId: 'latte',            temp: 'HOT' },
+      '아바라': { menuId: 'vanilla_latte',    temp: 'ICE' },
+      '따바라': { menuId: 'vanilla_latte',    temp: 'HOT' },
+      '아카라': { menuId: 'caramel_latte',    temp: 'ICE' },
+      '따카라': { menuId: 'caramel_latte',    temp: 'HOT' },
+      '아돌라': { menuId: 'dolce_latte',      temp: 'ICE' },
+      '콜브':   { menuId: 'coldbrew',         temp: 'ICE' },
+      '아인':   { menuId: 'einspanner',       temp: 'ICE' },
+    },
+  },
+};
 
 // ════════════════════════════════════════════════════════════════
-// 📝 줄임말 → 풀 메뉴 + 온도 매핑
-// "아아" 같이 입력하면 메뉴를 "아메리카노", 온도를 "ICE"로 자동 설정합니다.
-// 여기에 추가하면 자동완성 드롭다운에도 같이 노출됩니다.
+// 현재 카페 결정 (URL ?cafe=mega 로 override 가능, 없으면 기본값)
 // ════════════════════════════════════════════════════════════════
-const MENU_SHORTCUTS = {
-  '아아':   { menu: '아메리카노',            temp: 'ICE' },
-  '따아':   { menu: '아메리카노',            temp: 'HOT' },
-  '뜨아':   { menu: '아메리카노',            temp: 'HOT' },
-  '아라':   { menu: '카페라떼',              temp: 'ICE' },
-  '따라':   { menu: '카페라떼',              temp: 'HOT' },
-  '뜨라':   { menu: '카페라떼',              temp: 'HOT' },
-  '아바라': { menu: '바닐라 라떼',           temp: 'ICE' },
-  '따바라': { menu: '바닐라 라떼',           temp: 'HOT' },
-  '아카라': { menu: '카라멜 마키아또',       temp: 'ICE' },
-  '따카라': { menu: '카라멜 마키아또',       temp: 'HOT' },
-  '아모카': { menu: '카페모카',              temp: 'ICE' },
-  '따모카': { menu: '카페모카',              temp: 'HOT' },
-  '아돌라': { menu: '돌체 라떼',             temp: 'ICE' },
-  '따돌라': { menu: '돌체 라떼',             temp: 'HOT' },
-  '콜브':   { menu: '콜드브루',              temp: 'ICE' },
-  '바크콜': { menu: '바닐라 크림 콜드브루',  temp: 'ICE' },
-  '돌콜':   { menu: '돌체 콜드브루',         temp: 'ICE' },
-  '자프':   { menu: '자바칩 프라푸치노',     temp: 'ICE' },
-  '카프':   { menu: '카라멜 프라푸치노',     temp: 'ICE' },
-  '디아':   { menu: '디카페인 아메리카노',   temp: 'ICE' },
-  '따디아': { menu: '디카페인 아메리카노',   temp: 'HOT' },
-  '디라':   { menu: '디카페인 카페라떼',     temp: 'ICE' },
-  '따디라': { menu: '디카페인 카페라떼',     temp: 'HOT' },
-};
+const DEFAULT_CAFE = 'starbucks';
+const CURRENT_CAFE_ID = (() => {
+  const fromUrl = new URLSearchParams(location.search).get('cafe');
+  return fromUrl && CAFES[fromUrl] ? fromUrl : DEFAULT_CAFE;
+})();
+const ACTIVE_CAFE = CAFES[CURRENT_CAFE_ID];
+
+// 카페 테마 색상을 CSS 변수에 반영
+if (ACTIVE_CAFE.theme) {
+  const root = document.documentElement.style;
+  root.setProperty('--sb-green',      ACTIVE_CAFE.theme.primary);
+  root.setProperty('--sb-green-dark', ACTIVE_CAFE.theme.dark || ACTIVE_CAFE.theme.primary);
+  root.setProperty('--sb-light',      ACTIVE_CAFE.theme.light || '#e7efeb');
+}
 
 // ════════════════════════════════════════════════════════════════
 // Firebase 초기화
@@ -461,7 +633,7 @@ if (isConfigured) {
 }
 
 // ════════════════════════════════════════════════════════════════
-// 드롭다운 셋업 (이름 select + 메뉴 datalist)
+// 드롭다운 셋업 (이름 select + 메뉴 커스텀 드롭다운)
 // ════════════════════════════════════════════════════════════════
 const nameInput = document.getElementById('nameInput');
 TEAM_MEMBERS.forEach(name => {
@@ -472,40 +644,223 @@ TEAM_MEMBERS.forEach(name => {
 });
 
 const menuInput = document.getElementById('menuInput');
-const menuList = document.getElementById('menuList');
+const menuDropdown = document.getElementById('menuDropdown');
+const menuPicker = document.getElementById('menuPicker');
 
-// 줄임말 먼저: 자동완성 상단에 노출되게 하고, 풀 이름을 힌트로 같이 보여줌
-Object.entries(MENU_SHORTCUTS).forEach(([shortcut, { menu, temp }]) => {
-  const opt = document.createElement('option');
-  opt.value = shortcut;
-  const tempLabel = temp === 'ICE' ? '아이스 ' : temp === 'HOT' ? '따뜻한 ' : '';
-  opt.label = '→ ' + tempLabel + menu;
-  opt.textContent = tempLabel + menu;
-  menuList.appendChild(opt);
+// 카페 뱃지 & 헤더 서브타이틀에 현재 카페 이름 표기
+document.getElementById('cafeBadge').textContent = ACTIVE_CAFE.name;
+document.getElementById('headerSubtitle').innerHTML =
+  `축하해주셔서 감사합니다 🙏<br>${ACTIVE_CAFE.name}에서 드실 메뉴를 골라주세요!`;
+
+// 메뉴 id → menu 객체 조회 맵
+const MENU_BY_ID = Object.fromEntries(ACTIVE_CAFE.menus.map(m => [m.id, m]));
+
+// ── 이미지 로드 실패 시 카테고리 이모지로 폴백 ────────────
+window._menuImgFallback = function (img) {
+  const emoji = img.dataset.fallback || '☕';
+  const div = document.createElement('div');
+  div.className = 'menu-thumb-fallback';
+  div.textContent = emoji;
+  if (img.parentNode) img.parentNode.replaceChild(div, img);
+};
+
+function menuDisplayName(menu, temp) {
+  const prefix = temp === 'ICE' ? '아이스 ' : temp === 'HOT' ? '따뜻한 ' : '';
+  return prefix + menu.name;
+}
+
+function menuThumbHTML(menu) {
+  const emoji = CATEGORY_EMOJI[menu.category] || '☕';
+  const src = ACTIVE_CAFE.imageDir + menu.id + '.webp';
+  return `<div class="menu-thumb">
+    <img src="${src}" alt="" loading="lazy" data-fallback="${emoji}"
+         onerror="window._menuImgFallback(this)">
+  </div>`;
+}
+
+// ════════════════════════════════════════════════════════════════
+// 커스텀 메뉴 드롭다운
+// ════════════════════════════════════════════════════════════════
+let dropdownItems = [];    // 현재 렌더된 엔트리 배열
+let highlightedIdx = -1;
+
+function normalizeQ(s) {
+  return (s || '').toLowerCase().replace(/\s+/g, '');
+}
+
+function buildDropdownEntries(filter) {
+  const q = normalizeQ(filter);
+  const entries = [];
+  const seenMenuIds = new Set();
+
+  // 1) 줄임말: prefix 매치면 최상단, 그 외는 메뉴명 substring 매치
+  Object.entries(ACTIVE_CAFE.shortcuts).forEach(([short, spec]) => {
+    const menu = MENU_BY_ID[spec.menuId];
+    if (!menu) return;
+    const shortN = normalizeQ(short);
+    const prefixMatch = q && shortN.startsWith(q);
+    const nameMatch = q && normalizeQ(menu.name).includes(q);
+    if (q && !prefixMatch && !nameMatch) return;
+    entries.push({
+      kind: 'shortcut',
+      shortcut: short,
+      menu,
+      temp: spec.temp,
+      priority: prefixMatch ? 0 : 1,
+    });
+  });
+
+  // 2) 일반 메뉴 (substring 매치)
+  ACTIVE_CAFE.menus.forEach(menu => {
+    if (q && !normalizeQ(menu.name).includes(q)) return;
+    entries.push({
+      kind: 'menu',
+      menu,
+      temp: menu.defaultTemp,
+      priority: 2,
+    });
+  });
+
+  // 동일 메뉴에 대해 줄임말 2개 이상 뜨는 경우 정리:
+  // 우선순위 낮은 동일 menuId+temp 중복은 제거
+  const dedup = [];
+  const seen = new Set();
+  entries.sort((a, b) => a.priority - b.priority);
+  entries.forEach(e => {
+    const key = e.kind + ':' + e.menu.id + ':' + (e.temp || '');
+    if (seen.has(key)) return;
+    seen.add(key);
+    dedup.push(e);
+  });
+
+  return dedup;
+}
+
+function renderDropdown(filter = '') {
+  const entries = buildDropdownEntries(filter);
+  dropdownItems = entries;
+  highlightedIdx = -1;
+
+  if (entries.length === 0) {
+    menuDropdown.innerHTML =
+      '<div class="menu-empty">일치하는 메뉴가 없어요.<br>그대로 입력해도 주문할 수 있어요.</div>';
+    return;
+  }
+
+  menuDropdown.innerHTML = entries.map((e, i) => {
+    const displayName = menuDisplayName(e.menu, e.temp);
+    const sub = (e.temp || 'ICE') + ' · Tall';
+    const tag = e.kind === 'shortcut'
+      ? `<span class="shortcut-tag">${escapeHtml(e.shortcut)}</span>`
+      : '';
+    return `
+      <div class="menu-item" data-idx="${i}" role="option">
+        ${menuThumbHTML(e.menu)}
+        <div class="menu-text">
+          <div class="menu-name">${tag}${escapeHtml(displayName)}</div>
+          <div class="menu-sub">${escapeHtml(sub)}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function showDropdown() { menuDropdown.classList.remove('hide'); }
+
+function hideDropdown() {
+  menuDropdown.classList.add('hide');
+  highlightedIdx = -1;
+  menuDropdown.querySelectorAll('.menu-item.highlighted')
+    .forEach(el => el.classList.remove('highlighted'));
+}
+
+function updateHighlight() {
+  const items = menuDropdown.querySelectorAll('.menu-item');
+  items.forEach((el, i) => el.classList.toggle('highlighted', i === highlightedIdx));
+  const el = items[highlightedIdx];
+  if (el) el.scrollIntoView({ block: 'nearest' });
+}
+
+function selectEntry(entry) {
+  if (!entry) return;
+  menuInput.value = entry.menu.name;
+  const tempToSet = entry.temp || entry.menu.defaultTemp;
+  if (tempToSet) setSingle('tempOptions', tempToSet);
+  hideDropdown();
+  menuInput.blur(); // 모바일에서 키보드 내림
+}
+
+// ── 이벤트 바인딩 ────────────────────────────────────────
+menuInput.addEventListener('focus', () => {
+  renderDropdown(menuInput.value.trim());
+  showDropdown();
 });
 
-MENUS.forEach(m => {
-  const opt = document.createElement('option');
-  opt.value = m;
-  menuList.appendChild(opt);
+menuInput.addEventListener('input', () => {
+  renderDropdown(menuInput.value.trim());
+  showDropdown();
 });
 
-// "아아" → "아메리카노" + ICE 처럼 줄임말을 풀어쓰기
+// iOS: 드롭다운 터치 시 input이 먼저 blur되면 선택이 날아감 → 기본동작 막기
+menuDropdown.addEventListener('mousedown', e => e.preventDefault());
+menuDropdown.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
+
+menuDropdown.addEventListener('click', e => {
+  const item = e.target.closest('.menu-item');
+  if (!item) return;
+  const idx = parseInt(item.dataset.idx, 10);
+  selectEntry(dropdownItems[idx]);
+});
+
+menuInput.addEventListener('blur', () => {
+  // 드롭다운 클릭 처리가 끝날 시간을 잠시 줌
+  setTimeout(hideDropdown, 150);
+});
+
+menuInput.addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (dropdownItems.length === 0) return;
+    highlightedIdx = Math.min(highlightedIdx + 1, dropdownItems.length - 1);
+    updateHighlight();
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (dropdownItems.length === 0) return;
+    highlightedIdx = Math.max(highlightedIdx - 1, 0);
+    updateHighlight();
+  } else if (e.key === 'Enter') {
+    if (highlightedIdx >= 0 && dropdownItems[highlightedIdx]) {
+      e.preventDefault();
+      selectEntry(dropdownItems[highlightedIdx]);
+    } else {
+      // 아무 하이라이트도 없으면 줄임말 풀이 시도 후 blur
+      expandMenuShortcut();
+    }
+  } else if (e.key === 'Escape') {
+    hideDropdown();
+  }
+});
+
+document.addEventListener('click', e => {
+  if (!menuPicker.contains(e.target)) hideDropdown();
+});
+
+// ════════════════════════════════════════════════════════════════
+// "아아" → "카페 아메리카노" 자동 풀이 (드롭다운 미사용 경로)
+// ════════════════════════════════════════════════════════════════
 function expandMenuShortcut() {
   const val = menuInput.value.trim();
-  const expansion = MENU_SHORTCUTS[val];
-  if (!expansion) return false;
-  menuInput.value = expansion.menu;
-  if (expansion.temp) setSingle('tempOptions', expansion.temp);
+  const spec = ACTIVE_CAFE.shortcuts[val];
+  if (!spec) return false;
+  const menu = MENU_BY_ID[spec.menuId];
+  if (!menu) return false;
+  menuInput.value = menu.name;
+  if (spec.temp) setSingle('tempOptions', spec.temp);
   return true;
 }
 
-// datalist 선택 or 타이핑 후 포커스 이동 시 자동 풀이
+// 타이핑 후 포커스 이동 시 자동 풀이 (change 이벤트는 blur 시 발생)
 menuInput.addEventListener('change', expandMenuShortcut);
-// 엔터로 바로 제출하는 경우에도 풀이가 반영되도록
-menuInput.addEventListener('keydown', e => {
-  if (e.key === 'Enter') expandMenuShortcut();
-});
 
 // ════════════════════════════════════════════════════════════════
 // Chip 선택 UI
