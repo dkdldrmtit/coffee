@@ -271,6 +271,52 @@ gtag('config', 'G-9VCP0RKBY0');
   .field-hint .hint-muted {
     color: #a8a198; font-size: 10.5px;
   }
+  /* ── 메뉴 커스텀 드롭다운 ───────────────────────────── */
+  .menu-picker { position: relative; }
+  .menu-dropdown {
+    position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+    background: white; border-radius: 14px;
+    border: 1px solid var(--border);
+    box-shadow: 0 10px 28px rgba(var(--ink-rgb), 0.12),
+                0 2px 6px rgba(var(--ink-rgb), 0.06);
+    max-height: 320px; overflow-y: auto; z-index: 50;
+    padding: 4px; -webkit-overflow-scrolling: touch;
+  }
+  .menu-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 8px; border-radius: 10px;
+    cursor: pointer; transition: background 0.12s;
+  }
+  .menu-item:active,
+  .menu-item.highlighted { background: var(--sb-accent-soft); }
+  .menu-thumb {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: #fdf5e6; overflow: hidden; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .menu-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .menu-thumb-fallback { font-size: 22px; line-height: 1; }
+  .menu-text { min-width: 0; flex: 1; }
+  .menu-name {
+    font-weight: 600; font-size: 14px;
+    color: var(--ink-dark);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .menu-name .shortcut-tag {
+    display: inline-block; font-size: 10px; font-weight: 700;
+    color: var(--sb-accent-deep);
+    background: var(--sb-accent-soft);
+    padding: 1px 6px; border-radius: 4px;
+    margin-right: 6px; vertical-align: middle;
+  }
+  .menu-sub {
+    font-size: 11px; color: var(--muted); margin-top: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .menu-empty {
+    text-align: center; color: var(--muted); padding: 18px 10px;
+    font-size: 13px; line-height: 1.55;
+  }
   details.addon-details,
   details.memo-details {
     margin: 14px 0 8px;
@@ -854,7 +900,10 @@ gtag('config', 'G-9VCP0RKBY0');
         메뉴
         <a class="ext-link" id="sbuxMenuLink" href="https://www.starbucks.co.kr/menu/drink_list.do" target="_blank" rel="noopener">메뉴 보기</a>
       </label>
-      <input id="menuInput" type="text" placeholder="예) 아이스 아메리카노" autocomplete="off" maxlength="50">
+      <div class="menu-picker" id="menuPicker">
+        <input id="menuInput" type="text" placeholder="메뉴 또는 줄임말 (예: 아아)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" maxlength="50">
+        <div class="menu-dropdown hide" id="menuDropdown" role="listbox"></div>
+      </div>
 
       <details class="addon-details" id="detailOptions">
         <summary>
@@ -1269,6 +1318,128 @@ const CAFE_MENUS = {
 };
 
 // ════════════════════════════════════════════════════════════════
+// 🧩 메뉴 메타데이터 — 드롭다운 카테고리 이모지 폴백 & 기본 온도
+// 이 맵에 없는 메뉴는 generic(☕ + ICE)으로 폴백 — 안전함
+// ════════════════════════════════════════════════════════════════
+const MENU_META = {
+  // 공통
+  '아메리카노':              { category: 'coffee',      defaultTemp: 'ICE' },
+  '디카페인 아메리카노':     { category: 'coffee',      defaultTemp: 'ICE' },
+  '카페라떼':                { category: 'latte',       defaultTemp: 'ICE' },
+  '디카페인 카페라떼':       { category: 'latte',       defaultTemp: 'ICE' },
+  '바닐라 라떼':             { category: 'latte',       defaultTemp: 'ICE' },
+  '카라멜 마키아또':         { category: 'latte',       defaultTemp: 'ICE' },
+  '카페모카':                { category: 'chocolate',   defaultTemp: 'ICE' },
+  '카푸치노':                { category: 'latte',       defaultTemp: 'HOT' },
+  '에스프레소':              { category: 'espresso',    defaultTemp: 'HOT' },
+  '핫초콜릿':                { category: 'chocolate',   defaultTemp: 'HOT' },
+  // 스타벅스
+  '돌체 라떼':               { category: 'latte',       defaultTemp: 'ICE' },
+  '콜드브루':                { category: 'coldbrew',    defaultTemp: 'ICE' },
+  '바닐라 크림 콜드브루':    { category: 'coldbrew',    defaultTemp: 'ICE' },
+  '돌체 콜드브루':           { category: 'coldbrew',    defaultTemp: 'ICE' },
+  '나이트로 콜드브루':       { category: 'coldbrew',    defaultTemp: 'ICE' },
+  '자바칩 프라푸치노':       { category: 'frappuccino', defaultTemp: 'ICE' },
+  '카라멜 프라푸치노':       { category: 'frappuccino', defaultTemp: 'ICE' },
+  '모카 프라푸치노':         { category: 'frappuccino', defaultTemp: 'ICE' },
+  '제주 유기농 말차로 만든 라떼': { category: 'tea',     defaultTemp: 'ICE' },
+  '헤이즐넛 라떼':           { category: 'latte',       defaultTemp: 'ICE' },
+  '플랫 화이트':             { category: 'latte',       defaultTemp: 'HOT' },
+  '화이트 초콜릿 모카':      { category: 'chocolate',   defaultTemp: 'ICE' },
+  '차이 티 라떼':            { category: 'tea',         defaultTemp: 'ICE' },
+  '자몽 허니 블랙 티':       { category: 'tea',         defaultTemp: 'ICE' },
+  '그린 티 크림 프라푸치노': { category: 'frappuccino', defaultTemp: 'ICE' },
+  '쿨 라임 피지오':          { category: 'fizzio',      defaultTemp: 'ICE' },
+  // 이디야
+  '토피넛 라떼':             { category: 'latte',       defaultTemp: 'ICE' },
+  '쫀득 인절미 라떼':        { category: 'latte',       defaultTemp: 'ICE' },
+  '얼그레이 라떼':           { category: 'latte',       defaultTemp: 'ICE' },
+  '딸기 라떼':               { category: 'blended',     defaultTemp: 'ICE' },
+  '초코 라떼':               { category: 'chocolate',   defaultTemp: 'ICE' },
+  '아인슈페너':              { category: 'coffee',      defaultTemp: 'ICE' },
+  '플라워 블렌딩 티':        { category: 'tea',         defaultTemp: 'HOT' },
+  '블루레몬에이드':          { category: 'ade',         defaultTemp: 'ICE' },
+  '수박 주스':               { category: 'smoothie',    defaultTemp: 'ICE' },
+  // 메가
+  '연유 라떼':               { category: 'latte',       defaultTemp: 'ICE' },
+  '딸기 스무디':             { category: 'smoothie',    defaultTemp: 'ICE' },
+  '망고 스무디':             { category: 'smoothie',    defaultTemp: 'ICE' },
+  '블루베리 요거트 스무디':  { category: 'smoothie',    defaultTemp: 'ICE' },
+  '레몬 에이드':             { category: 'ade',         defaultTemp: 'ICE' },
+  '자몽 에이드':             { category: 'ade',         defaultTemp: 'ICE' },
+  '아이스티':                { category: 'tea',         defaultTemp: 'ICE' },
+  // 컴포즈
+  '바닐라 콘파나':           { category: 'coffee',      defaultTemp: 'ICE' },
+  '흑임자 라떼':             { category: 'latte',       defaultTemp: 'ICE' },
+  '복숭아 아이스티':         { category: 'tea',         defaultTemp: 'ICE' },
+  // 투썸
+  '아이스 초콜라떼':         { category: 'chocolate',   defaultTemp: 'ICE' },
+  '유자 얼그레이 티':        { category: 'tea',         defaultTemp: 'HOT' },
+  '라즈베리 초코 라떼':      { category: 'chocolate',   defaultTemp: 'ICE' },
+  '얼 그레이 밀크티':        { category: 'tea',         defaultTemp: 'ICE' },
+  '스트로베리 요거트 스무디': { category: 'smoothie',   defaultTemp: 'ICE' },
+  '망고 패션후르츠 티':      { category: 'tea',         defaultTemp: 'ICE' },
+  // 할리스
+  '할리치노':                { category: 'frappuccino', defaultTemp: 'ICE' },
+  '초코 할리치노':           { category: 'frappuccino', defaultTemp: 'ICE' },
+  '드림 카푸치노':           { category: 'latte',       defaultTemp: 'HOT' },
+  '녹차 라떼':               { category: 'tea',         defaultTemp: 'ICE' },
+  '고구마 라떼':             { category: 'latte',       defaultTemp: 'ICE' },
+  '블루 레모네이드':         { category: 'ade',         defaultTemp: 'ICE' },
+  '유자차':                  { category: 'tea',         defaultTemp: 'HOT' },
+  // 빽다방
+  '원샷 아메리카노':         { category: 'coffee',      defaultTemp: 'ICE' },
+  '빽스치노':                { category: 'frappuccino', defaultTemp: 'ICE' },
+  '달콤 연유 라떼':          { category: 'latte',       defaultTemp: 'ICE' },
+  '키위 주스':               { category: 'smoothie',    defaultTemp: 'ICE' },
+};
+
+const CATEGORY_EMOJI = {
+  coffee:      '☕',
+  latte:       '🥛',
+  coldbrew:    '🧊',
+  frappuccino: '🥤',
+  tea:         '🍵',
+  chocolate:   '🍫',
+  fizzio:      '🍋',
+  blended:     '🍓',
+  ade:         '🍋',
+  smoothie:    '🥤',
+  espresso:    '☕',
+};
+
+// ════════════════════════════════════════════════════════════════
+// 📝 줄임말 → 메뉴명 + 온도
+// 드롭다운 상단에 태그(아아 · 따아 …)와 함께 노출되고,
+// 타이핑 후 blur/Enter 시 자동으로 풀메뉴로 바뀝니다.
+// ════════════════════════════════════════════════════════════════
+const MENU_SHORTCUTS = {
+  '아아':   { menu: '아메리카노',              temp: 'ICE' },
+  '따아':   { menu: '아메리카노',              temp: 'HOT' },
+  '뜨아':   { menu: '아메리카노',              temp: 'HOT' },
+  '아라':   { menu: '카페라떼',                temp: 'ICE' },
+  '따라':   { menu: '카페라떼',                temp: 'HOT' },
+  '뜨라':   { menu: '카페라떼',                temp: 'HOT' },
+  '아바라': { menu: '바닐라 라떼',             temp: 'ICE' },
+  '따바라': { menu: '바닐라 라떼',             temp: 'HOT' },
+  '아카라': { menu: '카라멜 마키아또',         temp: 'ICE' },
+  '따카라': { menu: '카라멜 마키아또',         temp: 'HOT' },
+  '아모카': { menu: '카페모카',                temp: 'ICE' },
+  '따모카': { menu: '카페모카',                temp: 'HOT' },
+  '아돌라': { menu: '돌체 라떼',               temp: 'ICE' },
+  '따돌라': { menu: '돌체 라떼',               temp: 'HOT' },
+  '콜브':   { menu: '콜드브루',                temp: 'ICE' },
+  '바크콜': { menu: '바닐라 크림 콜드브루',    temp: 'ICE' },
+  '돌콜':   { menu: '돌체 콜드브루',           temp: 'ICE' },
+  '자프':   { menu: '자바칩 프라푸치노',       temp: 'ICE' },
+  '카프':   { menu: '카라멜 프라푸치노',       temp: 'ICE' },
+  '디아':   { menu: '디카페인 아메리카노',     temp: 'ICE' },
+  '따디아': { menu: '디카페인 아메리카노',     temp: 'HOT' },
+  '디라':   { menu: '디카페인 카페라떼',       temp: 'ICE' },
+  '따디라': { menu: '디카페인 카페라떼',       temp: 'HOT' },
+};
+
+// ════════════════════════════════════════════════════════════════
 // Firebase 초기화
 // ════════════════════════════════════════════════════════════════
 let db = null, ordersRef = null;
@@ -1502,6 +1673,12 @@ function applyCafeMenus() {
   const cafeId = CAFE_MENUS[CONFIG.cafe] ? CONFIG.cafe : 'starbucks';
   const sbuxLink = document.getElementById('sbuxMenuLink');
   if (sbuxLink) sbuxLink.classList.toggle('hide', cafeId !== 'starbucks');
+  // 드롭다운이 열려 있으면 새 카페 메뉴로 즉시 갱신
+  const dd = document.getElementById('menuDropdown');
+  const mi = document.getElementById('menuInput');
+  if (dd && mi && !dd.classList.contains('hide') && typeof renderMenuDropdown === 'function') {
+    renderMenuDropdown(mi.value.trim());
+  }
 }
 
 function renderMembersEditor() {
@@ -1835,6 +2012,218 @@ menuInput.addEventListener('change', () => {
   const normalized = normalizeMenuTemp(menuInput.value.trim());
   menuInput.value = normalized;
   updateDetailSummary();
+});
+
+// ════════════════════════════════════════════════════════════════
+// 🍽 커스텀 메뉴 드롭다운 (카페 앱 느낌: 이미지 + 이름 + ICE·Tall)
+// ════════════════════════════════════════════════════════════════
+const menuDropdown = document.getElementById('menuDropdown');
+const menuPicker   = document.getElementById('menuPicker');
+let _dropdownItems = [];
+let _dropdownHighlightedIdx = -1;
+
+// 이미지 로드 실패 → 카테고리 이모지로 폴백 (onerror에서 호출)
+window._menuImgFallback = function (img) {
+  const emoji = img.dataset.fallback || '☕';
+  const div = document.createElement('div');
+  div.className = 'menu-thumb-fallback';
+  div.textContent = emoji;
+  if (img.parentNode) img.parentNode.replaceChild(div, img);
+};
+
+function menuCategory(name)    { return (MENU_META[name] || {}).category || 'coffee'; }
+function menuDefaultTemp(name) { return (MENU_META[name] || {}).defaultTemp || 'ICE'; }
+function menuEmoji(name)       { return CATEGORY_EMOJI[menuCategory(name)] || '☕'; }
+function menuImagePath(name) {
+  const cafeId = CAFE_MENUS[CONFIG.cafe] ? CONFIG.cafe : 'starbucks';
+  const slug = encodeURIComponent(name.replace(/\s+/g, '_'));
+  return `./images/${cafeId}/${slug}.webp`;
+}
+function menuDisplayName(name, temp) {
+  const prefix = temp === 'ICE' ? '아이스 ' : temp === 'HOT' ? '따뜻한 ' : '';
+  return prefix + name;
+}
+
+function _normalizeMenuQuery(s) { return (s || '').toLowerCase().replace(/\s+/g, ''); }
+
+// 필터에서 온도 접두어 제거 — "아이스 아메리카노" 쳐도 "아메리카노"로 매칭
+function _stripTempPrefix(q) {
+  return q.replace(/^(아이스|차가운|시원한|찬|핫|따뜻한?|따듯한?|뜨거운?|따|뜨)/, '');
+}
+
+function buildMenuDropdownEntries(filter) {
+  const cafeId = CAFE_MENUS[CONFIG.cafe] ? CONFIG.cafe : 'starbucks';
+  const cafeMenus = CAFE_MENUS[cafeId] || [];
+  const allMenus = [...new Set([...COMMON_MENUS, ...cafeMenus])];
+
+  const qRaw = _normalizeMenuQuery(filter);
+  const q = _stripTempPrefix(qRaw);
+
+  const entries = [];
+
+  // 1) 줄임말
+  Object.entries(MENU_SHORTCUTS).forEach(([short, { menu, temp }]) => {
+    const shortN = _normalizeMenuQuery(short);
+    const menuN  = _normalizeMenuQuery(menu);
+    const prefixMatch = q && shortN.startsWith(q);
+    const nameMatch   = q && menuN.includes(q);
+    if (q && !prefixMatch && !nameMatch) return;
+    entries.push({
+      kind: 'shortcut',
+      shortcut: short,
+      menu, temp,
+      priority: prefixMatch ? 0 : 1,
+    });
+  });
+
+  // 2) 일반 메뉴
+  allMenus.forEach(menu => {
+    if (q && !_normalizeMenuQuery(menu).includes(q)) return;
+    entries.push({
+      kind: 'menu',
+      menu,
+      temp: menuDefaultTemp(menu),
+      priority: 2,
+    });
+  });
+
+  // 동일 (menu + temp) 중복 제거, priority 낮은 쪽 유지
+  entries.sort((a, b) => a.priority - b.priority);
+  const seen = new Set();
+  const dedup = [];
+  entries.forEach(e => {
+    const key = e.kind + '|' + e.menu + '|' + (e.temp || '');
+    if (seen.has(key)) return;
+    seen.add(key);
+    dedup.push(e);
+  });
+  return dedup;
+}
+
+function renderMenuDropdown(filter = '') {
+  const entries = buildMenuDropdownEntries(filter);
+  _dropdownItems = entries;
+  _dropdownHighlightedIdx = -1;
+
+  if (entries.length === 0) {
+    menuDropdown.innerHTML =
+      '<div class="menu-empty">일치하는 메뉴가 없어요.<br>그대로 입력해도 주문돼요 ☕️</div>';
+    return;
+  }
+
+  const preset = CAFE_PRESETS[CONFIG.cafe] || CAFE_PRESETS.starbucks;
+  const firstSize = preset.sizes[0] || '';
+
+  menuDropdown.innerHTML = entries.map((e, i) => {
+    const displayName = menuDisplayName(e.menu, e.temp);
+    const sub = (e.temp || 'ICE') + (firstSize ? ' · ' + firstSize : '');
+    const tag = e.kind === 'shortcut'
+      ? `<span class="shortcut-tag">${escapeHtml(e.shortcut)}</span>`
+      : '';
+    return `
+      <div class="menu-item" data-idx="${i}" role="option">
+        <div class="menu-thumb">
+          <img src="${menuImagePath(e.menu)}" alt="" loading="lazy"
+               data-fallback="${menuEmoji(e.menu)}"
+               onerror="window._menuImgFallback(this)">
+        </div>
+        <div class="menu-text">
+          <div class="menu-name">${tag}${escapeHtml(displayName)}</div>
+          <div class="menu-sub">${escapeHtml(sub)}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function showMenuDropdown() { menuDropdown.classList.remove('hide'); }
+function hideMenuDropdown() {
+  menuDropdown.classList.add('hide');
+  _dropdownHighlightedIdx = -1;
+  menuDropdown.querySelectorAll('.menu-item.highlighted')
+    .forEach(el => el.classList.remove('highlighted'));
+}
+
+function _updateDropdownHighlight() {
+  const items = menuDropdown.querySelectorAll('.menu-item');
+  items.forEach((el, i) => el.classList.toggle('highlighted', i === _dropdownHighlightedIdx));
+  const el = items[_dropdownHighlightedIdx];
+  if (el) el.scrollIntoView({ block: 'nearest' });
+}
+
+function selectMenuEntry(entry) {
+  if (!entry) return;
+  menuInput.value = entry.menu;
+  const temp = entry.temp || menuDefaultTemp(entry.menu);
+  if (temp) setSingle('tempOptions', temp);
+  hideMenuDropdown();
+  menuInput.blur(); // 모바일 키보드 내림
+  updateDetailSummary();
+}
+
+// "아아" → "아메리카노" 자동 풀이 (드롭다운 미사용 경로 안전망)
+function expandMenuShortcut() {
+  const val = menuInput.value.trim();
+  const spec = MENU_SHORTCUTS[val];
+  if (!spec) return false;
+  menuInput.value = spec.menu;
+  if (spec.temp) setSingle('tempOptions', spec.temp);
+  updateDetailSummary();
+  return true;
+}
+
+// ── 이벤트 바인딩 ────────────────────────────────────────
+menuInput.addEventListener('focus', () => {
+  if (typeof isPastDeadline === 'function' && isPastDeadline()) return;
+  renderMenuDropdown(menuInput.value.trim());
+  showMenuDropdown();
+});
+
+menuInput.addEventListener('input', () => {
+  if (typeof isPastDeadline === 'function' && isPastDeadline()) return;
+  renderMenuDropdown(menuInput.value.trim());
+  showMenuDropdown();
+});
+
+// iOS: 드롭다운 터치 시 input이 먼저 blur → 선택 날아감. preventDefault로 방지
+menuDropdown.addEventListener('mousedown', e => e.preventDefault());
+menuDropdown.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
+
+menuDropdown.addEventListener('click', e => {
+  const item = e.target.closest('.menu-item');
+  if (!item) return;
+  const idx = parseInt(item.dataset.idx, 10);
+  selectMenuEntry(_dropdownItems[idx]);
+});
+
+menuInput.addEventListener('blur', () => {
+  setTimeout(hideMenuDropdown, 150);
+});
+
+menuInput.addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (_dropdownItems.length === 0) return;
+    _dropdownHighlightedIdx = Math.min(_dropdownHighlightedIdx + 1, _dropdownItems.length - 1);
+    _updateDropdownHighlight();
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (_dropdownItems.length === 0) return;
+    _dropdownHighlightedIdx = Math.max(_dropdownHighlightedIdx - 1, 0);
+    _updateDropdownHighlight();
+  } else if (e.key === 'Enter') {
+    if (_dropdownHighlightedIdx >= 0 && _dropdownItems[_dropdownHighlightedIdx]) {
+      e.preventDefault();
+      selectMenuEntry(_dropdownItems[_dropdownHighlightedIdx]);
+    } else {
+      expandMenuShortcut();
+    }
+  } else if (e.key === 'Escape') {
+    hideMenuDropdown();
+  }
+});
+
+document.addEventListener('click', e => {
+  if (!menuPicker.contains(e.target)) hideMenuDropdown();
 });
 
 // ════════════════════════════════════════════════════════════════
