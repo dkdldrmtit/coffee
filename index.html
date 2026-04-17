@@ -2033,7 +2033,27 @@ window._menuImgFallback = function (img) {
 
 function menuCategory(name)    { return (MENU_META[name] || {}).category || 'coffee'; }
 function menuDefaultTemp(name) { return (MENU_META[name] || {}).defaultTemp || 'ICE'; }
-function menuEmoji(name)       { return CATEGORY_EMOJI[menuCategory(name)] || '☕'; }
+
+// 카테고리 + 온도 조합으로 이모지 선택.
+// 뜨거운 컵(☕) / 찬 컵(🥤 · 🥛) / 얼음(🧊) 을 구분해서 직관성 높임.
+function menuEmoji(name, temp) {
+  const cat = menuCategory(name);
+  const isHot = temp === 'HOT';
+  switch (cat) {
+    case 'espresso':    return '☕';          // 에스프레소는 항상 뜨거움
+    case 'coldbrew':    return '🧊';          // 콜드브루 계열은 항상 얼음
+    case 'frappuccino': return '🥤';          // 프라푸치노/블렌디드 = 얼음 컵
+    case 'smoothie':    return '🥤';
+    case 'blended':     return '🍓';
+    case 'ade':         return '🍋';
+    case 'fizzio':      return '🍋';
+    case 'tea':         return isHot ? '🍵' : '🧋';
+    case 'chocolate':   return isHot ? '☕' : '🍫';
+    case 'latte':       return isHot ? '☕' : '🥛';
+    case 'coffee':      return isHot ? '☕' : '🧋';
+    default:            return isHot ? '☕' : '🥤';
+  }
+}
 function menuImagePath(name) {
   const cafeId = CAFE_MENUS[CONFIG.cafe] ? CONFIG.cafe : 'starbucks';
   const slug = encodeURIComponent(name.replace(/\s+/g, '_'));
@@ -2123,7 +2143,7 @@ function renderMenuDropdown(filter = '') {
       <div class="menu-item" data-idx="${i}" role="option">
         <div class="menu-thumb">
           <img src="${menuImagePath(e.menu)}" alt="" loading="lazy"
-               data-fallback="${menuEmoji(e.menu)}"
+               data-fallback="${menuEmoji(e.menu, e.temp)}"
                onerror="window._menuImgFallback(this)">
         </div>
         <div class="menu-text">
