@@ -156,6 +156,17 @@ gtag('config', 'G-9VCP0RKBY0');
     transition: background 0.15s, border-color 0.15s, filter 0.15s;
   }
   .icon-btn:hover { background: var(--sb-light); border-color: var(--sb-light); }
+  .header-icon-btn {
+    background: transparent; border: none;
+    color: var(--muted); cursor: pointer;
+    padding: 6px; border-radius: 8px;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: color 0.15s, background 0.15s;
+  }
+  .header-icon-btn:hover {
+    color: var(--ink-dark);
+    background: rgba(0, 0, 0, 0.04);
+  }
   .icon-btn-accent {
     background: white;
     color: var(--sb-accent);
@@ -569,19 +580,28 @@ gtag('config', 'G-9VCP0RKBY0');
     width: 100%; padding: 16px; border: none; border-radius: 12px;
     background: var(--sb-accent); color: white;
     font-size: 16px; font-weight: 700; cursor: pointer;
-    font-family: inherit; margin-bottom: 18px;
+    font-family: inherit;
     box-shadow: 0 4px 14px rgba(var(--sb-accent-rgb), 0.3);
-    transition: filter 0.15s;
+    transition: filter 0.15s, padding 0.15s, font-size 0.15s;
   }
   .host-share-btn:hover { filter: brightness(1.08); }
   .host-share-btn:active { transform: translateY(1px); }
+  #hostDashboard.compact .host-share-btn {
+    padding: 10px; font-size: 13px; font-weight: 600;
+    background: transparent; color: var(--sb-accent);
+    border: 1px dashed var(--sb-accent);
+    box-shadow: none;
+  }
+  #hostDashboard.compact .host-share-btn:hover {
+    background: var(--sb-accent-soft);
+  }
   .host-empty {
     color: var(--muted); font-size: 14px;
-    padding: 12px 0 4px; margin: 0;
+    padding: 4px 0 16px; margin: 0;
   }
   .host-count {
-    font-size: 15px; font-weight: 700; color: var(--ink-dark);
-    padding: 8px 0 4px;
+    font-size: 22px; font-weight: 800; color: var(--ink-dark);
+    padding: 8px 0 14px;
   }
 
   .toast {
@@ -793,8 +813,12 @@ gtag('config', 'G-9VCP0RKBY0');
   <header class="header">
     <div class="header-top">
       <div class="header-actions">
-        <button type="button" class="icon-btn hide" id="shareBtn">공유</button>
-        <button type="button" class="icon-btn hide" id="settingsBtn">설정</button>
+        <button type="button" class="header-icon-btn hide" id="settingsBtn" aria-label="설정">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </button>
       </div>
     </div>
     <h1 id="pageTitle"></h1>
@@ -818,10 +842,10 @@ gtag('config', 'G-9VCP0RKBY0');
 
   <!-- 방장 대시보드 -->
   <div class="card hide" id="hostDashboard">
-    <button class="host-share-btn" id="hostShareBtn">팀원에게 링크 보내기 📤</button>
     <div id="hostDashContent">
       <p class="host-empty">링크를 공유하면 여기에 주문이 하나씩 쌓여요</p>
     </div>
+    <button class="host-share-btn" id="hostShareBtn">팀원에게 링크 보내기 📤</button>
   </div>
 
   <div class="tabs">
@@ -1526,7 +1550,6 @@ function renderMembersEditor() {
 // 방장 권한별 UI 반영
 // ════════════════════════════════════════════════════════════════
 function applyOwnerUI() {
-  document.getElementById('shareBtn').classList.toggle('hide', !IS_OWNER);
   document.getElementById('settingsBtn').classList.toggle('hide', !IS_OWNER);
   document.querySelector('.header-top').classList.toggle('hide', !IS_OWNER);
   document.getElementById('hostDashboard').classList.toggle('hide', !IS_OWNER);
@@ -1627,7 +1650,6 @@ async function doShare() {
     }
   }
 }
-document.getElementById('shareBtn').addEventListener('click', doShare);
 document.getElementById('guestShareBtn').addEventListener('click', doShare);
 document.getElementById('hostShareBtn').addEventListener('click', doShare);
 
@@ -2223,13 +2245,19 @@ let prevOrderCount = 0;
 
 function renderHostDashboard() {
   const container = document.getElementById('hostDashContent');
-  if (!container || !IS_OWNER) return;
+  const dash = document.getElementById('hostDashboard');
+  const shareBtn = document.getElementById('hostShareBtn');
+  if (!container || !dash || !IS_OWNER) return;
   const count = Object.keys(currentOrders).length;
   if (count === 0) {
     container.innerHTML = '<p class="host-empty">링크를 공유하면 여기에 주문이 하나씩 쌓여요</p>';
-    return;
+    dash.classList.remove('compact');
+    shareBtn.textContent = '팀원에게 링크 보내기 📤';
+  } else {
+    container.innerHTML = `<div class="host-count">${count}명 주문 완료</div>`;
+    dash.classList.add('compact');
+    shareBtn.textContent = '+ 링크 더 보내기';
   }
-  container.innerHTML = `<div class="host-count">${count}명 주문 완료</div>`;
 }
 
 if (isConfigured) {
