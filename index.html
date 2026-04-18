@@ -2508,6 +2508,7 @@ function renderMenuDropdown(filter = '') {
 
 // 입력창을 visible viewport 상단 15% 지점으로 스크롤 → 드롭다운이 아래에
 // 펼쳐질 공간을 확보. iOS 키보드 올라온 뒤에 실행해야 정확.
+// behavior: 'instant' 로 즉시 이동 — smooth 는 타이핑과 겹치면 화면이 튐.
 function scrollInputIntoViewForDropdown() {
   const mi = document.getElementById('menuInput');
   if (!mi || document.activeElement !== mi) return;
@@ -2516,11 +2517,10 @@ function scrollInputIntoViewForDropdown() {
   const visHeight = vv ? vv.height : window.innerHeight;
   const visTop    = vv ? vv.offsetTop : 0;
   const inputTopInVisible = rect.top - visTop;
-  // 입력창을 visible 상단 15% 지점에 오도록
   const targetY = Math.max(24, visHeight * 0.15);
   const delta = inputTopInVisible - targetY;
-  if (Math.abs(delta) > 12) {
-    window.scrollBy({ top: delta, behavior: 'smooth' });
+  if (Math.abs(delta) > 20) {
+    window.scrollBy({ top: delta, behavior: 'instant' });
   }
 }
 
@@ -2529,8 +2529,8 @@ function showMenuDropdown() {
   const mi = document.getElementById('menuInput');
   if (dd) dd.classList.remove('hide');
   if (mi) mi.setAttribute('aria-expanded', 'true');
-  // 키보드가 올라온 뒤(iOS ~300ms) 입력창을 위로 끌어올려 드롭다운 공간 확보
-  setTimeout(scrollInputIntoViewForDropdown, 350);
+  // 스크롤 조정은 focus 핸들러에서 한 번만 실행. 여기선 호출 안 함
+  // (input 이벤트마다 호출되면 타이핑 중 화면이 튐).
 }
 function hideMenuDropdown() {
   const dd = document.getElementById('menuDropdown');
@@ -2593,6 +2593,8 @@ menuInput.addEventListener('focus', () => {
   if (typeof isPastDeadline === 'function' && isPastDeadline()) return;
   renderMenuDropdown(menuInput.value.trim());
   showMenuDropdown();
+  // 포커스 시 한 번만 스크롤 (iOS 키보드가 올라온 뒤에 실행)
+  setTimeout(scrollInputIntoViewForDropdown, 350);
 });
 
 menuInput.addEventListener('input', () => {
@@ -2653,13 +2655,8 @@ document.addEventListener('click', e => {
   }
 });
 
-// 키보드 올라오는 순간 입력창을 다시 위로 끌어올림 (visualViewport 변할 때)
-if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', () => {
-    const mi = document.getElementById('menuInput');
-    if (mi && document.activeElement === mi) scrollInputIntoViewForDropdown();
-  });
-}
+// visualViewport resize 에 따른 자동 스크롤은 제거 — 타이핑 중 Korean IME
+// 영향으로 resize 가 반복 발생하면 화면이 튐. focus 시 1회 스크롤로 충분.
 
 // ════════════════════════════════════════════════════════════════
 // Chip 선택 UI
