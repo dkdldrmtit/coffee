@@ -2408,6 +2408,16 @@ function resolveShortcutMenu(spec, cafeList) {
 }
 
 function buildMenuDropdownEntries(filter) {
+  let entries = _buildMenuEntriesRaw(filter);
+  // 한글 IME 조합 중간 상태("아메맄" 등)가 매칭을 깨뜨려 결과가 비면
+  // 드롭다운이 깜빡거림 → 마지막 글자 한 칸 빼고 재시도해 이전 결과 유지.
+  if (entries.length === 0 && filter && filter.trim().length > 1) {
+    entries = _buildMenuEntriesRaw(filter.trim().slice(0, -1));
+  }
+  return entries;
+}
+
+function _buildMenuEntriesRaw(filter) {
   const cafeId  = CAFE_MENUS[CONFIG.cafe] ? CONFIG.cafe : 'starbucks';
   const allMenus = getCafeMenuList(cafeId);
 
