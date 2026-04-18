@@ -2615,9 +2615,16 @@ function menuDisplayName(name, temp) {
 
 function _normalizeMenuQuery(s) { return (s || '').toLowerCase().replace(/\s+/g, ''); }
 
-// 필터에서 온도 접두어 제거 — "아이스 아메리카노" 쳐도 "아메리카노"로 매칭
-function _stripTempPrefix(q) {
-  return q.replace(/^(아이스|차가운|시원한|찬|핫|따뜻한?|따듯한?|뜨거운?|따|뜨)/, '');
+// 필터 앞쪽 온도 접두어를 추출 — '따뜻한 아메리카노' → { temp:'HOT', rest:'아메리카노' }
+// temp 를 따로 뽑아내서 결과 리스트의 정렬/필터링에 힌트로 활용.
+function _extractTempPrefix(q) {
+  const iceRe = /^(아이스|차가운|시원한|찬)(.*)$/;
+  const hotRe = /^(핫|따뜻한?|따듯한?|뜨거운?|따|뜨)(.*)$/;
+  const ice = q.match(iceRe);
+  if (ice) return { temp: 'ICE', rest: ice[2] };
+  const hot = q.match(hotRe);
+  if (hot) return { temp: 'HOT', rest: hot[2] };
+  return { temp: null, rest: q };
 }
 
 // addedAt 문자열 → 최근 MENU_NEW_DAYS 일 이내면 true
@@ -2664,12 +2671,24 @@ function _buildMenuEntriesRaw(filter) {
   const allMenus = getCafeMenuList(cafeId);
 
   const qRaw = _normalizeMenuQuery(filter);
-  const q = _stripTempPrefix(qRaw);
+  // '따뜻한/아이스' 등이 앞에 있으면 뽑아내서 온도 힌트로. 남은 문자열이 실제 검색어.
+  const { temp: tempHint, rest: q } = _extractTempPrefix(qRaw);
+
+  // 메뉴가 해당 온도를 지원 가능한지 (iceOnly/hotOnly 제약 고려)
+  const canServeTemp = (menuName, tempWanted) => {
+    if (!tempWanted) return true;
+    const c = getMenuConstraints(menuName);
+    if (tempWanted === 'HOT' && c.iceOnly) return false;
+    if (tempWanted === 'ICE' && c.hotOnly) return false;
+    return true;
+  };
 
   const entries = [];
 
   // 1) 줄임말 — 카페별 공식명으로 해석
   Object.entries(MENU_SHORTCUTS).forEach(([short, spec]) => {
+    // 온도 힌트가 있으면 같은 온도 줄임말만
+    if (tempHint && spec.temp !== tempHint) return;
     const resolved = resolveShortcutMenu(spec, allMenus);
     const shortN = _normalizeMenuQuery(short);
     const menuN  = _normalizeMenuQuery(resolved.name);
@@ -2689,10 +2708,12 @@ function _buildMenuEntriesRaw(filter) {
   // 2) 일반 메뉴
   allMenus.forEach(m => {
     if (q && !_normalizeMenuQuery(m.name).includes(q)) return;
+    // 온도 힌트 있으면 지원 가능한 메뉴만 + 해당 온도로 표시
+    if (!canServeTemp(m.name, tempHint)) return;
     entries.push({
       kind: 'menu',
       menu: m.name,
-      temp: menuDefaultTemp(m.name),
+      temp: tempHint || menuDefaultTemp(m.name),
       priority: 2,
       addedAt: m.addedAt,
     });
