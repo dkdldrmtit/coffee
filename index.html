@@ -2445,17 +2445,23 @@ setupChips('addonOptions', true);
 // 추가옵션 선택 개수 표시
 const addonContainer = document.getElementById('addonOptions');
 const addonCountEl = document.getElementById('addonCount');
+// module 상단에서 applyConfig()가 호출될 때 applyCafeAddons → updateAddonCount
+// 체인으로 불릴 수 있어, 모듈-스코프 const에 의존하지 않고 매번 DOM 조회.
 function updateAddonCount() {
-  const count = addonContainer.querySelectorAll('.chip.active').length;
-  addonCountEl.textContent = count > 0 ? `· ${count}개` : '';
-  updateDetailSummary();
+  const container = document.getElementById('addonOptions');
+  const countEl   = document.getElementById('addonCount');
+  if (!container || !countEl) return;
+  const count = container.querySelectorAll('.chip.active').length;
+  countEl.textContent = count > 0 ? `· ${count}개` : '';
+  if (typeof updateDetailSummary === 'function') updateDetailSummary();
 }
-addonContainer.addEventListener('click', updateAddonCount);
+if (addonContainer) addonContainer.addEventListener('click', updateAddonCount);
 
 function updateDetailSummary() {
   const temp = getSingle('tempOptions');
   const size = getSize();
-  const addons = addonContainer.querySelectorAll('.chip.active').length;
+  const container = document.getElementById('addonOptions');
+  const addons = container ? container.querySelectorAll('.chip.active').length : 0;
   const memo = document.getElementById('memoInput')?.value.trim();
   const parts = [temp, size].filter(Boolean);
   if (addons) parts.push(`옵션 ${addons}개`);
