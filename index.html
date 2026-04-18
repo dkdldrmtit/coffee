@@ -2336,6 +2336,15 @@ menuInput.addEventListener('change', () => {
 // ════════════════════════════════════════════════════════════════
 const menuDropdown = document.getElementById('menuDropdown');
 const menuPicker   = document.getElementById('menuPicker');
+
+// ⚠️ Portal: 드롭다운 요소를 <body> 밑으로 이동.
+// .tab-content 의 animation transform 이 Safari 에서 position:fixed 의
+// containing block 을 뷰포트가 아닌 tab-content 로 잡아버리는 버그 회피.
+// 이렇게 body 직속으로 옮기면 fixed 가 확실히 viewport 기준으로 잡힘.
+if (menuDropdown && menuDropdown.parentElement !== document.body) {
+  document.body.appendChild(menuDropdown);
+}
+
 // hoisting 되는 var 로 선언 — 모듈 상단에서 renderMenuDropdown 이 조기 호출돼도
 // TDZ 안 터지게. 선언은 하단이지만 엔진이 module 시작 시 undefined 로 잡아둠.
 var _dropdownItems = [];
@@ -2683,7 +2692,10 @@ menuInput.addEventListener('keydown', e => {
 });
 
 document.addEventListener('click', e => {
-  if (!menuPicker.contains(e.target)) hideMenuDropdown();
+  // 드롭다운은 body 직속이라 menuPicker 밖에 있음 — 둘 다 체크
+  if (!menuPicker.contains(e.target) && !menuDropdown.contains(e.target)) {
+    hideMenuDropdown();
+  }
 });
 
 // 키보드 올라오거나(visualViewport resize) 스크롤/창 크기 변경 시
