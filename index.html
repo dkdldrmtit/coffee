@@ -916,7 +916,7 @@ gtag('config', 'G-9VCP0RKBY0');
             <div class="chip" data-val="HOT">HOT</div>
           </div>
 
-          <label>사이즈</label>
+          <label id="sizeLabel">사이즈</label>
           <div class="chips" id="sizeOptions">
             <div class="chip active" data-val="Tall">Tall</div>
             <div class="chip" data-val="Grande">Grande</div>
@@ -924,17 +924,8 @@ gtag('config', 'G-9VCP0RKBY0');
           </div>
           <input type="text" id="sizeCustom" class="hide" placeholder="예) 작게 / 보통 / 1L 등" maxlength="20">
 
-          <label>추가옵션 <span class="addon-count" id="addonCount"></span></label>
-          <div class="chips" id="addonOptions">
-            <div class="chip" data-val="샷추가">샷추가</div>
-            <div class="chip" data-val="시럽추가">시럽추가</div>
-            <div class="chip" data-val="휘핑추가" data-group="whip">휘핑추가</div>
-            <div class="chip" data-val="휘핑빼기" data-group="whip">휘핑빼기</div>
-            <div class="chip" data-val="디카페인">디카페인</div>
-            <div class="chip" data-val="연하게">연하게</div>
-            <div class="chip" data-val="얼음적게" data-group="ice">얼음적게</div>
-            <div class="chip" data-val="얼음많이" data-group="ice">얼음많이</div>
-          </div>
+          <label id="addonLabel">추가옵션 <span class="addon-count" id="addonCount"></span></label>
+          <div class="chips" id="addonOptions"></div>
 
           <label>메모 <span class="memo-indicator" id="memoIndicator"></span></label>
           <textarea id="memoInput" rows="2" placeholder="예) 시럽 반만, 얼음 조금만" maxlength="200"></textarea>
@@ -1332,7 +1323,7 @@ const MENU_META = {
   '카페모카':                { category: 'chocolate',   defaultTemp: 'ICE' },
   '카푸치노':                { category: 'latte',       defaultTemp: 'HOT' },
   '에스프레소':              { category: 'espresso',    defaultTemp: 'HOT' },
-  '핫초콜릿':                { category: 'chocolate',   defaultTemp: 'HOT' },
+  '핫초콜릿':                { category: 'chocolate',   defaultTemp: 'HOT', constraints: { hotOnly: true } },
   // 스타벅스
   '돌체 라떼':               { category: 'latte',       defaultTemp: 'ICE' },
   '콜드브루':                { category: 'coldbrew',    defaultTemp: 'ICE' },
@@ -1386,7 +1377,7 @@ const MENU_META = {
   '녹차 라떼':               { category: 'tea',         defaultTemp: 'ICE' },
   '고구마 라떼':             { category: 'latte',       defaultTemp: 'ICE' },
   '블루 레모네이드':         { category: 'ade',         defaultTemp: 'ICE' },
-  '유자차':                  { category: 'tea',         defaultTemp: 'HOT' },
+  '유자차':                  { category: 'tea',         defaultTemp: 'HOT', constraints: { hotOnly: true } },
   // 빽다방
   '원샷 아메리카노':         { category: 'coffee',      defaultTemp: 'ICE' },
   '빽스치노':                { category: 'frappuccino', defaultTemp: 'ICE' },
@@ -1438,6 +1429,55 @@ const MENU_SHORTCUTS = {
   '디라':   { menu: '디카페인 카페라떼',       temp: 'ICE' },
   '따디라': { menu: '디카페인 카페라떼',       temp: 'HOT' },
 };
+
+// ════════════════════════════════════════════════════════════════
+// 🎛 추가옵션 정의
+// - ADDON_DEFS: 각 옵션의 라벨 + 배타 그룹(whip, ice 등) 메타
+// - CAFE_ADDONS: 카페별로 노출할 옵션 목록
+// ════════════════════════════════════════════════════════════════
+const ADDON_DEFS = {
+  '샷추가':   { label: '샷추가' },
+  '시럽추가': { label: '시럽추가' },
+  '휘핑추가': { label: '휘핑추가', group: 'whip' },
+  '휘핑빼기': { label: '휘핑빼기', group: 'whip' },
+  '디카페인': { label: '디카페인' },
+  '연하게':   { label: '연하게' },
+  '얼음적게': { label: '얼음적게', group: 'ice' },
+  '얼음많이': { label: '얼음많이', group: 'ice' },
+  '펄추가':   { label: '펄추가' },
+};
+
+const CAFE_ADDONS = {
+  starbucks: ['샷추가', '시럽추가', '휘핑추가', '휘핑빼기', '디카페인', '연하게', '얼음적게', '얼음많이'],
+  ediya:     ['샷추가', '시럽추가', '휘핑추가', '휘핑빼기', '얼음적게', '얼음많이'],
+  mega:      ['샷추가', '시럽추가', '얼음적게', '얼음많이'],
+  compose:   ['샷추가', '얼음적게', '얼음많이'],
+  twosome:   ['샷추가', '시럽추가', '휘핑추가', '휘핑빼기', '얼음적게', '얼음많이'],
+  hollys:    ['샷추가', '시럽추가', '휘핑추가', '휘핑빼기', '얼음적게', '얼음많이'],
+  paik:      ['샷추가', '얼음적게', '얼음많이'],
+  other:     ['샷추가', '시럽추가', '휘핑추가', '휘핑빼기', '디카페인', '연하게', '얼음적게', '얼음많이'],
+};
+
+// ════════════════════════════════════════════════════════════════
+// 🚦 메뉴별 제약: 카테고리에서 기본값 derive + MENU_META.constraints 로 override
+//   - iceOnly: HOT 숨김, ICE 강제
+//   - hotOnly: ICE 숨김, HOT 강제
+//   - noSize:  사이즈 섹션 숨김
+// ════════════════════════════════════════════════════════════════
+const CATEGORY_CONSTRAINTS = {
+  espresso:    { hotOnly: true, noSize: true },
+  coldbrew:    { iceOnly: true },
+  frappuccino: { iceOnly: true },
+  smoothie:    { iceOnly: true },
+  blended:     { iceOnly: true },
+  ade:         { iceOnly: true },
+  fizzio:      { iceOnly: true },
+};
+function getMenuConstraints(name) {
+  const meta = MENU_META[name] || {};
+  const fromCategory = CATEGORY_CONSTRAINTS[meta.category] || {};
+  return { ...fromCategory, ...(meta.constraints || {}) };
+}
 
 // ════════════════════════════════════════════════════════════════
 // Firebase 초기화
@@ -1531,6 +1571,7 @@ function applyConfig() {
   document.getElementById('headerSub').textContent = subParts.join(' · ');
   applyCafeSizes();
   applyCafeMenus();
+  applyCafeAddons();
   calcDeadline();
   updateCountdown();
   // 마감시간이 연장되면 복원, 단축되면 마감 뷰
@@ -1679,6 +1720,31 @@ function applyCafeMenus() {
   if (dd && mi && !dd.classList.contains('hide') && typeof renderMenuDropdown === 'function') {
     renderMenuDropdown(mi.value.trim());
   }
+}
+
+// 카페 프리셋에 맞춰 추가옵션 chip 을 재구성. 현재 선택은 교집합으로 보존.
+function applyCafeAddons() {
+  const cafeId  = CAFE_ADDONS[CONFIG.cafe] ? CONFIG.cafe : 'starbucks';
+  const addons  = CAFE_ADDONS[cafeId] || [];
+  const container = document.getElementById('addonOptions');
+  if (!container) return;
+
+  const prevSelected = Array.from(container.querySelectorAll('.chip.active'))
+    .map(c => c.dataset.val);
+
+  container.innerHTML = '';
+  addons.forEach(val => {
+    const def = ADDON_DEFS[val] || { label: val };
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.dataset.val = val;
+    chip.textContent = def.label || val;
+    if (def.group) chip.dataset.group = def.group;
+    if (prevSelected.includes(val)) chip.classList.add('active');
+    container.appendChild(chip);
+  });
+
+  if (typeof updateAddonCount === 'function') updateAddonCount();
 }
 
 function renderMembersEditor() {
@@ -1998,19 +2064,122 @@ document.getElementById('sbuxMenuLink').addEventListener('click', e => {
 
 const menuInput = document.getElementById('menuInput');
 
-// 메뉴에 온도 접두어가 포함된 경우 자동 분리
-// 예) "아이스아메리카노" → ICE 자동 선택 + "아메리카노"
-// 예) "핫아메리카노" → HOT 자동 선택 + "아메리카노"
-function normalizeMenuTemp(val) {
-  const iceMatch = val.match(/^(아이스|차가운|시원한|찬)\s*/);
-  const hotMatch = val.match(/^(핫|따뜻한?|따듯한?|뜨거운?)\s*/);
-  if (iceMatch) { setSingle('tempOptions', 'ICE'); return val.slice(iceMatch[0].length); }
-  if (hotMatch) { setSingle('tempOptions', 'HOT'); return val.slice(hotMatch[0].length); }
-  return val;
+// 사이즈 별칭 (파서용) — "그란데", "tall", "라지" 등을 카페 프리셋 이름으로 매핑
+const SIZE_ALIAS = {
+  'tall':    'Tall',    '톨':     'Tall',
+  'grande':  'Grande',  '그란데': 'Grande',
+  'venti':   'Venti',   '벤티':   'Venti',
+  'regular': '레귤러',  '레귤러': '레귤러', '레규': '레귤러',
+  'large':   '라지',    '라지':   '라지',   '라':   '라지',
+};
+function matchSizeToken(token, availableSizes) {
+  const lower = token.toLowerCase();
+  const exact = availableSizes.find(s => s.toLowerCase() === lower);
+  if (exact) return exact;
+  const mapped = SIZE_ALIAS[lower];
+  return (mapped && availableSizes.includes(mapped)) ? mapped : null;
 }
+
+// 메뉴 텍스트 파서 — 온도/사이즈/추가옵션 토큰을 추출하고 나머지를 메뉴명으로
+// 예) "아이스 아메리카노 그란데 샷추가 디카페인"
+//     → { temp: 'ICE', size: 'Grande', addons: ['샷추가','디카페인'], menu: '아메리카노' }
+function parseMenuLine(raw) {
+  let text = (raw || '').trim();
+  const result = { temp: null, size: null, addons: [], menu: '' };
+  if (!text) return result;
+
+  // 1) 온도 접두어 — 띄어쓰기 없이 붙은 경우(아이스아메리카노)도 지원
+  const iceMatch = text.match(/^(아이스|차가운|시원한|찬)\s*/);
+  const hotMatch = text.match(/^(핫|따뜻한?|따듯한?|뜨거운?)\s*/);
+  if (iceMatch) { result.temp = 'ICE'; text = text.slice(iceMatch[0].length); }
+  else if (hotMatch) { result.temp = 'HOT'; text = text.slice(hotMatch[0].length); }
+
+  // 2) 남은 부분을 공백으로 나눠 토큰별로 분류 (사이즈/애드온/메뉴부분)
+  const cafeId = CAFE_PRESETS[CONFIG.cafe] ? CONFIG.cafe : 'starbucks';
+  const sizes  = CAFE_PRESETS[cafeId].sizes || [];
+  const addons = CAFE_ADDONS[cafeId] || [];
+  const tokens = text.split(/\s+/).filter(Boolean);
+  const menuParts = [];
+
+  for (const tok of tokens) {
+    if (!result.size) {
+      const s = matchSizeToken(tok, sizes);
+      if (s) { result.size = s; continue; }
+    }
+    if (addons.includes(tok)) {
+      if (!result.addons.includes(tok)) result.addons.push(tok);
+      continue;
+    }
+    menuParts.push(tok);
+  }
+
+  result.menu = menuParts.join(' ');
+  return result;
+}
+
+// 호환성: 기존 시그니처(문자열 → 스트립 후 문자열) 유지. 내부는 파서 재사용.
+function normalizeMenuTemp(val) {
+  const { temp, menu } = parseMenuLine(val);
+  if (temp) setSingle('tempOptions', temp);
+  return menu;
+}
+
+// 메뉴별 제약을 UI에 반영 (iceOnly/hotOnly/noSize)
+// 빈 메뉴 or 제약 없는 메뉴 → 숨김 해제 (복원)
+function applyMenuConstraints(menuName) {
+  const c = getMenuConstraints(menuName || '');
+
+  // 온도 칩: 금지된 쪽만 숨김, 허용된 쪽 자동 선택
+  document.querySelectorAll('#tempOptions .chip').forEach(chip => {
+    const val = chip.dataset.val;
+    const blocked = (c.iceOnly && val === 'HOT') || (c.hotOnly && val === 'ICE');
+    chip.classList.toggle('hide', blocked);
+  });
+  if (c.iceOnly) setSingle('tempOptions', 'ICE');
+  if (c.hotOnly) setSingle('tempOptions', 'HOT');
+
+  // 사이즈 섹션 (라벨 + 칩/커스텀 입력) 통째로 숨김/복원
+  const sizeLabel  = document.getElementById('sizeLabel');
+  const sizeChips  = document.getElementById('sizeOptions');
+  const sizeCustom = document.getElementById('sizeCustom');
+  if (c.noSize) {
+    sizeLabel  && sizeLabel.classList.add('hide');
+    sizeChips  && sizeChips.classList.add('hide');
+    sizeCustom && sizeCustom.classList.add('hide');
+  } else {
+    sizeLabel  && sizeLabel.classList.remove('hide');
+    // chips vs customInput 노출 여부는 applyCafeSizes가 결정
+    if (typeof applyCafeSizes === 'function') applyCafeSizes();
+  }
+}
+
+// 메뉴 입력 blur 시: 줄임말 확장 → 텍스트 파싱 → 온도/사이즈/추가옵션 + 제약 적용
 menuInput.addEventListener('change', () => {
-  const normalized = normalizeMenuTemp(menuInput.value.trim());
-  menuInput.value = normalized;
+  const raw = menuInput.value.trim();
+  if (!raw) {
+    applyMenuConstraints('');
+    updateDetailSummary();
+    return;
+  }
+  // 줄임말(아아/따아 등) 단독 입력은 풀메뉴로 치환
+  const shortSpec = MENU_SHORTCUTS[raw];
+  if (shortSpec) {
+    menuInput.value = shortSpec.menu;
+    if (shortSpec.temp) setSingle('tempOptions', shortSpec.temp);
+    applyMenuConstraints(shortSpec.menu);
+    updateDetailSummary();
+    return;
+  }
+  const parsed = parseMenuLine(raw);
+  if (parsed.menu !== raw) menuInput.value = parsed.menu;
+  if (parsed.temp) setSingle('tempOptions', parsed.temp);
+  if (parsed.size) setSize(parsed.size);
+  if (parsed.addons.length) {
+    const merged = [...new Set([...getMulti('addonOptions'), ...parsed.addons])];
+    setMulti('addonOptions', merged);
+    if (typeof updateAddonCount === 'function') updateAddonCount();
+  }
+  applyMenuConstraints(menuInput.value);
   updateDetailSummary();
 });
 
@@ -2174,6 +2343,7 @@ function selectMenuEntry(entry) {
   menuInput.value = entry.menu;
   const temp = entry.temp || menuDefaultTemp(entry.menu);
   if (temp) setSingle('tempOptions', temp);
+  applyMenuConstraints(entry.menu);
   hideMenuDropdown();
   menuInput.blur(); // 모바일 키보드 내림
   updateDetailSummary();
@@ -2431,6 +2601,7 @@ function fillFormFromOrder(o) {
     document.querySelector('details.memo-details').open = true;
   }
   updateMemoIndicator();
+  applyMenuConstraints(o.menu || '');
 }
 
 function resetFormFields() {
@@ -2450,6 +2621,7 @@ function resetFormFields() {
   document.querySelector('details.memo-details').open = false;
   document.getElementById('memoInput').value = '';
   updateMemoIndicator();
+  applyMenuConstraints('');
 }
 
 function updateMemoIndicator() {
