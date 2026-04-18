@@ -302,13 +302,6 @@ gtag('config', 'G-9VCP0RKBY0');
     color: var(--ink-dark);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .menu-name .shortcut-tag {
-    display: inline-block; font-size: 10px; font-weight: 700;
-    color: var(--sb-accent-deep);
-    background: var(--sb-accent-soft);
-    padding: 1px 6px; border-radius: 4px;
-    margin-right: 6px; vertical-align: middle;
-  }
   .menu-name .menu-new-tag {
     display: inline-block; font-size: 9.5px; font-weight: 800;
     color: #fff; background: var(--sb-accent);
@@ -1819,10 +1812,30 @@ function setSize(val) {
   }
 }
 
+// 카페별 공식 메뉴 페이지 — "메뉴 보기" 링크 대상
+const CAFE_MENU_URLS = {
+  starbucks: 'https://www.starbucks.co.kr/menu/drink_list.do',
+  ediya:     'https://ediya.com/contents/drink.html',
+  mega:      'https://mega-mgccoffee.com/menu/menu_list.php',
+  compose:   'https://composecoffee.com/menu/drink',
+  twosome:   'https://twosome.co.kr/menu/bevList.do',
+  hollys:    'https://www.hollys.co.kr/menu/coffee.do',
+  paik:      'https://paikdabang.com/menu/menu_coffee/',
+  // other: 없음 → 링크 숨김
+};
+
 function applyCafeMenus() {
-  const cafeId = CAFE_MENUS[CONFIG.cafe] ? CONFIG.cafe : 'starbucks';
-  const sbuxLink = document.getElementById('sbuxMenuLink');
-  if (sbuxLink) sbuxLink.classList.toggle('hide', cafeId !== 'starbucks');
+  const cafeId  = CAFE_MENUS[CONFIG.cafe] ? CONFIG.cafe : 'starbucks';
+  const menuLink = document.getElementById('sbuxMenuLink');
+  if (menuLink) {
+    const url = CAFE_MENU_URLS[cafeId];
+    if (url) {
+      menuLink.href = url;
+      menuLink.classList.remove('hide');
+    } else {
+      menuLink.classList.add('hide');
+    }
+  }
   // 드롭다운이 열려 있으면 새 카페 메뉴로 즉시 갱신
   const dd = document.getElementById('menuDropdown');
   const mi = document.getElementById('menuInput');
@@ -2162,10 +2175,13 @@ document.getElementById('memberAddInput').addEventListener('keydown', e => {
 // - 기타 : 새 탭으로 웹 오픈
 // ════════════════════════════════════════════════════════════════
 document.getElementById('sbuxMenuLink').addEventListener('click', e => {
+  // 스타벅스 선택된 경우에만 Android 앱 인텐트 딥링크 시도,
+  // 다른 카페는 기본 target="_blank" 로 웹 페이지 열림
+  if (CONFIG.cafe !== 'starbucks') return;
   const ua = navigator.userAgent.toLowerCase();
   if (ua.includes('android')) {
     e.preventDefault();
-    const webUrl = 'https://www.starbucks.co.kr/menu/drink_list.do';
+    const webUrl = CAFE_MENU_URLS.starbucks;
     window.location.href = `intent://home#Intent;scheme=starbuckskorea;package=com.starbucks.co;S.browser_fallback_url=${encodeURIComponent(webUrl)};end`;
   }
   // iOS/기타: 기본 동작(target="_blank") 유지 → iOS는 Universal Link로 앱 연동 시도
@@ -2421,11 +2437,15 @@ function buildMenuDropdownEntries(filter) {
     });
   });
 
-  // 정렬: priority 우선, 그 안에서 NEW 아이템이 위로
+  // 정렬:
+  //  - 필터 없을 때 = 브라우징 상태: NEW 아이템이 전체 최상단 (눈에 띄게)
+  //  - 필터 있을 때 = 검색 상태: priority(줄임말 prefix 매치 우선) 중시,
+  //    동률이면 NEW 가 먼저
   entries.sort((a, b) => {
-    if (a.priority !== b.priority) return a.priority - b.priority;
     const aNew = isNewMenu(a.addedAt) ? 0 : 1;
     const bNew = isNewMenu(b.addedAt) ? 0 : 1;
+    if (!q && aNew !== bNew) return aNew - bNew;
+    if (a.priority !== b.priority) return a.priority - b.priority;
     return aNew - bNew;
   });
   // 동일 (menu + temp) 중복 제거 (상위 우선으로 살아남음)
