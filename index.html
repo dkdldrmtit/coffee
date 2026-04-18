@@ -196,6 +196,24 @@ gtag('config', 'G-9VCP0RKBY0');
     color: var(--muted); margin: 6px 0 0 14px;
     letter-spacing: 0.2px;
   }
+  .header-desc {
+    font-size: 14px; font-weight: 500;
+    color: var(--ink); margin: 4px 0 0 14px;
+    line-height: 1.45; letter-spacing: 0.1px;
+  }
+  .header-desc:empty { display: none; }
+  .label-head { display: inline-flex; align-items: center; gap: 6px; }
+  .menu-cafe-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 11px; font-weight: 700;
+    background: var(--cafe-color, var(--sb-accent));
+    color: white;
+    letter-spacing: 0.2px;
+    vertical-align: middle;
+    box-shadow: 0 1px 3px rgba(var(--ink-rgb), 0.1);
+  }
   .header-meta {
     display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
     margin-top: 14px;
@@ -909,9 +927,9 @@ gtag('config', 'G-9VCP0RKBY0');
   </button>
   <header class="header">
     <h1 id="pageTitle"></h1>
+    <p class="header-desc hide" id="pageDesc"></p>
     <p class="header-sub" id="headerSub"></p>
     <!-- 숨김: JS 참조용 -->
-    <p id="pageDesc" class="hide"></p>
     <span class="hide" id="cafeLabel"></span>
     <span class="hide" id="hostLabel"></span>
     <span class="hide" id="ownerBadge"></span>
@@ -948,7 +966,10 @@ gtag('config', 'G-9VCP0RKBY0');
       <div class="hide" id="nameChips"></div>
 
       <label>
-        메뉴
+        <span class="label-head">
+          메뉴
+          <span class="menu-cafe-badge hide" id="menuCafeBadge"></span>
+        </span>
         <a class="ext-link" id="sbuxMenuLink" href="https://www.starbucks.co.kr/menu/drink_list.do" target="_blank" rel="noopener">메뉴 보기</a>
       </label>
       <div class="menu-picker" id="menuPicker">
@@ -1723,14 +1744,17 @@ document.getElementById('roomCodeLabel').textContent = ROOM_ID;
 // ════════════════════════════════════════════════════════════════
 function applyConfig() {
   document.getElementById('pageTitle').textContent = CONFIG.title;
-  document.getElementById('pageDesc').textContent = CONFIG.desc;
+  // 부제(desc) 를 제목 바로 아래에 노출. 비어있으면 숨김.
+  const pageDescEl = document.getElementById('pageDesc');
+  if (pageDescEl) {
+    pageDescEl.textContent = CONFIG.desc || '';
+    pageDescEl.classList.toggle('hide', !CONFIG.desc);
+  }
   document.title = `${CONFIG.title} · 커피 골든벨`;
-  // 헤더 부제: 카페명 + 쏘는 사람을 한 줄로
-  const preset = CAFE_PRESETS[CONFIG.cafe] || CAFE_PRESETS.starbucks;
+  // 헤더 서브: host 만 표시. 카페 표시는 메뉴 라벨 옆 뱃지로 이전.
   const host = (CONFIG.host || '').trim();
-  const subParts = [preset.name];
-  if (host) subParts.push(`${host}님이 쏩니다`);
-  document.getElementById('headerSub').textContent = subParts.join(' · ');
+  const headerSubEl = document.getElementById('headerSub');
+  if (headerSubEl) headerSubEl.textContent = host ? `${host}님이 쏩니다` : '';
   applyCafeSizes();
   applyCafeMenus();
   applyCafeAddons();
@@ -1886,6 +1910,7 @@ const CAFE_MENU_URLS = {
 
 function applyCafeMenus() {
   const cafeId  = CAFE_MENUS[CONFIG.cafe] ? CONFIG.cafe : 'starbucks';
+  const preset  = CAFE_PRESETS[cafeId] || CAFE_PRESETS.starbucks;
   const menuLink = document.getElementById('sbuxMenuLink');
   if (menuLink) {
     const url = CAFE_MENU_URLS[cafeId];
@@ -1895,6 +1920,13 @@ function applyCafeMenus() {
     } else {
       menuLink.classList.add('hide');
     }
+  }
+  // 카페 뱃지: 메뉴 라벨 옆에 카페명 + 브랜드 컬러로 표시
+  const badge = document.getElementById('menuCafeBadge');
+  if (badge) {
+    badge.textContent = preset.name;
+    badge.style.setProperty('--cafe-color', preset.color);
+    badge.classList.remove('hide');
   }
   // 드롭다운이 열려 있으면 새 카페 메뉴로 즉시 갱신
   const dd = document.getElementById('menuDropdown');
