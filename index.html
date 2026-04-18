@@ -342,8 +342,9 @@ gtag('config', 'G-9VCP0RKBY0');
     font-size: 13px; line-height: 1.55;
   }
   /* ── 설정 모달: 부제 입력 (제목 바로 아래, 작게) ─────── */
-  /* 이전 프리뷰 박스와 동일 크기/톤 유지 */
-  .cfg-desc-input {
+  /* 이전 '💬 카톡에 이렇게 보여요' 프리뷰 박스와 동일 크기/톤.
+     전역 input[type=text] 스타일을 덮기 위해 input.cfg-desc-input 으로 특이도 ↑ */
+  input.cfg-desc-input {
     width: 100%; font-size: 11.5px; color: var(--ink);
     margin: 6px 2px 0; padding: 6px 10px;
     background: var(--memo-bg); border: 1px dashed var(--memo-border);
@@ -351,12 +352,12 @@ gtag('config', 'G-9VCP0RKBY0');
     box-sizing: border-box; font-family: inherit;
     transition: border 0.1s, background 0.1s;
   }
-  .cfg-desc-input:focus {
+  input.cfg-desc-input:focus {
     outline: none; border-style: solid;
     border-color: var(--sb-accent);
     background: white;
   }
-  .cfg-desc-input::placeholder { color: var(--muted); font-size: 11.5px; }
+  input.cfg-desc-input::placeholder { color: var(--muted); font-size: 11.5px; }
   /* ── 설정 모달: 이벤트 이름 예시 패널 ─────────────────── */
   .examples-panel {
     background: var(--memo-bg);
