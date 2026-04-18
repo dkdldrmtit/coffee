@@ -2506,21 +2506,19 @@ function renderMenuDropdown(filter = '') {
   }).join('');
 }
 
-// 입력창을 visible viewport 상단 15% 지점으로 스크롤 → 드롭다운이 아래에
-// 펼쳐질 공간을 확보. iOS 키보드 올라온 뒤에 실행해야 정확.
-// behavior: 'instant' 로 즉시 이동 — smooth 는 타이핑과 겹치면 화면이 튐.
+// 입력창을 화면 상단 근처(약 60px 지점)으로 끌어올려 드롭다운이 키보드에
+// 덜 가리게. iOS 키보드가 올라온 뒤에 호출해야 정확.
+// scrollIntoView 대신 scrollTo 로 명시적 target 지정 — iOS 호환성 ↑.
 function scrollInputIntoViewForDropdown() {
   const mi = document.getElementById('menuInput');
   if (!mi || document.activeElement !== mi) return;
-  const vv = window.visualViewport;
   const rect = mi.getBoundingClientRect();
-  const visHeight = vv ? vv.height : window.innerHeight;
-  const visTop    = vv ? vv.offsetTop : 0;
-  const inputTopInVisible = rect.top - visTop;
-  const targetY = Math.max(24, visHeight * 0.15);
-  const delta = inputTopInVisible - targetY;
-  if (Math.abs(delta) > 20) {
-    window.scrollBy({ top: delta, behavior: 'instant' });
+  const currentY = window.scrollY || window.pageYOffset || 0;
+  const headerOffset = 60; // 입력창 위로 남길 여백
+  const targetY = currentY + rect.top - headerOffset;
+  if (Math.abs(targetY - currentY) > 20) {
+    // iOS 일부 버전은 behavior 옵션을 무시하므로 기본값(instant) 의존
+    window.scrollTo(0, Math.max(0, targetY));
   }
 }
 
@@ -2603,14 +2601,10 @@ menuInput.addEventListener('input', () => {
   showMenuDropdown();
 });
 
-// iOS: 드롭다운 터치 시 input이 먼저 blur → 선택 날아감. preventDefault로 방지.
-// 단, 스크롤 터치는 통과시켜야 하므로 .menu-item 위 탭에만 걸음.
-menuDropdown.addEventListener('mousedown', e => {
-  if (e.target.closest('.menu-item')) e.preventDefault();
-});
-menuDropdown.addEventListener('touchstart', e => {
-  if (e.target.closest('.menu-item')) e.preventDefault();
-}, { passive: false });
+// iOS: 드롭다운 터치 시 input blur 가 먼저 발생 → setTimeout 150ms 뒤에 hide
+// 하는 동안 click 이벤트가 먼저 발사되어 selectMenuEntry 가 실행됨.
+// touchstart preventDefault 는 iOS 에서 click 자체를 취소해버려 탭 반응이
+// 아예 안 먹음 → 걸지 않음. mousedown 도 마찬가지로 생략.
 
 menuDropdown.addEventListener('click', e => {
   const item = e.target.closest('.menu-item');
@@ -2620,7 +2614,8 @@ menuDropdown.addEventListener('click', e => {
 });
 
 menuInput.addEventListener('blur', () => {
-  setTimeout(hideMenuDropdown, 150);
+  // iOS 에서 click 이 touchend 후 살짝 늦게 발사되므로 여유있게 220ms
+  setTimeout(hideMenuDropdown, 220);
 });
 
 menuInput.addEventListener('keydown', e => {
