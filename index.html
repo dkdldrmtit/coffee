@@ -181,13 +181,14 @@ gtag('config', 'G-9VCP0RKBY0');
     margin: 0 !important;
   }
   .title-host {
-    font-size: 11px; font-weight: 500;
-    color: var(--muted);
+    font-size: 11.5px; font-weight: 700;
+    color: var(--sb-accent-deep);
     white-space: nowrap; flex-shrink: 0;
     padding: 3px 10px;
-    background: var(--memo-bg);
-    border: 1px solid var(--memo-border);
+    background: var(--sb-accent-soft);
+    border: 1px solid rgba(var(--sb-accent-rgb), 0.25);
     border-radius: 999px;
+    letter-spacing: 0.1px;
   }
   .header h1 {
     font-size: 25px; margin: 0 0 8px;
@@ -1779,14 +1780,16 @@ function applyConfig() {
     pageDescEl.classList.toggle('hide', !CONFIG.desc);
   }
   document.title = `${CONFIG.title} · 커피 골든벨`;
-  // 쏘는 사람: 제목 오른쪽에 작은 뱃지로. 빈 값이면 숨김.
-  // '님' 으로 끝나면(예: '김민석 부장님') 뒤에 또 '님' 안 붙여 '님님이 쏨' 방지.
+  // 쏘는 사람: 제목 오른쪽에 앰버 pill 로 이름만 표시.
+  // 뱃지 자체(앰버 컬러)가 "이 사람이 쏘는 사람" 이라는 시각 단서.
+  // trailing 님 중복 제거 후 한 번만 붙임.
   const host = (CONFIG.host || '').trim();
   const hostStripped = host.replace(/님+$/, '');
+  const hostLabel = hostStripped ? `${hostStripped}님` : '';
   const titleHostEl = document.getElementById('titleHost');
   if (titleHostEl) {
-    titleHostEl.textContent = host ? `${hostStripped}님이 쏨` : '';
-    titleHostEl.classList.toggle('hide', !host);
+    titleHostEl.textContent = hostLabel;
+    titleHostEl.classList.toggle('hide', !hostLabel);
   }
   // headerSub 은 숨김 상태 유지 (공유 프리뷰 등 JS 참조 호환용)
   const headerSubEl = document.getElementById('headerSub');
