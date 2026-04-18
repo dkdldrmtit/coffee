@@ -309,6 +309,14 @@ gtag('config', 'G-9VCP0RKBY0');
     padding: 1px 6px; border-radius: 4px;
     margin-right: 6px; vertical-align: middle;
   }
+  .menu-name .menu-new-tag {
+    display: inline-block; font-size: 9.5px; font-weight: 800;
+    color: #fff; background: var(--sb-accent);
+    padding: 1px 6px; border-radius: 4px;
+    margin-left: 6px; vertical-align: middle;
+    letter-spacing: 0.5px;
+    box-shadow: 0 1px 3px rgba(var(--sb-accent-rgb), 0.35);
+  }
   .menu-sub {
     font-size: 11px; color: var(--muted); margin-top: 2px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -1203,108 +1211,166 @@ const DEFAULT_MEMBERS = [];
 let CURRENT_MEMBERS = [...DEFAULT_MEMBERS];
 
 // ════════════════════════════════════════════════════════════════
-// ☕️ 스타벅스 메뉴 (평균적인 인기순 — 위로 갈수록 많이 시킴)
-// 여기에 없는 시즌/신메뉴는 입력란에 직접 타이핑하면 주문 가능합니다.
-// ════════════════════════════════════════════════════════════════
-// ════════════════════════════════════════════════════════════════
 // ☕️ 메뉴 데이터베이스
 // ────────────────────────────────────────────────────────────────
+// - 스키마: [{ name: '메뉴명', addedAt: 'YYYY-MM-DD' }]
+//   addedAt 은 "이 메뉴가 카탈로그에 추가된 날짜" — NEW 뱃지·정렬에 사용
 // - COMMON_MENUS: 대부분 카페에 있는 기본 음료 (모든 카페에 공통 노출)
 // - CAFE_MENUS[id]: 그 카페의 시그니처/인기 메뉴 (공통 아래에 추가 노출)
-// 여기 없는 시즌/신메뉴는 사용자가 직접 타이핑 가능 (datalist = 힌트일 뿐)
+// - CAFE_EXCLUDES[id]: 이 카페에서는 공통에서 제외할 메뉴명 목록
+//   (같은 메뉴를 공식명으로 재표기할 때 사용. 예: Starbucks의 "아메리카노" → "카페 아메리카노")
+// 여기 없는 시즌/신메뉴는 사용자가 직접 타이핑 가능
 // ════════════════════════════════════════════════════════════════
+const MENU_SEED_DATE = '2024-01-01';   // 기존 큐레이션 항목의 기본 addedAt
+const MENU_NEW_DAYS  = 14;             // 뱃지 표시 기준 (addedAt 이 이 일수 이내면 NEW)
+
 const COMMON_MENUS = [
-  '아메리카노',
-  '디카페인 아메리카노',
-  '카페라떼',
-  '디카페인 카페라떼',
-  '바닐라 라떼',
-  '카라멜 마키아또',
-  '카페모카',
-  '카푸치노',
-  '에스프레소',
-  '핫초콜릿',
+  { name: '아메리카노',            addedAt: MENU_SEED_DATE },
+  { name: '디카페인 아메리카노',   addedAt: MENU_SEED_DATE },
+  { name: '카페라떼',              addedAt: MENU_SEED_DATE },
+  { name: '디카페인 카페라떼',     addedAt: MENU_SEED_DATE },
+  { name: '바닐라 라떼',           addedAt: MENU_SEED_DATE },
+  { name: '카라멜 마키아또',       addedAt: MENU_SEED_DATE },
+  { name: '카페모카',              addedAt: MENU_SEED_DATE },
+  { name: '카푸치노',              addedAt: MENU_SEED_DATE },
+  { name: '에스프레소',            addedAt: MENU_SEED_DATE },
+  { name: '핫초콜릿',              addedAt: MENU_SEED_DATE },
 ];
+
+// 카페별로 공통 항목을 가릴 때 사용 (공식명으로 재표기된 경우)
+const CAFE_EXCLUDES = {
+  starbucks: [
+    '아메리카노', '디카페인 아메리카노',
+    '카페라떼', '디카페인 카페라떼',
+    '카페모카', '핫초콜릿',
+  ],
+  paik: ['아메리카노'],   // "원샷 아메리카노"로 재표기
+};
+
+// 스타벅스 공홈(2026-04-18 기준) 대조 반영 — 공식명 준수, 단종 메뉴 제거, 신메뉴 추가
 const CAFE_MENUS = {
   starbucks: [
-    '돌체 라떼',
-    '콜드브루',
-    '바닐라 크림 콜드브루',
-    '돌체 콜드브루',
-    '나이트로 콜드브루',
-    '자바칩 프라푸치노',
-    '카라멜 프라푸치노',
-    '모카 프라푸치노',
-    '제주 유기농 말차로 만든 라떼',
-    '헤이즐넛 라떼',
-    '플랫 화이트',
-    '화이트 초콜릿 모카',
-    '차이 티 라떼',
-    '자몽 허니 블랙 티',
-    '그린 티 크림 프라푸치노',
-    '쿨 라임 피지오',
+    // Common 대체 (공식명)
+    { name: '카페 아메리카노',      addedAt: MENU_SEED_DATE },
+    { name: '카페 라떼',            addedAt: MENU_SEED_DATE },
+    { name: '카페 모카',            addedAt: MENU_SEED_DATE },
+    { name: '시그니처 핫 초콜릿',   addedAt: MENU_SEED_DATE },
+    // 🆕 2026-04-18 신메뉴 (공홈 NEW 태그)
+    { name: '스타벅스 에어로카노',                      addedAt: '2026-04-18' },
+    { name: '슈 폼 라떼',                               addedAt: '2026-04-18' },
+    { name: '슈크림 라떼',                              addedAt: '2026-04-18' },
+    { name: '바삭 피스타치오 바닐라 크림 콜드 브루',    addedAt: '2026-04-18' },
+    { name: '서울 막걸리향 콜드브루',                   addedAt: '2026-04-18' },
+    { name: '우디 카우보이 쿠키 콜드 브루',             addedAt: '2026-04-18' },
+    { name: '바나나 마카다미아 오트 프라푸치노',        addedAt: '2026-04-18' },
+    { name: '바삭 피스타치오 초콜릿 프라푸치노',        addedAt: '2026-04-18' },
+    { name: '제시 슈트로베리 프라푸치노',               addedAt: '2026-04-18' },
+    { name: '초코 바나나 마카다미아 오트 프라푸치노',   addedAt: '2026-04-18' },
+    { name: '블랙 글레이즈드 셔벗 플레이트',            addedAt: '2026-04-18' },
+    { name: '버즈 키위 팝 에너지 피지오',               addedAt: '2026-04-18' },
+    { name: '서울 석양 오미자 피지오',                  addedAt: '2026-04-18' },
+    // 라떼 · 에스프레소 계열 시그니처
+    { name: '라벤더 카페 브레베',   addedAt: MENU_SEED_DATE },
+    { name: '밀크카라멜 라떼',      addedAt: MENU_SEED_DATE },
+    { name: '바닐라 빈 라떼',       addedAt: MENU_SEED_DATE },
+    { name: '스타벅스 돌체 라떼',   addedAt: MENU_SEED_DATE },
+    { name: '스타벅스 꿀 호떡 라떼', addedAt: MENU_SEED_DATE },
+    { name: '인절미 크림 라떼',     addedAt: MENU_SEED_DATE },
+    { name: '에스프레소 콘 파나',   addedAt: MENU_SEED_DATE },
+    { name: '에스프레소 마키아또',  addedAt: MENU_SEED_DATE },
+    { name: '플랫 화이트',          addedAt: MENU_SEED_DATE },
+    { name: '화이트 초콜릿 모카',   addedAt: MENU_SEED_DATE },
+    // 콜드 브루
+    { name: '콜드 브루',            addedAt: MENU_SEED_DATE },
+    { name: '바닐라 크림 콜드 브루', addedAt: MENU_SEED_DATE },
+    { name: '돌체 콜드 브루',       addedAt: MENU_SEED_DATE },
+    { name: '나이트로 콜드 브루',   addedAt: MENU_SEED_DATE },
+    // 프라푸치노
+    { name: '자바 칩 프라푸치노',   addedAt: MENU_SEED_DATE },
+    { name: '카라멜 프라푸치노',    addedAt: MENU_SEED_DATE },
+    { name: '제주 말차 크림 프라푸치노', addedAt: MENU_SEED_DATE },
+    { name: '더블 에스프레소 칩 프라푸치노', addedAt: MENU_SEED_DATE },
+    // 블렌디드
+    { name: '딸기 딜라이트 요거트 블렌디드', addedAt: MENU_SEED_DATE },
+    { name: '망고 바나나 블렌디드',  addedAt: MENU_SEED_DATE },
+    { name: '스타벅스 클래식 밀크티 블렌디드', addedAt: MENU_SEED_DATE },
+    { name: '자몽 허니 레몬 블렌디드', addedAt: MENU_SEED_DATE },
+    { name: '피치 망고 블렌디드',    addedAt: MENU_SEED_DATE },
+    // 피지오
+    { name: '쿨 라임 피지오',        addedAt: MENU_SEED_DATE },
+    // 티
+    { name: '민트 블렌드 티',        addedAt: MENU_SEED_DATE },
+    { name: '얼 그레이 티',          addedAt: MENU_SEED_DATE },
+    { name: '유자 민트 티',          addedAt: MENU_SEED_DATE },
+    { name: '캐모마일 블렌드 티',    addedAt: MENU_SEED_DATE },
+    { name: '히비스커스 블렌드 티',  addedAt: MENU_SEED_DATE },
+    { name: '자몽 허니 블랙 티',     addedAt: MENU_SEED_DATE },
+    { name: '잉글리쉬 브렉퍼스트 티', addedAt: MENU_SEED_DATE },
+    { name: '제주 말차 라떼',        addedAt: MENU_SEED_DATE },
+    { name: '말차 티라미수 라떼',    addedAt: MENU_SEED_DATE },
+    { name: '복숭아 아이스 티',      addedAt: MENU_SEED_DATE },
   ],
   ediya: [
-    '토피넛 라떼',
-    '쫀득 인절미 라떼',
-    '얼그레이 라떼',
-    '딸기 라떼',
-    '초코 라떼',
-    '아인슈페너',
-    '플라워 블렌딩 티',
-    '블루레몬에이드',
-    '수박 주스',
+    { name: '토피넛 라떼',          addedAt: MENU_SEED_DATE },
+    { name: '쫀득 인절미 라떼',     addedAt: MENU_SEED_DATE },
+    { name: '얼그레이 라떼',        addedAt: MENU_SEED_DATE },
+    { name: '딸기 라떼',            addedAt: MENU_SEED_DATE },
+    { name: '초코 라떼',            addedAt: MENU_SEED_DATE },
+    { name: '아인슈페너',           addedAt: MENU_SEED_DATE },
+    { name: '플라워 블렌딩 티',     addedAt: MENU_SEED_DATE },
+    { name: '블루레몬에이드',       addedAt: MENU_SEED_DATE },
+    { name: '수박 주스',            addedAt: MENU_SEED_DATE },
   ],
   mega: [
-    '초코 라떼',
-    '연유 라떼',
-    '딸기 스무디',
-    '망고 스무디',
-    '블루베리 요거트 스무디',
-    '레몬 에이드',
-    '자몽 에이드',
-    '아이스티',
+    { name: '초코 라떼',            addedAt: MENU_SEED_DATE },
+    { name: '연유 라떼',            addedAt: MENU_SEED_DATE },
+    { name: '딸기 스무디',          addedAt: MENU_SEED_DATE },
+    { name: '망고 스무디',          addedAt: MENU_SEED_DATE },
+    { name: '블루베리 요거트 스무디', addedAt: MENU_SEED_DATE },
+    { name: '레몬 에이드',          addedAt: MENU_SEED_DATE },
+    { name: '자몽 에이드',          addedAt: MENU_SEED_DATE },
+    { name: '아이스티',             addedAt: MENU_SEED_DATE },
   ],
   compose: [
-    '아인슈페너',
-    '바닐라 콘파나',
-    '딸기 라떼',
-    '흑임자 라떼',
-    '복숭아 아이스티',
-    '레몬 에이드',
-    '자몽 에이드',
+    { name: '아인슈페너',           addedAt: MENU_SEED_DATE },
+    { name: '바닐라 콘파나',        addedAt: MENU_SEED_DATE },
+    { name: '딸기 라떼',            addedAt: MENU_SEED_DATE },
+    { name: '흑임자 라떼',          addedAt: MENU_SEED_DATE },
+    { name: '복숭아 아이스티',      addedAt: MENU_SEED_DATE },
+    { name: '레몬 에이드',          addedAt: MENU_SEED_DATE },
+    { name: '자몽 에이드',          addedAt: MENU_SEED_DATE },
   ],
   twosome: [
-    '아이스 초콜라떼',
-    '유자 얼그레이 티',
-    '라즈베리 초코 라떼',
-    '얼 그레이 밀크티',
-    '스트로베리 요거트 스무디',
-    '망고 패션후르츠 티',
+    { name: '아이스 초콜라떼',      addedAt: MENU_SEED_DATE },
+    { name: '유자 얼그레이 티',     addedAt: MENU_SEED_DATE },
+    { name: '라즈베리 초코 라떼',   addedAt: MENU_SEED_DATE },
+    { name: '얼 그레이 밀크티',     addedAt: MENU_SEED_DATE },
+    { name: '스트로베리 요거트 스무디', addedAt: MENU_SEED_DATE },
+    { name: '망고 패션후르츠 티',   addedAt: MENU_SEED_DATE },
   ],
   hollys: [
-    '할리치노',
-    '초코 할리치노',
-    '드림 카푸치노',
-    '녹차 라떼',
-    '고구마 라떼',
-    '블루 레모네이드',
-    '유자차',
+    { name: '할리치노',             addedAt: MENU_SEED_DATE },
+    { name: '초코 할리치노',        addedAt: MENU_SEED_DATE },
+    { name: '드림 카푸치노',        addedAt: MENU_SEED_DATE },
+    { name: '녹차 라떼',            addedAt: MENU_SEED_DATE },
+    { name: '고구마 라떼',          addedAt: MENU_SEED_DATE },
+    { name: '블루 레모네이드',      addedAt: MENU_SEED_DATE },
+    { name: '유자차',               addedAt: MENU_SEED_DATE },
   ],
   paik: [
-    '원샷 아메리카노',
-    '빽스치노',
-    '달콤 연유 라떼',
-    '딸기 스무디',
-    '키위 주스',
-    '레몬 에이드',
+    { name: '원샷 아메리카노',      addedAt: MENU_SEED_DATE },
+    { name: '빽스치노',             addedAt: MENU_SEED_DATE },
+    { name: '달콤 연유 라떼',       addedAt: MENU_SEED_DATE },
+    { name: '딸기 스무디',          addedAt: MENU_SEED_DATE },
+    { name: '키위 주스',            addedAt: MENU_SEED_DATE },
+    { name: '레몬 에이드',          addedAt: MENU_SEED_DATE },
   ],
   other: [
-    '녹차 라떼',
-    '고구마 라떼',
-    '딸기 라떼',
-    '레몬 에이드',
-    '아이스티',
+    { name: '녹차 라떼',            addedAt: MENU_SEED_DATE },
+    { name: '고구마 라떼',          addedAt: MENU_SEED_DATE },
+    { name: '딸기 라떼',            addedAt: MENU_SEED_DATE },
+    { name: '레몬 에이드',          addedAt: MENU_SEED_DATE },
+    { name: '아이스티',             addedAt: MENU_SEED_DATE },
   ],
 };
 
@@ -1383,6 +1449,49 @@ const MENU_META = {
   '빽스치노':                { category: 'frappuccino', defaultTemp: 'ICE' },
   '달콤 연유 라떼':          { category: 'latte',       defaultTemp: 'ICE' },
   '키위 주스':               { category: 'smoothie',    defaultTemp: 'ICE' },
+
+  // ── 스타벅스 공식명 (2026-04-18 공홈 대조) ─────────────
+  '카페 아메리카노':         { category: 'coffee',      defaultTemp: 'ICE' },
+  '카페 라떼':               { category: 'latte',       defaultTemp: 'ICE' },
+  '카페 모카':               { category: 'chocolate',   defaultTemp: 'ICE' },
+  '시그니처 핫 초콜릿':      { category: 'chocolate',   defaultTemp: 'HOT', constraints: { hotOnly: true } },
+  '콜드 브루':               { category: 'coldbrew',    defaultTemp: 'ICE' },
+  '바닐라 크림 콜드 브루':   { category: 'coldbrew',    defaultTemp: 'ICE' },
+  '돌체 콜드 브루':          { category: 'coldbrew',    defaultTemp: 'ICE' },
+  '나이트로 콜드 브루':      { category: 'coldbrew',    defaultTemp: 'ICE' },
+  '자바 칩 프라푸치노':      { category: 'frappuccino', defaultTemp: 'ICE' },
+  '에스프레소 콘 파나':      { category: 'espresso',    defaultTemp: 'HOT' },
+
+  // 스타벅스 시그니처 · 인기 메뉴
+  '라벤더 카페 브레베':      { category: 'latte',       defaultTemp: 'ICE' },
+  '밀크카라멜 라떼':         { category: 'latte',       defaultTemp: 'ICE' },
+  '바닐라 빈 라떼':          { category: 'latte',       defaultTemp: 'ICE' },
+  '스타벅스 돌체 라떼':      { category: 'latte',       defaultTemp: 'ICE' },
+  '스타벅스 꿀 호떡 라떼':   { category: 'latte',       defaultTemp: 'ICE' },
+  '인절미 크림 라떼':        { category: 'latte',       defaultTemp: 'ICE' },
+  '제주 말차 크림 프라푸치노': { category: 'frappuccino', defaultTemp: 'ICE' },
+  '더블 에스프레소 칩 프라푸치노': { category: 'frappuccino', defaultTemp: 'ICE' },
+  '스타벅스 클래식 밀크티 블렌디드': { category: 'blended', defaultTemp: 'ICE' },
+  '자몽 허니 레몬 블렌디드': { category: 'blended',     defaultTemp: 'ICE' },
+  '피치 망고 블렌디드':      { category: 'blended',     defaultTemp: 'ICE' },
+  '제주 말차 라떼':          { category: 'tea',         defaultTemp: 'ICE' },
+  '말차 티라미수 라떼':      { category: 'tea',         defaultTemp: 'ICE' },
+  '복숭아 아이스 티':        { category: 'tea',         defaultTemp: 'ICE' },
+
+  // 🆕 2026-04-18 신메뉴 (공홈 NEW)
+  '스타벅스 에어로카노':                   { category: 'coffee',      defaultTemp: 'ICE' },
+  '슈 폼 라떼':                            { category: 'latte',       defaultTemp: 'ICE' },
+  '슈크림 라떼':                           { category: 'latte',       defaultTemp: 'ICE' },
+  '바삭 피스타치오 바닐라 크림 콜드 브루':  { category: 'coldbrew',    defaultTemp: 'ICE' },
+  '서울 막걸리향 콜드브루':                { category: 'coldbrew',    defaultTemp: 'ICE' },
+  '우디 카우보이 쿠키 콜드 브루':          { category: 'coldbrew',    defaultTemp: 'ICE' },
+  '바나나 마카다미아 오트 프라푸치노':     { category: 'frappuccino', defaultTemp: 'ICE' },
+  '바삭 피스타치오 초콜릿 프라푸치노':     { category: 'frappuccino', defaultTemp: 'ICE' },
+  '제시 슈트로베리 프라푸치노':            { category: 'frappuccino', defaultTemp: 'ICE' },
+  '초코 바나나 마카다미아 오트 프라푸치노': { category: 'frappuccino', defaultTemp: 'ICE' },
+  '블랙 글레이즈드 셔벗 플레이트':         { category: 'blended',     defaultTemp: 'ICE' },
+  '버즈 키위 팝 에너지 피지오':            { category: 'fizzio',      defaultTemp: 'ICE' },
+  '서울 석양 오미자 피지오':               { category: 'fizzio',      defaultTemp: 'ICE' },
 };
 
 const CATEGORY_EMOJI = {
@@ -2161,12 +2270,14 @@ menuInput.addEventListener('change', () => {
     updateDetailSummary();
     return;
   }
-  // 줄임말(아아/따아 등) 단독 입력은 풀메뉴로 치환
+  // 줄임말(아아/따아 등) 단독 입력은 풀메뉴로 치환 (현재 카페 공식명으로)
   const shortSpec = MENU_SHORTCUTS[raw];
   if (shortSpec) {
-    menuInput.value = shortSpec.menu;
+    const cafeId  = CAFE_MENUS[CONFIG.cafe] ? CONFIG.cafe : 'starbucks';
+    const resolved = resolveShortcutMenu(shortSpec, getCafeMenuList(cafeId));
+    menuInput.value = resolved.name;
     if (shortSpec.temp) setSingle('tempOptions', shortSpec.temp);
-    applyMenuConstraints(shortSpec.menu);
+    applyMenuConstraints(resolved.name);
     updateDetailSummary();
     return;
   }
@@ -2188,8 +2299,10 @@ menuInput.addEventListener('change', () => {
 // ════════════════════════════════════════════════════════════════
 const menuDropdown = document.getElementById('menuDropdown');
 const menuPicker   = document.getElementById('menuPicker');
-let _dropdownItems = [];
-let _dropdownHighlightedIdx = -1;
+// hoisting 되는 var 로 선언 — 모듈 상단에서 renderMenuDropdown 이 조기 호출돼도
+// TDZ 안 터지게. 선언은 하단이지만 엔진이 module 시작 시 undefined 로 잡아둠.
+var _dropdownItems = [];
+var _dropdownHighlightedIdx = -1;
 
 // 이미지 로드 실패 → 카테고리 이모지로 폴백 (onerror에서 호출)
 window._menuImgFallback = function (img) {
@@ -2240,46 +2353,82 @@ function _stripTempPrefix(q) {
   return q.replace(/^(아이스|차가운|시원한|찬|핫|따뜻한?|따듯한?|뜨거운?|따|뜨)/, '');
 }
 
+// addedAt 문자열 → 최근 MENU_NEW_DAYS 일 이내면 true
+function isNewMenu(addedAt) {
+  if (!addedAt) return false;
+  const t = new Date(addedAt).getTime();
+  if (isNaN(t)) return false;
+  return (Date.now() - t) < MENU_NEW_DAYS * 24 * 60 * 60 * 1000;
+}
+
+// 현재 카페의 유효 메뉴 목록 (공통 + 카페전용, CAFE_EXCLUDES 적용)
+// 반환: [{ name, addedAt }]. 중복 이름은 카페별이 공통을 덮어씀.
+function getCafeMenuList(cafeId) {
+  const excludes = new Set(CAFE_EXCLUDES[cafeId] || []);
+  const merged = new Map();
+  COMMON_MENUS
+    .filter(m => !excludes.has(m.name))
+    .forEach(m => merged.set(m.name, m));
+  (CAFE_MENUS[cafeId] || []).forEach(m => merged.set(m.name, m));
+  return Array.from(merged.values());
+}
+
+// 줄임말 spec을 현재 카페 메뉴로 해석 (예: '아메리카노' → 스벅이면 '카페 아메리카노')
+function resolveShortcutMenu(spec, cafeList) {
+  const exact = cafeList.find(m => m.name === spec.menu);
+  if (exact) return exact;
+  const bySubstr = cafeList.find(m => m.name.includes(spec.menu));
+  if (bySubstr) return bySubstr;
+  return { name: spec.menu, addedAt: null };
+}
+
 function buildMenuDropdownEntries(filter) {
-  const cafeId = CAFE_MENUS[CONFIG.cafe] ? CONFIG.cafe : 'starbucks';
-  const cafeMenus = CAFE_MENUS[cafeId] || [];
-  const allMenus = [...new Set([...COMMON_MENUS, ...cafeMenus])];
+  const cafeId  = CAFE_MENUS[CONFIG.cafe] ? CONFIG.cafe : 'starbucks';
+  const allMenus = getCafeMenuList(cafeId);
 
   const qRaw = _normalizeMenuQuery(filter);
   const q = _stripTempPrefix(qRaw);
 
   const entries = [];
 
-  // 1) 줄임말
-  Object.entries(MENU_SHORTCUTS).forEach(([short, { menu, temp }]) => {
+  // 1) 줄임말 — 카페별 공식명으로 해석
+  Object.entries(MENU_SHORTCUTS).forEach(([short, spec]) => {
+    const resolved = resolveShortcutMenu(spec, allMenus);
     const shortN = _normalizeMenuQuery(short);
-    const menuN  = _normalizeMenuQuery(menu);
+    const menuN  = _normalizeMenuQuery(resolved.name);
     const prefixMatch = q && shortN.startsWith(q);
     const nameMatch   = q && menuN.includes(q);
     if (q && !prefixMatch && !nameMatch) return;
     entries.push({
       kind: 'shortcut',
       shortcut: short,
-      menu, temp,
+      menu: resolved.name,
+      temp: spec.temp,
       priority: prefixMatch ? 0 : 1,
+      addedAt: resolved.addedAt,
     });
   });
 
   // 2) 일반 메뉴
-  allMenus.forEach(menu => {
-    if (q && !_normalizeMenuQuery(menu).includes(q)) return;
+  allMenus.forEach(m => {
+    if (q && !_normalizeMenuQuery(m.name).includes(q)) return;
     entries.push({
       kind: 'menu',
-      menu,
-      temp: menuDefaultTemp(menu),
+      menu: m.name,
+      temp: menuDefaultTemp(m.name),
       priority: 2,
+      addedAt: m.addedAt,
     });
   });
 
-  // 동일 (menu + temp) 조합은 한 번만 표시.
-  // 줄임말(priority 0/1)이 일반 메뉴(priority 2)보다 먼저 오므로
-  // 줄임말 태그가 붙은 항목이 살아남고, 중복된 일반 항목은 제거됨.
-  entries.sort((a, b) => a.priority - b.priority);
+  // 정렬: priority 우선, 그 안에서 NEW 아이템이 위로
+  entries.sort((a, b) => {
+    if (a.priority !== b.priority) return a.priority - b.priority;
+    const aNew = isNewMenu(a.addedAt) ? 0 : 1;
+    const bNew = isNewMenu(b.addedAt) ? 0 : 1;
+    return aNew - bNew;
+  });
+  // 동일 (menu + temp) 중복 제거 (상위 우선으로 살아남음)
   const seen = new Set();
   const dedup = [];
   entries.forEach(e => {
@@ -2292,12 +2441,16 @@ function buildMenuDropdownEntries(filter) {
 }
 
 function renderMenuDropdown(filter = '') {
+  // 모듈 초기화 타이밍에서 호출돼도 깨지지 않도록 DOM 직접 조회 (const TDZ 회피)
+  const dropdownEl = document.getElementById('menuDropdown');
+  if (!dropdownEl) return;
+
   const entries = buildMenuDropdownEntries(filter);
   _dropdownItems = entries;
   _dropdownHighlightedIdx = -1;
 
   if (entries.length === 0) {
-    menuDropdown.innerHTML =
+    dropdownEl.innerHTML =
       '<div class="menu-empty">일치하는 메뉴가 없어요.<br>그대로 입력해도 주문돼요 ☕️</div>';
     return;
   }
@@ -2305,9 +2458,10 @@ function renderMenuDropdown(filter = '') {
   const preset = CAFE_PRESETS[CONFIG.cafe] || CAFE_PRESETS.starbucks;
   const firstSize = preset.sizes[0] || '';
 
-  menuDropdown.innerHTML = entries.map((e, i) => {
+  dropdownEl.innerHTML = entries.map((e, i) => {
     const displayName = menuDisplayName(e.menu, e.temp);
     const sub = (e.temp || 'ICE') + (firstSize ? ' · ' + firstSize : '');
+    const newTag = isNewMenu(e.addedAt) ? '<span class="menu-new-tag">NEW</span>' : '';
     return `
       <div class="menu-item" data-idx="${i}" role="option">
         <div class="menu-thumb">
@@ -2316,7 +2470,7 @@ function renderMenuDropdown(filter = '') {
                onerror="window._menuImgFallback(this)">
         </div>
         <div class="menu-text">
-          <div class="menu-name">${escapeHtml(displayName)}</div>
+          <div class="menu-name">${escapeHtml(displayName)}${newTag}</div>
           <div class="menu-sub">${escapeHtml(sub)}</div>
         </div>
       </div>`;
@@ -2354,8 +2508,12 @@ function expandMenuShortcut() {
   const val = menuInput.value.trim();
   const spec = MENU_SHORTCUTS[val];
   if (!spec) return false;
-  menuInput.value = spec.menu;
+  // 현재 카페의 공식명으로 해석 (스벅이면 '아메리카노' → '카페 아메리카노')
+  const cafeId = CAFE_MENUS[CONFIG.cafe] ? CONFIG.cafe : 'starbucks';
+  const resolved = resolveShortcutMenu(spec, getCafeMenuList(cafeId));
+  menuInput.value = resolved.name;
   if (spec.temp) setSingle('tempOptions', spec.temp);
+  applyMenuConstraints(resolved.name);
   updateDetailSummary();
   return true;
 }
