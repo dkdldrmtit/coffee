@@ -342,9 +342,10 @@ gtag('config', 'G-9VCP0RKBY0');
     font-size: 13px; line-height: 1.55;
   }
   /* ── 설정 모달: 부제 입력 (제목 바로 아래, 작게) ─────── */
+  /* 이전 프리뷰 박스와 동일 크기/톤 유지 */
   .cfg-desc-input {
-    width: 100%; font-size: 12.5px; color: var(--ink);
-    margin: 6px 0 0; padding: 8px 12px;
+    width: 100%; font-size: 11.5px; color: var(--ink);
+    margin: 6px 2px 0; padding: 6px 10px;
     background: var(--memo-bg); border: 1px dashed var(--memo-border);
     border-radius: 8px; line-height: 1.5;
     box-sizing: border-box; font-family: inherit;
@@ -355,7 +356,7 @@ gtag('config', 'G-9VCP0RKBY0');
     border-color: var(--sb-accent);
     background: white;
   }
-  .cfg-desc-input::placeholder { color: var(--muted); }
+  .cfg-desc-input::placeholder { color: var(--muted); font-size: 11.5px; }
   /* ── 설정 모달: 이벤트 이름 예시 패널 ─────────────────── */
   .examples-panel {
     background: var(--memo-bg);
