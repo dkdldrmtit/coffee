@@ -2527,8 +2527,8 @@ function showMenuDropdown() {
   const mi = document.getElementById('menuInput');
   if (dd) dd.classList.remove('hide');
   if (mi) mi.setAttribute('aria-expanded', 'true');
-  // 스크롤 조정은 focus 핸들러에서 한 번만 실행. 여기선 호출 안 함
-  // (input 이벤트마다 호출되면 타이핑 중 화면이 튐).
+  // max-height 조정(스크롤 없음)은 매번 해도 페이지 튐 안 생김
+  adjustDropdownMaxHeight();
 }
 function hideMenuDropdown() {
   const dd = document.getElementById('menuDropdown');
@@ -2650,8 +2650,24 @@ document.addEventListener('click', e => {
   }
 });
 
-// visualViewport resize 에 따른 자동 스크롤은 제거 — 타이핑 중 Korean IME
-// 영향으로 resize 가 반복 발생하면 화면이 튐. focus 시 1회 스크롤로 충분.
+// 드롭다운 max-height 를 실제 가용 공간(visualViewport 하단 - 입력창 하단)에
+// 맞춰 동적 조정. 한글 IME 로 키보드 높이가 바뀌어도 드롭다운이 키보드에
+// 잘리지 않고 스크롤 가능하게. 스크롤은 건드리지 않으니 페이지 튐 없음.
+function adjustDropdownMaxHeight() {
+  const dd = document.getElementById('menuDropdown');
+  const mi = document.getElementById('menuInput');
+  if (!dd || !mi || dd.classList.contains('hide')) return;
+  const vv = window.visualViewport;
+  if (!vv) return;
+  const rect = mi.getBoundingClientRect();
+  const visBottom = vv.offsetTop + vv.height;
+  const available = Math.max(0, visBottom - rect.bottom - 12);
+  dd.style.maxHeight = Math.max(80, Math.min(280, available)) + 'px';
+}
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', adjustDropdownMaxHeight);
+  window.visualViewport.addEventListener('scroll', adjustDropdownMaxHeight);
+}
 
 // ════════════════════════════════════════════════════════════════
 // Chip 선택 UI
