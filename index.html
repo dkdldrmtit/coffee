@@ -341,18 +341,21 @@ gtag('config', 'G-9VCP0RKBY0');
     text-align: center; color: var(--muted); padding: 18px 10px;
     font-size: 13px; line-height: 1.55;
   }
-  /* ── 설정 모달: 카톡 공유 프리뷰 (부제 힌트) ────────── */
-  .cfg-desc-preview {
-    font-size: 11.5px; color: var(--muted);
-    margin: 6px 2px 0; padding: 6px 10px;
+  /* ── 설정 모달: 부제 입력 (제목 바로 아래, 작게) ─────── */
+  .cfg-desc-input {
+    width: 100%; font-size: 12.5px; color: var(--ink);
+    margin: 6px 0 0; padding: 8px 12px;
     background: var(--memo-bg); border: 1px dashed var(--memo-border);
     border-radius: 8px; line-height: 1.5;
+    box-sizing: border-box; font-family: inherit;
+    transition: border 0.1s, background 0.1s;
   }
-  .cfg-desc-preview::before {
-    content: '💬 카톡에 이렇게 보여요  ';
-    color: var(--memo-text); font-weight: 600;
-    font-size: 10.5px; letter-spacing: 0.2px;
+  .cfg-desc-input:focus {
+    outline: none; border-style: solid;
+    border-color: var(--sb-accent);
+    background: white;
   }
+  .cfg-desc-input::placeholder { color: var(--muted); }
   /* ── 설정 모달: 이벤트 이름 예시 패널 ─────────────────── */
   .examples-panel {
     background: var(--memo-bg);
@@ -1063,7 +1066,7 @@ gtag('config', 'G-9VCP0RKBY0');
       <a class="ext-link" id="cfgExamplesBtn" role="button">✨ 예시 보기</a>
     </label>
     <input type="text" id="cfgTitle" placeholder="예) 김과장 승진턱">
-    <div class="cfg-desc-preview hide" id="cfgDescPreview"></div>
+    <input type="text" id="cfgDesc" class="cfg-desc-input" placeholder="부제 (선택) — 예) 오늘은 제가 쏩니다!" maxlength="100" autocomplete="off">
     <div class="examples-panel hide" id="cfgExamplesPanel"></div>
     <label>쏘는 사람 <span class="label-optional">(선택)</span></label>
     <input type="text" id="cfgHost" placeholder="예) 김과장" maxlength="20">
@@ -1081,7 +1084,6 @@ gtag('config', 'G-9VCP0RKBY0');
       <input type="text" id="memberAddInput" maxlength="20">
       <button type="button" id="memberAddBtn">+</button>
     </div>
-    <input type="hidden" id="cfgDesc" value="">
 
     <button class="primary" id="cfgSaveBtn" style="margin-top:20px">저장하기</button>
     <hr class="modal-divider">
@@ -2194,20 +2196,9 @@ const EXAMPLE_GROUPS = [
 // 호환성: 랜덤 placeholder 용 평탄화 리스트
 const EXAMPLE_PAIRS = EXAMPLE_GROUPS.flatMap(g => g.items);
 
-// '카톡에 이렇게 보여요' 프리뷰 동기화 — cfgDesc 값 바뀔 때마다 호출
-function updateCfgDescPreview() {
-  const preview = document.getElementById('cfgDescPreview');
-  const d = document.getElementById('cfgDesc');
-  if (!preview || !d) return;
-  const desc = (d.value || '').trim();
-  if (desc) {
-    preview.textContent = desc;
-    preview.classList.remove('hide');
-  } else {
-    preview.textContent = '';
-    preview.classList.add('hide');
-  }
-}
+// 부제 입력이 visible 로 바뀌어 별도 프리뷰 업데이트 필요 없음 (no-op 유지
+// — 이전 호출부 안전하게 남겨두고 한번에 정리)
+function updateCfgDescPreview() { /* legacy no-op */ }
 
 // 예시 패널 렌더: 카테고리별로 그룹 라벨 + 제목/부제 카드
 function renderExamplesPanel() {
