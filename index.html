@@ -1780,15 +1780,17 @@ function applyConfig() {
   }
   document.title = `${CONFIG.title} · 커피 골든벨`;
   // 쏘는 사람: 제목 오른쪽에 작은 뱃지로. 빈 값이면 숨김.
+  // '님' 으로 끝나면(예: '김민석 부장님') 뒤에 또 '님' 안 붙여 '님님이 쏨' 방지.
   const host = (CONFIG.host || '').trim();
+  const hostStripped = host.replace(/님+$/, '');
   const titleHostEl = document.getElementById('titleHost');
   if (titleHostEl) {
-    titleHostEl.textContent = host ? `${host}님이 쏨` : '';
+    titleHostEl.textContent = host ? `${hostStripped}님이 쏨` : '';
     titleHostEl.classList.toggle('hide', !host);
   }
   // headerSub 은 숨김 상태 유지 (공유 프리뷰 등 JS 참조 호환용)
   const headerSubEl = document.getElementById('headerSub');
-  if (headerSubEl) headerSubEl.textContent = host ? `${host}님이 쏩니다` : '';
+  if (headerSubEl) headerSubEl.textContent = host ? `${hostStripped}님이 쏩니다` : '';
   applyCafeSizes();
   applyCafeMenus();
   applyCafeAddons();
@@ -2075,8 +2077,9 @@ async function doShare() {
 
   const url = window.location.href;
   const hasHost = !!(CONFIG.host && CONFIG.host.trim());
+  const hostStripped = (CONFIG.host || '').trim().replace(/님+$/, '');
   const hostLine = hasHost
-    ? `${CONFIG.host}님이 쏩니다!`
+    ? `${hostStripped}님이 쏩니다!`
     : (CONFIG.desc || '');
   const cafeName = (CAFE_PRESETS[CONFIG.cafe] || CAFE_PRESETS.starbucks).name;
 
