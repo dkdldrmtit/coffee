@@ -2598,7 +2598,11 @@ menuInput.addEventListener('input', () => {
   if (typeof isPastDeadline === 'function' && isPastDeadline()) return;
   renderMenuDropdown(menuInput.value.trim());
   showMenuDropdown();
-});
+  // iOS 가 타이핑 중 입력창을 화면 중앙으로 되돌리려는 auto-scroll 을
+  // 하기 때문에, 매 input 마다 우리가 원하는 위치(y=30) 로 다시 스냅.
+  // scrollTo 기본값(instant) — 애니메이션 없어 jitter 최소.
+  scrollInputIntoViewForDropdown();
+}, { passive: true });
 
 // iOS: 드롭다운 터치 시 input blur 가 먼저 발생 → setTimeout 150ms 뒤에 hide
 // 하는 동안 click 이벤트가 먼저 발사되어 selectMenuEntry 가 실행됨.
