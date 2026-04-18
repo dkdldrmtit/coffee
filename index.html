@@ -283,8 +283,19 @@ gtag('config', 'G-9VCP0RKBY0');
     padding: 4px; -webkit-overflow-scrolling: touch;
     animation: dropdown-fadein 0.14s ease-out;
   }
+  /* 공간 부족 시 위로 플립 (iOS 키보드 가림 대응) */
+  .menu-dropdown.up {
+    top: auto; bottom: calc(100% + 6px);
+    box-shadow: 0 -10px 28px rgba(var(--ink-rgb), 0.12),
+                0 -2px 6px rgba(var(--ink-rgb), 0.06);
+    animation: dropdown-fadein-up 0.14s ease-out;
+  }
   @keyframes dropdown-fadein {
     from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes dropdown-fadein-up {
+    from { opacity: 0; transform: translateY(4px); }
     to   { opacity: 1; transform: translateY(0); }
   }
   .menu-item {
@@ -2505,6 +2516,34 @@ function renderMenuDropdown(filter = '') {
         </div>
       </div>`;
   }).join('');
+
+  // 내용 바뀐 뒤 위치 재계산 (아이템 개수에 따라 높이 달라질 수 있음)
+  positionMenuDropdown();
+}
+
+// 입력창 아래 공간이 부족하면(=키보드 가림) 드롭다운을 위로 플립.
+// visualViewport API 로 키보드 올라온 상태 정확히 측정 (iOS 특히).
+function positionMenuDropdown() {
+  const dd = document.getElementById('menuDropdown');
+  const mi = document.getElementById('menuInput');
+  if (!dd || !mi) return;
+  if (dd.classList.contains('hide')) return;
+
+  const rect = mi.getBoundingClientRect();
+  const vv = window.visualViewport;
+  const visTop    = vv ? vv.offsetTop : 0;
+  const visBottom = vv ? (vv.offsetTop + vv.height) : window.innerHeight;
+  const spaceBelow = visBottom - rect.bottom;
+  const spaceAbove = rect.top - visTop;
+  const desiredHeight = 320;
+
+  // 위/아래 중 넓은 쪽으로. 아래가 일정 이상이면 기본(아래).
+  const flipUp = spaceBelow < Math.min(desiredHeight, 220) && spaceAbove > spaceBelow;
+  dd.classList.toggle('up', flipUp);
+
+  // 가용 공간에 맞춰 max-height 동적 조정 (스크롤 확보)
+  const room = Math.max(140, (flipUp ? spaceAbove : spaceBelow) - 16);
+  dd.style.maxHeight = Math.min(desiredHeight, room) + 'px';
 }
 
 function showMenuDropdown() {
@@ -2512,6 +2551,8 @@ function showMenuDropdown() {
   const mi = document.getElementById('menuInput');
   if (dd) dd.classList.remove('hide');
   if (mi) mi.setAttribute('aria-expanded', 'true');
+  // 렌더 직후 한 프레임 뒤에 위치 재계산 (DOM 반영 대기)
+  requestAnimationFrame(positionMenuDropdown);
 }
 function hideMenuDropdown() {
   const dd = document.getElementById('menuDropdown');
@@ -2625,6 +2666,15 @@ menuInput.addEventListener('keydown', e => {
 document.addEventListener('click', e => {
   if (!menuPicker.contains(e.target)) hideMenuDropdown();
 });
+
+// 키보드 올라오거나(visualViewport resize) 스크롤/창 크기 변경 시
+// 드롭다운이 열려있으면 위/아래 위치 재계산
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', positionMenuDropdown);
+  window.visualViewport.addEventListener('scroll', positionMenuDropdown);
+}
+window.addEventListener('resize', positionMenuDropdown);
+window.addEventListener('scroll', positionMenuDropdown, { passive: true });
 
 // ════════════════════════════════════════════════════════════════
 // Chip 선택 UI
