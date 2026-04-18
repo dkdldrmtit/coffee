@@ -274,28 +274,17 @@ gtag('config', 'G-9VCP0RKBY0');
   /* ── 메뉴 커스텀 드롭다운 ───────────────────────────── */
   .menu-picker { position: relative; }
   .menu-dropdown {
-    /* position: fixed — visualViewport 기준으로 positionMenuDropdown 이 매번
-       top/bottom/left/width 를 명시 설정. iOS 키보드/스크롤 변화에 안정적 */
-    position: fixed;
+    position: absolute; top: calc(100% + 6px); left: 0; right: 0;
     background: white; border-radius: 14px;
     border: 1px solid var(--border);
     box-shadow: 0 10px 28px rgba(var(--ink-rgb), 0.12),
                 0 2px 6px rgba(var(--ink-rgb), 0.06);
-    overflow-y: auto; z-index: 50;
+    max-height: 280px; overflow-y: auto; z-index: 50;
     padding: 4px; -webkit-overflow-scrolling: touch;
     animation: dropdown-fadein 0.14s ease-out;
   }
-  .menu-dropdown.up {
-    box-shadow: 0 -10px 28px rgba(var(--ink-rgb), 0.12),
-                0 -2px 6px rgba(var(--ink-rgb), 0.06);
-    animation: dropdown-fadein-up 0.14s ease-out;
-  }
   @keyframes dropdown-fadein {
     from { opacity: 0; transform: translateY(-4px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes dropdown-fadein-up {
-    from { opacity: 0; transform: translateY(4px); }
     to   { opacity: 1; transform: translateY(0); }
   }
   .menu-item {
@@ -2336,17 +2325,7 @@ menuInput.addEventListener('change', () => {
 // ════════════════════════════════════════════════════════════════
 const menuDropdown = document.getElementById('menuDropdown');
 const menuPicker   = document.getElementById('menuPicker');
-
-// ⚠️ Portal: 드롭다운 요소를 <body> 밑으로 이동.
-// .tab-content 의 animation transform 이 Safari 에서 position:fixed 의
-// containing block 을 뷰포트가 아닌 tab-content 로 잡아버리는 버그 회피.
-// 이렇게 body 직속으로 옮기면 fixed 가 확실히 viewport 기준으로 잡힘.
-if (menuDropdown && menuDropdown.parentElement !== document.body) {
-  document.body.appendChild(menuDropdown);
-}
-
-// hoisting 되는 var 로 선언 — 모듈 상단에서 renderMenuDropdown 이 조기 호출돼도
-// TDZ 안 터지게. 선언은 하단이지만 엔진이 module 시작 시 undefined 로 잡아둠.
+// hoisting 되는 var 로 선언 — TDZ 방어
 var _dropdownItems = [];
 var _dropdownHighlightedIdx = -1;
 
@@ -2525,45 +2504,23 @@ function renderMenuDropdown(filter = '') {
         </div>
       </div>`;
   }).join('');
-
-  // 내용 바뀐 뒤 위치 재계산 (아이템 개수에 따라 높이 달라질 수 있음)
-  positionMenuDropdown();
 }
 
-// position: fixed 드롭다운의 top/bottom/left/width 를 visualViewport 기준으로 계산.
-// 키보드 올라왔을 때 가용 영역 = visualViewport.
-function positionMenuDropdown() {
-  const dd = document.getElementById('menuDropdown');
+// 입력창을 visible viewport 상단 15% 지점으로 스크롤 → 드롭다운이 아래에
+// 펼쳐질 공간을 확보. iOS 키보드 올라온 뒤에 실행해야 정확.
+function scrollInputIntoViewForDropdown() {
   const mi = document.getElementById('menuInput');
-  if (!dd || !mi) return;
-  if (dd.classList.contains('hide')) return;
-
-  const rect = mi.getBoundingClientRect();
+  if (!mi || document.activeElement !== mi) return;
   const vv = window.visualViewport;
+  const rect = mi.getBoundingClientRect();
+  const visHeight = vv ? vv.height : window.innerHeight;
   const visTop    = vv ? vv.offsetTop : 0;
-  const visBottom = vv ? (vv.offsetTop + vv.height) : window.innerHeight;
-  const spaceBelow = Math.max(0, visBottom - rect.bottom);
-  const spaceAbove = Math.max(0, rect.top - visTop);
-  const margin = 10;
-  const desiredHeight = 320;
-
-  const flipUp = spaceBelow < 220 && spaceAbove > spaceBelow;
-  dd.classList.toggle('up', flipUp);
-
-  // 좌우 입력창과 동일 라인. 폭 = 입력창 폭.
-  dd.style.left  = rect.left + 'px';
-  dd.style.width = rect.width + 'px';
-
-  if (flipUp) {
-    // 위로: visibleArea 상단에서 시작, 입력창 위까지 채움
-    dd.style.top = (visTop + margin) + 'px';
-    dd.style.bottom = 'auto';
-    dd.style.maxHeight = Math.max(80, Math.min(desiredHeight, rect.top - visTop - margin * 2)) + 'px';
-  } else {
-    // 아래로: 입력창 바로 아래부터 visibleArea 하단까지
-    dd.style.top = (rect.bottom + 6) + 'px';
-    dd.style.bottom = 'auto';
-    dd.style.maxHeight = Math.max(80, Math.min(desiredHeight, visBottom - rect.bottom - margin * 2)) + 'px';
+  const inputTopInVisible = rect.top - visTop;
+  // 입력창을 visible 상단 15% 지점에 오도록
+  const targetY = Math.max(24, visHeight * 0.15);
+  const delta = inputTopInVisible - targetY;
+  if (Math.abs(delta) > 12) {
+    window.scrollBy({ top: delta, behavior: 'smooth' });
   }
 }
 
@@ -2572,10 +2529,8 @@ function showMenuDropdown() {
   const mi = document.getElementById('menuInput');
   if (dd) dd.classList.remove('hide');
   if (mi) mi.setAttribute('aria-expanded', 'true');
-  // 즉시 1회 + 키보드 애니메이션 후 2회 (iOS 키보드는 ~250-300ms)
-  positionMenuDropdown();
-  setTimeout(positionMenuDropdown, 100);
-  setTimeout(positionMenuDropdown, 400);
+  // 키보드가 올라온 뒤(iOS ~300ms) 입력창을 위로 끌어올려 드롭다운 공간 확보
+  setTimeout(scrollInputIntoViewForDropdown, 350);
 }
 function hideMenuDropdown() {
   const dd = document.getElementById('menuDropdown');
@@ -2698,14 +2653,13 @@ document.addEventListener('click', e => {
   }
 });
 
-// 키보드 올라오거나(visualViewport resize) 스크롤/창 크기 변경 시
-// 드롭다운이 열려있으면 위/아래 위치 재계산
+// 키보드 올라오는 순간 입력창을 다시 위로 끌어올림 (visualViewport 변할 때)
 if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', positionMenuDropdown);
-  window.visualViewport.addEventListener('scroll', positionMenuDropdown);
+  window.visualViewport.addEventListener('resize', () => {
+    const mi = document.getElementById('menuInput');
+    if (mi && document.activeElement === mi) scrollInputIntoViewForDropdown();
+  });
 }
-window.addEventListener('resize', positionMenuDropdown);
-window.addEventListener('scroll', positionMenuDropdown, { passive: true });
 
 // ════════════════════════════════════════════════════════════════
 // Chip 선택 UI
