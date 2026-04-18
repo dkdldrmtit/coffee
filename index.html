@@ -323,6 +323,39 @@ gtag('config', 'G-9VCP0RKBY0');
     text-align: center; color: var(--muted); padding: 18px 10px;
     font-size: 13px; line-height: 1.55;
   }
+  /* ── 설정 모달: 이벤트 이름 예시 패널 ─────────────────── */
+  .examples-panel {
+    background: var(--memo-bg);
+    border: 1px solid var(--memo-border);
+    border-radius: 12px;
+    padding: 10px; margin-top: 8px;
+    max-height: 320px; overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    animation: dropdown-fadein 0.14s ease-out;
+  }
+  .examples-group-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.3px;
+    color: var(--ink-dark);
+    margin: 12px 2px 6px;
+  }
+  .examples-group-label:first-child { margin-top: 0; }
+  .example-item {
+    background: white; border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 12px; margin-bottom: 6px;
+    cursor: pointer; transition: background 0.1s, border-color 0.1s;
+  }
+  .example-item:active {
+    background: var(--sb-accent-soft);
+    border-color: var(--sb-accent);
+  }
+  .example-item .ex-title {
+    font-weight: 600; font-size: 13px;
+    color: var(--ink-dark); line-height: 1.35;
+  }
+  .example-item .ex-desc {
+    font-size: 11.5px; color: var(--muted);
+    margin-top: 3px; line-height: 1.45;
+  }
   details.addon-details,
   details.memo-details {
     margin: 14px 0 8px;
@@ -992,8 +1025,12 @@ gtag('config', 'G-9VCP0RKBY0');
     <div class="guest-note hide" id="settingsGuestNote" style="margin-bottom:16px">
       이 방의 관리자만 설정을 변경할 수 있어요
     </div>
-    <label>이벤트 이름</label>
+    <label>
+      이벤트 이름
+      <a class="ext-link" id="cfgExamplesBtn" role="button">✨ 예시 보기</a>
+    </label>
     <input type="text" id="cfgTitle" placeholder="예) 김과장 승진턱">
+    <div class="examples-panel hide" id="cfgExamplesPanel"></div>
     <label>쏘는 사람 <span class="label-optional">(선택)</span></label>
     <input type="text" id="cfgHost" placeholder="예) 김과장" maxlength="20">
     <label>카페</label>
@@ -2043,18 +2080,127 @@ const settingsModal = document.getElementById('settingsModal');
 
 // 설정 모달 placeholder 예시 — 매번 모달 열 때 랜덤으로 노출
 // 모든 예시는 "오늘 누가 한 턱 쏘는 날!" 텐션으로 통일
-const EXAMPLE_PAIRS = [
-  { title: '김과장 승진턱',       desc: '오늘은 제가 쏩니다!' },
-  { title: '프로젝트 마무리 자축', desc: '우리 진짜 해냈어요!' },
-  { title: '첫 월급 한 턱',       desc: '첫 월급은 쏴야 제 맛' },
-  { title: '계약 따낸 기념',      desc: '이건 무조건 제가 쏠게요' },
-  { title: '합격 한 턱',          desc: '드디어 통과, 같이 축하해요!' },
-  { title: '생일 한 턱',          desc: '오늘 제 생일, 같이 즐겨요' },
-  { title: '금요일 자축',         desc: 'TGIF, 한 주 진짜 수고했어요' },
-  { title: '보너스 들어온 날',    desc: '기분이다, 한 잔씩!' },
+const EXAMPLE_GROUPS = [
+  {
+    label: '🎉 축하 · 자축',
+    items: [
+      { title: '김과장 승진턱',       desc: '오늘은 제가 쏩니다!' },
+      { title: '프로젝트 마무리 자축', desc: '우리 진짜 해냈어요!' },
+      { title: '첫 월급 한 턱',       desc: '첫 월급은 쏴야 제 맛' },
+      { title: '계약 따낸 기념',      desc: '이건 무조건 제가 쏠게요' },
+      { title: '합격 한 턱',          desc: '드디어 통과, 같이 축하해요!' },
+      { title: '생일 한 턱',          desc: '오늘 제 생일, 같이 즐겨요' },
+      { title: '보너스 들어온 날',    desc: '기분이다, 한 잔씩!' },
+      { title: '결혼 기념',           desc: '앞으로 잘 살겠습니다 🙏' },
+    ],
+  },
+  {
+    label: '🙇 상사가 쏨',
+    items: [
+      { title: '부장님 아침 커피',   desc: '오늘은 부장님이 쏘십니다. 맛있고 비싼거로 고르시죠!' },
+      { title: '팀장님 쏘는 날',     desc: '다들 고생했으니 편하게 골라요' },
+      { title: '대표님 격려 커피',   desc: '요즘 고생 많으시죠, 한 잔 드세요' },
+      { title: '선배가 쏩니다',      desc: '막내들 기죽지 말고 비싼걸로 시켜' },
+    ],
+  },
+  {
+    label: '🙏 감사 · 보답',
+    items: [
+      { title: '팀에게 감사 커피',   desc: '요즘 다들 고마워요' },
+      { title: '도움 주신 분들께',   desc: '덕분에 살았습니다!' },
+      { title: 'MVP 한 턱',          desc: '이번 성공, 당신 덕분이에요' },
+    ],
+  },
+  {
+    label: '💪 응원 · 격려',
+    items: [
+      { title: '중요한 PT 앞두고',   desc: '내일 잘해봅시다, 화이팅!' },
+      { title: '면접 보러 가는 날',  desc: '긴장 풀고 한 모금' },
+      { title: '수능 응원',          desc: '수험생 여러분 힘내세요' },
+    ],
+  },
+  {
+    label: '😮‍💨 토닥토닥',
+    items: [
+      { title: '쉽지 않은 월요일',   desc: '힘들죠... 커피라도 한 잔' },
+      { title: '회식 다음날 해장',   desc: '어제 고생했어요, 오늘은 편히' },
+      { title: '야근 버티는 중',     desc: '조금만 더 버팁시다' },
+    ],
+  },
+  {
+    label: '📅 요일 루틴',
+    items: [
+      { title: '월요일 파이팅',      desc: '한 주 잘 시작해봐요' },
+      { title: '수요일 에너지 충전', desc: '반 왔어요, 조금만 더!' },
+      { title: '금요일 자축',        desc: 'TGIF, 한 주 수고했어요' },
+    ],
+  },
+  {
+    label: '☔ 날씨 · 계절',
+    items: [
+      { title: '비 오는 날 한 잔',   desc: '이런 날엔 따뜻한 커피가 제 맛' },
+      { title: '폭염 대피용',        desc: '아이스 아니면 의미 없죠' },
+      { title: '쌀쌀한 가을 아침',   desc: '온기가 필요한 날' },
+      { title: '첫눈 기념',          desc: '오늘 같은 날엔 커피 한 잔!' },
+    ],
+  },
 ];
 
+// 호환성: 랜덤 placeholder 용 평탄화 리스트
+const EXAMPLE_PAIRS = EXAMPLE_GROUPS.flatMap(g => g.items);
+
+// 예시 패널 렌더: 카테고리별로 그룹 라벨 + 제목/부제 카드
+function renderExamplesPanel() {
+  const panel = document.getElementById('cfgExamplesPanel');
+  if (!panel) return;
+  panel.innerHTML = EXAMPLE_GROUPS.map((group, gi) => {
+    const items = group.items.map((it, i) => `
+      <div class="example-item" data-gi="${gi}" data-i="${i}">
+        <div class="ex-title">${escapeHtml(it.title)}</div>
+        <div class="ex-desc">${escapeHtml(it.desc)}</div>
+      </div>
+    `).join('');
+    return `
+      <div class="examples-group-label">${escapeHtml(group.label)}</div>
+      ${items}
+    `;
+  }).join('');
+}
+
+// '예시 보기' 토글
+document.getElementById('cfgExamplesBtn')?.addEventListener('click', e => {
+  e.preventDefault();
+  const panel = document.getElementById('cfgExamplesPanel');
+  if (!panel) return;
+  const wasHidden = panel.classList.contains('hide');
+  if (wasHidden) {
+    renderExamplesPanel();
+    panel.classList.remove('hide');
+  } else {
+    panel.classList.add('hide');
+  }
+});
+
+// 예시 아이템 클릭 → 제목/부제 동시 채움
+document.getElementById('cfgExamplesPanel')?.addEventListener('click', e => {
+  const item = e.target.closest('.example-item');
+  if (!item) return;
+  const gi = parseInt(item.dataset.gi, 10);
+  const i  = parseInt(item.dataset.i, 10);
+  const ex = EXAMPLE_GROUPS[gi]?.items[i];
+  if (!ex) return;
+  const t = document.getElementById('cfgTitle');
+  const d = document.getElementById('cfgDesc');
+  if (t) t.value = ex.title;
+  if (d) d.value = ex.desc;
+  document.getElementById('cfgExamplesPanel').classList.add('hide');
+  // 제목 입력창에 포커스 복귀해 수정 용이하게
+  if (t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); }
+});
+
 function openSettingsModal({ welcome = false } = {}) {
+  // 예시 패널은 항상 접힌 상태로 시작
+  document.getElementById('cfgExamplesPanel')?.classList.add('hide');
   // 아직 기본값인 방이면 placeholder 노출(welcome과 동일 처리)
   const isDefault = CONFIG.title === DEFAULT_CONFIG.title && CONFIG.desc === DEFAULT_CONFIG.desc;
   const empty = welcome || isDefault;
