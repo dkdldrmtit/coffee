@@ -323,6 +323,18 @@ gtag('config', 'G-9VCP0RKBY0');
     text-align: center; color: var(--muted); padding: 18px 10px;
     font-size: 13px; line-height: 1.55;
   }
+  /* ── 설정 모달: 카톡 공유 프리뷰 (부제 힌트) ────────── */
+  .cfg-desc-preview {
+    font-size: 11.5px; color: var(--muted);
+    margin: 6px 2px 0; padding: 6px 10px;
+    background: var(--memo-bg); border: 1px dashed var(--memo-border);
+    border-radius: 8px; line-height: 1.5;
+  }
+  .cfg-desc-preview::before {
+    content: '💬 카톡에 이렇게 보여요  ';
+    color: var(--memo-text); font-weight: 600;
+    font-size: 10.5px; letter-spacing: 0.2px;
+  }
   /* ── 설정 모달: 이벤트 이름 예시 패널 ─────────────────── */
   .examples-panel {
     background: var(--memo-bg);
@@ -1030,6 +1042,7 @@ gtag('config', 'G-9VCP0RKBY0');
       <a class="ext-link" id="cfgExamplesBtn" role="button">✨ 예시 보기</a>
     </label>
     <input type="text" id="cfgTitle" placeholder="예) 김과장 승진턱">
+    <div class="cfg-desc-preview hide" id="cfgDescPreview"></div>
     <div class="examples-panel hide" id="cfgExamplesPanel"></div>
     <label>쏘는 사람 <span class="label-optional">(선택)</span></label>
     <input type="text" id="cfgHost" placeholder="예) 김과장" maxlength="20">
@@ -2149,6 +2162,21 @@ const EXAMPLE_GROUPS = [
 // 호환성: 랜덤 placeholder 용 평탄화 리스트
 const EXAMPLE_PAIRS = EXAMPLE_GROUPS.flatMap(g => g.items);
 
+// '카톡에 이렇게 보여요' 프리뷰 동기화 — cfgDesc 값 바뀔 때마다 호출
+function updateCfgDescPreview() {
+  const preview = document.getElementById('cfgDescPreview');
+  const d = document.getElementById('cfgDesc');
+  if (!preview || !d) return;
+  const desc = (d.value || '').trim();
+  if (desc) {
+    preview.textContent = desc;
+    preview.classList.remove('hide');
+  } else {
+    preview.textContent = '';
+    preview.classList.add('hide');
+  }
+}
+
 // 예시 패널 렌더: 카테고리별로 그룹 라벨 + 제목/부제 카드
 function renderExamplesPanel() {
   const panel = document.getElementById('cfgExamplesPanel');
@@ -2193,6 +2221,7 @@ document.getElementById('cfgExamplesPanel')?.addEventListener('click', e => {
   const d = document.getElementById('cfgDesc');
   if (t) t.value = ex.title;
   if (d) d.value = ex.desc;
+  updateCfgDescPreview();
   document.getElementById('cfgExamplesPanel').classList.add('hide');
   // 제목 입력창에 포커스 복귀해 수정 용이하게
   if (t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); }
@@ -2207,6 +2236,7 @@ function openSettingsModal({ welcome = false } = {}) {
   document.getElementById('cfgTitle').value = empty ? '' : CONFIG.title;
   document.getElementById('cfgHost').value  = CONFIG.host || '';
   document.getElementById('cfgDesc').value  = empty ? '' : CONFIG.desc;
+  updateCfgDescPreview();
   document.getElementById('cfgCafe').value  = CONFIG.cafe || 'starbucks';
   // 날짜/시간 기본값: 현재 시각 + 1시간 (자정 넘어가면 내일)
   let dateVal = CONFIG.date || todayLocal();
