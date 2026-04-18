@@ -2613,7 +2613,9 @@ menuInput.addEventListener('keydown', e => {
       e.preventDefault();
       selectMenuEntry(_dropdownItems[_dropdownHighlightedIdx]);
     } else {
-      expandMenuShortcut();
+      // 하이라이트 없는 상태로 Enter → 즉시 파싱 실행 (change 이벤트 강제)
+      menuInput.dispatchEvent(new Event('change'));
+      hideMenuDropdown();
     }
   } else if (e.key === 'Escape') {
     hideMenuDropdown();
