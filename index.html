@@ -171,6 +171,23 @@ gtag('config', 'G-9VCP0RKBY0');
     background: var(--sb-accent-soft);
     border-color: var(--sb-accent);
   }
+  .title-row {
+    display: flex; align-items: baseline; gap: 10px;
+    margin: 0 0 8px;
+  }
+  .title-row h1 {
+    flex: 1; min-width: 0;
+    margin: 0 !important;
+  }
+  .title-host {
+    font-size: 11px; font-weight: 500;
+    color: var(--muted);
+    white-space: nowrap; flex-shrink: 0;
+    padding: 3px 10px;
+    background: var(--memo-bg);
+    border: 1px solid var(--memo-border);
+    border-radius: 999px;
+  }
   .header h1 {
     font-size: 25px; margin: 0 0 8px;
     color: var(--ink-dark);
@@ -934,10 +951,13 @@ gtag('config', 'G-9VCP0RKBY0');
     </svg>
   </button>
   <header class="header">
-    <h1 id="pageTitle"></h1>
+    <div class="title-row">
+      <h1 id="pageTitle"></h1>
+      <span class="title-host hide" id="titleHost"></span>
+    </div>
     <p class="header-desc hide" id="pageDesc"></p>
-    <p class="header-sub" id="headerSub"></p>
     <!-- 숨김: JS 참조용 -->
+    <p class="hide" id="headerSub"></p>
     <span class="hide" id="cafeLabel"></span>
     <span class="hide" id="hostLabel"></span>
     <span class="hide" id="ownerBadge"></span>
@@ -1758,8 +1778,14 @@ function applyConfig() {
     pageDescEl.classList.toggle('hide', !CONFIG.desc);
   }
   document.title = `${CONFIG.title} · 커피 골든벨`;
-  // 헤더 서브: host 만 표시. 카페 표시는 메뉴 라벨 옆 뱃지로 이전.
+  // 쏘는 사람: 제목 오른쪽에 작은 뱃지로. 빈 값이면 숨김.
   const host = (CONFIG.host || '').trim();
+  const titleHostEl = document.getElementById('titleHost');
+  if (titleHostEl) {
+    titleHostEl.textContent = host ? `${host}님이 쏨` : '';
+    titleHostEl.classList.toggle('hide', !host);
+  }
+  // headerSub 은 숨김 상태 유지 (공유 프리뷰 등 JS 참조 호환용)
   const headerSubEl = document.getElementById('headerSub');
   if (headerSubEl) headerSubEl.textContent = host ? `${host}님이 쏩니다` : '';
   applyCafeSizes();
