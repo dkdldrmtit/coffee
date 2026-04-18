@@ -2533,17 +2533,21 @@ function positionMenuDropdown() {
   const vv = window.visualViewport;
   const visTop    = vv ? vv.offsetTop : 0;
   const visBottom = vv ? (vv.offsetTop + vv.height) : window.innerHeight;
-  const spaceBelow = visBottom - rect.bottom;
-  const spaceAbove = rect.top - visTop;
+  const spaceBelow = Math.max(0, visBottom - rect.bottom);
+  const spaceAbove = Math.max(0, rect.top - visTop);
   const desiredHeight = 320;
+  const margin = 12;
 
-  // 위/아래 중 넓은 쪽으로. 아래가 일정 이상이면 기본(아래).
-  const flipUp = spaceBelow < Math.min(desiredHeight, 220) && spaceAbove > spaceBelow;
+  // 넓은 쪽으로. 아래가 일정 수준 이상이면 기본(아래).
+  const flipUp = spaceBelow < 220 && spaceAbove > spaceBelow;
   dd.classList.toggle('up', flipUp);
 
-  // 가용 공간에 맞춰 max-height 동적 조정 (스크롤 확보)
-  const room = Math.max(140, (flipUp ? spaceAbove : spaceBelow) - 16);
-  dd.style.maxHeight = Math.min(desiredHeight, room) + 'px';
+  // 가용 공간에 맞춰 max-height 동적 조정.
+  // 핵심: 실제 가용 공간보다 크게 잡으면 화면 밖으로 잘림 → 1줄만 보이는 버그.
+  // 최소 floor 없이 실제 공간 그대로 사용 (공간 너무 작으면 사용자가 다시
+  // 스크롤 or 창을 늘리면 그때 재계산됨).
+  const available = (flipUp ? spaceAbove : spaceBelow) - margin;
+  dd.style.maxHeight = Math.max(80, Math.min(desiredHeight, available)) + 'px';
 }
 
 function showMenuDropdown() {
@@ -2551,8 +2555,12 @@ function showMenuDropdown() {
   const mi = document.getElementById('menuInput');
   if (dd) dd.classList.remove('hide');
   if (mi) mi.setAttribute('aria-expanded', 'true');
-  // 렌더 직후 한 프레임 뒤에 위치 재계산 (DOM 반영 대기)
+  // 즉시 + 프레임 직후 + 키보드 애니메이션 후(iOS 약 300ms) 3단계 재계산.
+  // iOS 키보드 올라오는 중에는 visualViewport 값이 시시각각 바뀜.
+  positionMenuDropdown();
   requestAnimationFrame(positionMenuDropdown);
+  setTimeout(positionMenuDropdown, 350);
+  setTimeout(positionMenuDropdown, 600);
 }
 function hideMenuDropdown() {
   const dd = document.getElementById('menuDropdown');
@@ -2623,9 +2631,14 @@ menuInput.addEventListener('input', () => {
   showMenuDropdown();
 });
 
-// iOS: 드롭다운 터치 시 input이 먼저 blur → 선택 날아감. preventDefault로 방지
-menuDropdown.addEventListener('mousedown', e => e.preventDefault());
-menuDropdown.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
+// iOS: 드롭다운 터치 시 input이 먼저 blur → 선택 날아감. preventDefault로 방지.
+// 단, 스크롤 터치는 통과시켜야 하므로 .menu-item 위 탭에만 걸음.
+menuDropdown.addEventListener('mousedown', e => {
+  if (e.target.closest('.menu-item')) e.preventDefault();
+});
+menuDropdown.addEventListener('touchstart', e => {
+  if (e.target.closest('.menu-item')) e.preventDefault();
+}, { passive: false });
 
 menuDropdown.addEventListener('click', e => {
   const item = e.target.closest('.menu-item');
