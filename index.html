@@ -274,18 +274,18 @@ gtag('config', 'G-9VCP0RKBY0');
   /* ── 메뉴 커스텀 드롭다운 ───────────────────────────── */
   .menu-picker { position: relative; }
   .menu-dropdown {
-    position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+    /* position: fixed — visualViewport 기준으로 positionMenuDropdown 이 매번
+       top/bottom/left/width 를 명시 설정. iOS 키보드/스크롤 변화에 안정적 */
+    position: fixed;
     background: white; border-radius: 14px;
     border: 1px solid var(--border);
     box-shadow: 0 10px 28px rgba(var(--ink-rgb), 0.12),
                 0 2px 6px rgba(var(--ink-rgb), 0.06);
-    max-height: 320px; overflow-y: auto; z-index: 50;
+    overflow-y: auto; z-index: 50;
     padding: 4px; -webkit-overflow-scrolling: touch;
     animation: dropdown-fadein 0.14s ease-out;
   }
-  /* 공간 부족 시 위로 플립 (iOS 키보드 가림 대응) */
   .menu-dropdown.up {
-    top: auto; bottom: calc(100% + 6px);
     box-shadow: 0 -10px 28px rgba(var(--ink-rgb), 0.12),
                 0 -2px 6px rgba(var(--ink-rgb), 0.06);
     animation: dropdown-fadein-up 0.14s ease-out;
@@ -2521,8 +2521,8 @@ function renderMenuDropdown(filter = '') {
   positionMenuDropdown();
 }
 
-// 입력창 아래 공간이 부족하면(=키보드 가림) 드롭다운을 위로 플립.
-// visualViewport API 로 키보드 올라온 상태 정확히 측정 (iOS 특히).
+// position: fixed 드롭다운의 top/bottom/left/width 를 visualViewport 기준으로 계산.
+// 키보드 올라왔을 때 가용 영역 = visualViewport.
 function positionMenuDropdown() {
   const dd = document.getElementById('menuDropdown');
   const mi = document.getElementById('menuInput');
@@ -2535,19 +2535,27 @@ function positionMenuDropdown() {
   const visBottom = vv ? (vv.offsetTop + vv.height) : window.innerHeight;
   const spaceBelow = Math.max(0, visBottom - rect.bottom);
   const spaceAbove = Math.max(0, rect.top - visTop);
+  const margin = 10;
   const desiredHeight = 320;
-  const margin = 12;
 
-  // 넓은 쪽으로. 아래가 일정 수준 이상이면 기본(아래).
   const flipUp = spaceBelow < 220 && spaceAbove > spaceBelow;
   dd.classList.toggle('up', flipUp);
 
-  // 가용 공간에 맞춰 max-height 동적 조정.
-  // 핵심: 실제 가용 공간보다 크게 잡으면 화면 밖으로 잘림 → 1줄만 보이는 버그.
-  // 최소 floor 없이 실제 공간 그대로 사용 (공간 너무 작으면 사용자가 다시
-  // 스크롤 or 창을 늘리면 그때 재계산됨).
-  const available = (flipUp ? spaceAbove : spaceBelow) - margin;
-  dd.style.maxHeight = Math.max(80, Math.min(desiredHeight, available)) + 'px';
+  // 좌우 입력창과 동일 라인. 폭 = 입력창 폭.
+  dd.style.left  = rect.left + 'px';
+  dd.style.width = rect.width + 'px';
+
+  if (flipUp) {
+    // 위로: visibleArea 상단에서 시작, 입력창 위까지 채움
+    dd.style.top = (visTop + margin) + 'px';
+    dd.style.bottom = 'auto';
+    dd.style.maxHeight = Math.max(80, Math.min(desiredHeight, rect.top - visTop - margin * 2)) + 'px';
+  } else {
+    // 아래로: 입력창 바로 아래부터 visibleArea 하단까지
+    dd.style.top = (rect.bottom + 6) + 'px';
+    dd.style.bottom = 'auto';
+    dd.style.maxHeight = Math.max(80, Math.min(desiredHeight, visBottom - rect.bottom - margin * 2)) + 'px';
+  }
 }
 
 function showMenuDropdown() {
@@ -2555,12 +2563,10 @@ function showMenuDropdown() {
   const mi = document.getElementById('menuInput');
   if (dd) dd.classList.remove('hide');
   if (mi) mi.setAttribute('aria-expanded', 'true');
-  // 즉시 + 프레임 직후 + 키보드 애니메이션 후(iOS 약 300ms) 3단계 재계산.
-  // iOS 키보드 올라오는 중에는 visualViewport 값이 시시각각 바뀜.
+  // 즉시 1회 + 키보드 애니메이션 후 2회 (iOS 키보드는 ~250-300ms)
   positionMenuDropdown();
-  requestAnimationFrame(positionMenuDropdown);
-  setTimeout(positionMenuDropdown, 350);
-  setTimeout(positionMenuDropdown, 600);
+  setTimeout(positionMenuDropdown, 100);
+  setTimeout(positionMenuDropdown, 400);
 }
 function hideMenuDropdown() {
   const dd = document.getElementById('menuDropdown');
