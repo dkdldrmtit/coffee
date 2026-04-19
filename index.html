@@ -1117,21 +1117,21 @@ gtag('config', 'G-9VCP0RKBY0');
 <!-- 신규 방장용 간단 튜토리얼 (첫 방문 시 1회) -->
 <div class="modal-backdrop hide" id="welcomeTutorial">
   <div class="modal welcome-modal">
-    <div class="welcome-title">☕ 커피 골든벨</div>
-    <div class="welcome-sub">부서 커피 주문, 3단계로 끝나요</div>
+    <div class="welcome-title">부서 커피 주문, 3분 컷</div>
+    <div class="welcome-sub">메모장 대신 링크 하나로 끝내요</div>
     <ol class="welcome-steps">
-      <li><span class="step-num">1</span><span class="step-text">카페·마감시간 설정하기</span></li>
-      <li><span class="step-num">2</span><span class="step-text">팀원에게 링크 공유하기</span></li>
-      <li><span class="step-num">3</span><span class="step-text">마감되면 요약 보고 바로 주문하기</span></li>
+      <li><span class="step-num">1</span><span class="step-text">카페 고르고 링크 받기</span></li>
+      <li><span class="step-num">2</span><span class="step-text">팀원들이 각자 메뉴 고름</span></li>
+      <li><span class="step-num">3</span><span class="step-text">요약 그대로 카페에서 주문</span></li>
     </ol>
-    <button class="primary" id="welcomeStartBtn">시작하기</button>
+    <button class="primary" id="welcomeStartBtn">내 방 만들기 →</button>
   </div>
 </div>
 
 <div class="modal-backdrop hide" id="settingsModal">
   <div class="modal">
     <div class="modal-handle"></div>
-    <h2>설정</h2>
+    <h2 id="settingsModalTitle">설정</h2>
     <!-- JS 참조용 (화면 비노출) -->
     <code class="hide" id="roomCodeLabel"></code>
     <div class="guest-note hide" id="settingsValueProp" style="margin-bottom:16px">
@@ -2345,6 +2345,9 @@ function openSettingsModal({ welcome = false } = {}) {
   // 아직 기본값인 방이면 placeholder 노출(welcome과 동일 처리)
   const isDefault = CONFIG.title === DEFAULT_CONFIG.title && CONFIG.desc === DEFAULT_CONFIG.desc;
   const empty = welcome || isDefault;
+  // 모달 제목: welcome 플로우에선 '만들기' 맥락으로, 그 외엔 그냥 '설정'
+  const titleEl = document.getElementById('settingsModalTitle');
+  if (titleEl) titleEl.textContent = empty ? '☕ 주문 방 만들기' : '설정';
   document.getElementById('cfgTitle').value = empty ? '' : CONFIG.title;
   document.getElementById('cfgHost').value  = CONFIG.host || '';
   document.getElementById('cfgDesc').value  = empty ? '' : CONFIG.desc;
