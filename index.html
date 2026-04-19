@@ -3455,12 +3455,15 @@ function buildGroupedOrders(orders) {
 function renderSummary() {
   const list = document.getElementById('summaryList');
   const copyBtn = document.getElementById('copyBtn');
+  const summaryCard = document.getElementById('summaryCard');
   const orders = Object.values(currentOrders);
-  if (orders.length === 0) {
-    list.innerHTML = '<div class="empty">아직 첫 주문을 기다리고 있어요</div>';
-    copyBtn.classList.add('hide');
+  // 주문이 없거나 방장이 아니면 요약 카드 자체를 숨김
+  // (빈 '첫 주문 기다려요' 카드가 orderList 와 중복되지 않게)
+  if (orders.length === 0 || !IS_OWNER) {
+    summaryCard.classList.add('hide');
     return;
   }
+  summaryCard.classList.remove('hide');
   copyBtn.classList.remove('hide');
   const sortedMenus = buildGroupedOrders(orders);
   const total = orders.length;
@@ -3555,7 +3558,7 @@ document.getElementById('resetBtn').addEventListener('click', async () => {
   if (!isConfigured) { toast('서버 설정이 필요합니다', 'warn'); return; }
   if (!confirm(`모든 주문을 초기화하고 새 라운드를 시작할까요?\n이 작업은 되돌릴 수 없습니다.`)) return;
   try {
-    const { ref, remove, set, get } = window._fb;
+    const { ref, remove, set, get, update } = window._fb;
     // 기존 주문을 히스토리에 아카이브 (데이터 보존)
     const snap = await get(ref(db, `rooms/${ROOM_ID}/orders`));
     if (snap.exists()) {
@@ -3568,6 +3571,10 @@ document.getElementById('resetBtn').addEventListener('click', async () => {
       });
     }
     await remove(ref(db, `rooms/${ROOM_ID}/orders`));
+    // 마감시간도 현재 +1시간으로 재설정 (이전 마감시간이 지나 있으면
+    // '주문이 마감됐어요' UI 가 유지되던 문제 해결)
+    const newDeadline = getDefaultDeadline();
+    await update(ref(db, `rooms/${ROOM_ID}/meta/config`), newDeadline);
     localStorage.removeItem(ORDER_KEYS_LS);
     toast('새 라운드를 시작했어요!');
     if (typeof gtag === 'function') gtag('event', 'round_reset');
