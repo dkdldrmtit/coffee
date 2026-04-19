@@ -910,6 +910,45 @@ gtag('config', 'G-9VCP0RKBY0');
     width: 36px; height: 4px; background: #ddd;
     border-radius: 2px; margin: 0 auto 20px;
   }
+  /* ── 첫 방문 튜토리얼 (3스텝) ───────────────────────── */
+  .welcome-modal {
+    max-width: 340px;
+    padding: 34px 26px 22px;
+    text-align: left;
+  }
+  .welcome-title {
+    font-size: 22px; font-weight: 800;
+    color: var(--ink-dark);
+    letter-spacing: -0.3px;
+    margin-bottom: 6px;
+  }
+  .welcome-sub {
+    font-size: 13.5px; color: var(--muted);
+    line-height: 1.5; margin-bottom: 22px;
+  }
+  .welcome-steps {
+    list-style: none; padding: 0; margin: 0 0 22px;
+  }
+  .welcome-steps li {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 0;
+  }
+  .welcome-steps li + li {
+    border-top: 1px solid var(--border);
+  }
+  .step-num {
+    display: flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--sb-accent-soft);
+    color: var(--sb-accent-deep);
+    font-weight: 700; font-size: 13px;
+    flex-shrink: 0;
+  }
+  .step-text {
+    font-size: 14px; color: var(--text);
+    line-height: 1.4; font-weight: 500;
+  }
   .modal h2 { font-size: 17px; color: var(--ink-dark); margin: 0 0 16px; font-weight: 700; }
   .modal-info {
     display: flex; align-items: center; justify-content: space-between;
@@ -1075,6 +1114,20 @@ gtag('config', 'G-9VCP0RKBY0');
 </div>
 
 <!-- 설정 모달 -->
+<!-- 신규 방장용 간단 튜토리얼 (첫 방문 시 1회) -->
+<div class="modal-backdrop hide" id="welcomeTutorial">
+  <div class="modal welcome-modal">
+    <div class="welcome-title">☕ 커피 골든벨</div>
+    <div class="welcome-sub">부서 커피 주문, 3단계로 끝나요</div>
+    <ol class="welcome-steps">
+      <li><span class="step-num">1</span><span class="step-text">카페·마감시간 설정하기</span></li>
+      <li><span class="step-num">2</span><span class="step-text">팀원에게 링크 공유하기</span></li>
+      <li><span class="step-num">3</span><span class="step-text">마감되면 주문 요약 복사하기</span></li>
+    </ol>
+    <button class="primary" id="welcomeStartBtn">시작하기</button>
+  </div>
+</div>
+
 <div class="modal-backdrop hide" id="settingsModal">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -2332,10 +2385,24 @@ settingsModal.addEventListener('click', e => {
 // 온보딩 제거됨 — 설정 모달이 직관적이므로 별도 가이드 불필요
 
 // 새로 만든 방의 방장 → 온보딩 또는 설정 모달
-// 새 방 생성 시 바로 설정 모달 (온보딩 제거됨)
+// 새 방장에겐 먼저 간단 튜토리얼(3스텝) → 확인 누르면 설정 모달.
+// 한 번 본 적 있으면 localStorage 플래그로 스킵.
+const WELCOME_SEEN_KEY = 'welcome_tutorial_seen_v1';
+const welcomeTutorial = document.getElementById('welcomeTutorial');
 if (IS_NEW_ROOM && IS_OWNER) {
-  openSettingsModal({ welcome: true });
+  if (localStorage.getItem(WELCOME_SEEN_KEY)) {
+    openSettingsModal({ welcome: true });
+  } else if (welcomeTutorial) {
+    welcomeTutorial.classList.remove('hide');
+  } else {
+    openSettingsModal({ welcome: true });
+  }
 }
+document.getElementById('welcomeStartBtn')?.addEventListener('click', () => {
+  try { localStorage.setItem(WELCOME_SEEN_KEY, '1'); } catch {}
+  welcomeTutorial?.classList.add('hide');
+  openSettingsModal({ welcome: true });
+});
 
 document.getElementById('cfgSaveBtn').addEventListener('click', async () => {
   if (!IS_OWNER) return;
