@@ -213,11 +213,6 @@ gtag('config', 'G-9VCP0RKBY0');
     font-size: 14px; line-height: 1.5;
   }
   .header p:empty { display: none; }
-  .header-sub {
-    font-size: 13px; font-weight: 500;
-    color: var(--muted); margin: 6px 0 0 14px;
-    letter-spacing: 0.2px;
-  }
   .header-desc {
     font-size: 14px; font-weight: 500;
     color: var(--ink); margin: 4px 0 0 14px;
@@ -1936,7 +1931,10 @@ function setSize(val) {
   if (preset.sizes.length === 0) {
     document.getElementById('sizeCustom').value = val || '';
   } else {
-    setSingle('sizeOptions', val);
+    // 현재 카페에 해당 사이즈가 없으면(예: 스벅 Grande 주문 후 카페를 이디야로 변경)
+    // 첫 번째 사이즈로 폴백해 칩이 빈 상태로 남지 않게.
+    const safe = preset.sizes.includes(val) ? val : preset.sizes[0];
+    setSingle('sizeOptions', safe);
   }
 }
 
@@ -2239,10 +2237,6 @@ const EXAMPLE_GROUPS = [
 // 호환성: 랜덤 placeholder 용 평탄화 리스트
 const EXAMPLE_PAIRS = EXAMPLE_GROUPS.flatMap(g => g.items);
 
-// 부제 입력이 visible 로 바뀌어 별도 프리뷰 업데이트 필요 없음 (no-op 유지
-// — 이전 호출부 안전하게 남겨두고 한번에 정리)
-function updateCfgDescPreview() { /* legacy no-op */ }
-
 // 예시 패널 렌더: 카테고리별로 그룹 라벨 + 제목/부제 카드
 function renderExamplesPanel() {
   const panel = document.getElementById('cfgExamplesPanel');
@@ -2287,7 +2281,6 @@ document.getElementById('cfgExamplesPanel')?.addEventListener('click', e => {
   const d = document.getElementById('cfgDesc');
   if (t) t.value = ex.title;
   if (d) d.value = ex.desc;
-  updateCfgDescPreview();
   document.getElementById('cfgExamplesPanel').classList.add('hide');
   // 제목 입력창에 포커스 복귀해 수정 용이하게
   if (t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); }
@@ -2302,7 +2295,6 @@ function openSettingsModal({ welcome = false } = {}) {
   document.getElementById('cfgTitle').value = empty ? '' : CONFIG.title;
   document.getElementById('cfgHost').value  = CONFIG.host || '';
   document.getElementById('cfgDesc').value  = empty ? '' : CONFIG.desc;
-  updateCfgDescPreview();
   document.getElementById('cfgCafe').value  = CONFIG.cafe || 'starbucks';
   // 날짜/시간 기본값: 현재 시각 + 1시간 (자정 넘어가면 내일)
   let dateVal = CONFIG.date || todayLocal();
@@ -2365,7 +2357,7 @@ document.getElementById('cfgSaveBtn').addEventListener('click', async () => {
     await set(ref(db, `rooms/${ROOM_ID}/meta/config`), { title, host, desc, date, hour, minute, cafe });
     settingsModal.classList.add('hide');
     if (cafeChanged) {
-      toast(`${CAFE_PRESETS[cafe].name}로 변경했어요 · 사이즈 확인해주세요`);
+      toast(`${CAFE_PRESETS[cafe].name}로 변경했어요 · 사이즈 옵션이 바뀝니다`);
     } else {
       toast('설정을 저장했어요');
     }
