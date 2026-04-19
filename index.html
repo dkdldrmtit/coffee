@@ -2135,41 +2135,32 @@ async function doShare() {
   }
 
   const url = window.location.href;
-  const hasHost = !!(CONFIG.host && CONFIG.host.trim());
   const hostStripped = (CONFIG.host || '').trim().replace(/님+$/, '');
+  const hasHost = !!hostStripped;
   const hostLine = hasHost
     ? `${hostStripped}님이 쏩니다!`
-    : (CONFIG.desc || '');
+    : (CONFIG.desc || '메뉴 골라주세요');
   const cafeName = (CAFE_PRESETS[CONFIG.cafe] || CAFE_PRESETS.starbucks).name;
 
-  // 1순위: Kakao sendCustom — host가 있을 때만 "님이 쏩니다" 템플릿 사용
-  // host 없으면 sendScrap(OG 스크랩)으로 중립 카드 전송
+  // 카톡 공유: sendDefault 로 templateId 의존 없이 동적 카드 생성.
+  // host 가 비어 있어도 항상 풍부한 카카오 카드로 전송됨.
   if (window.Kakao && window.Kakao.isInitialized() && window.Kakao.Share) {
-    if (hasHost) {
-      try {
-        window.Kakao.Share.sendCustom({
-          templateId: 132213,
-          templateArgs: {
-            title: CONFIG.title,
-            host: CONFIG.host.trim(),
-            cafe: cafeName,
-            roomCode: ROOM_ID,
-            roomcode: ROOM_ID,
-            room_code: ROOM_ID,
-            room: ROOM_ID,
-            code: ROOM_ID,
-          },
-        });
-        return;
-      } catch (e) {
-        console.warn('Kakao sendCustom 실패, sendScrap으로 폴백:', e);
-      }
-    }
     try {
-      window.Kakao.Share.sendScrap({ requestUrl: url });
+      window.Kakao.Share.sendDefault({
+        objectType: 'feed',
+        content: {
+          title: CONFIG.title,
+          description: `${hostLine}\n${cafeName} · 방 코드 ${ROOM_ID}`,
+          imageUrl: location.origin + '/og-image.png',
+          link: { mobileWebUrl: url, webUrl: url },
+        },
+        buttons: [
+          { title: '메뉴 고르러 가기', link: { mobileWebUrl: url, webUrl: url } },
+        ],
+      });
       return;
-    } catch (e2) {
-      console.warn('Kakao sendScrap 실패, 기본 공유로 대체:', e2);
+    } catch (e) {
+      console.warn('Kakao sendDefault 실패, 시스템 공유로 폴백:', e);
     }
   }
 
