@@ -2144,7 +2144,7 @@ function applyOwnerUI() {
   document.getElementById('settingsGuestNote').classList.toggle('hide', IS_OWNER);
   document.getElementById('settingsValueProp').classList.toggle('hide', !IS_OWNER);
   document.getElementById('cfgSaveBtn').classList.toggle('hide', !IS_OWNER);
-  document.getElementById('summaryCard').classList.toggle('hide', !IS_OWNER);
+  // 요약 카드는 방장/팀원 모두 볼 수 있음 (가시성 제어는 renderSummary 가 담당)
   ['cfgTitle','cfgHost','cfgCafe','cfgDate','cfgTime'].forEach(id => {
     document.getElementById(id).disabled = !IS_OWNER;
   });
@@ -3654,9 +3654,9 @@ function renderSummary() {
   const copyBtn = document.getElementById('copyBtn');
   const summaryCard = document.getElementById('summaryCard');
   const orders = Object.values(currentOrders);
-  // 주문이 없거나 방장이 아니면 요약 카드 자체를 숨김
-  // (빈 '첫 주문 기다려요' 카드가 orderList 와 중복되지 않게)
-  if (orders.length === 0 || !IS_OWNER) {
+  // 주문이 없을 때만 요약 카드 숨김 (orderList 빈 카드와 중복 방지).
+  // 방장/팀원 모두 요약 카드 볼 수 있음.
+  if (orders.length === 0) {
     summaryCard.classList.add('hide');
     return;
   }
