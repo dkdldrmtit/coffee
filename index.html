@@ -2181,34 +2181,57 @@ async function doShare() {
 
   const url = window.location.href;
   const hostStripped = (CONFIG.host || '').trim().replace(/님+$/, '');
-  const hostForShare = hostStripped || '방장';
-  const hostLine = `${hostForShare}님이 쏩니다!`;
+  const hasHost = !!hostStripped;
   const cafeName = (CAFE_PRESETS[CONFIG.cafe] || CAFE_PRESETS.starbucks).name;
 
-  // 카톡 공유: 등록 템플릿(132213) 사용
+  // 카톡 공유:
+  //  - host 있음 → 등록 템플릿(132213) 사용 ('~님이 쏩니다' 카드)
+  //  - host 없음 → sendDefault 동적 카드 ('~님이 쏩니다' 문구 아예 없음)
   if (window.Kakao && window.Kakao.isInitialized() && window.Kakao.Share) {
+    if (hasHost) {
+      try {
+        window.Kakao.Share.sendCustom({
+          templateId: 132213,
+          templateArgs: {
+            title: CONFIG.title,
+            host: hostStripped,
+            cafe: cafeName,
+            roomCode: ROOM_ID,
+            roomcode: ROOM_ID,
+            room_code: ROOM_ID,
+            room: ROOM_ID,
+            code: ROOM_ID,
+          },
+        });
+        return;
+      } catch (e) {
+        console.warn('Kakao sendCustom 실패, sendDefault 로 폴백:', e);
+      }
+    }
+    // 호스트 없음 또는 sendCustom 실패 → 동적 카드 (쏘는 사람 문구 없이)
     try {
-      window.Kakao.Share.sendCustom({
-        templateId: 132213,
-        templateArgs: {
+      const descLine = CONFIG.desc ? CONFIG.desc : '메뉴 골라주세요';
+      window.Kakao.Share.sendDefault({
+        objectType: 'feed',
+        content: {
           title: CONFIG.title,
-          host: hostForShare,
-          cafe: cafeName,
-          roomCode: ROOM_ID,
-          roomcode: ROOM_ID,
-          room_code: ROOM_ID,
-          room: ROOM_ID,
-          code: ROOM_ID,
+          description: `${descLine}\n${cafeName}`,
+          imageUrl: location.origin + '/og-image.png',
+          link: { mobileWebUrl: url, webUrl: url },
         },
+        buttons: [
+          { title: '메뉴 고르러 가기', link: { mobileWebUrl: url, webUrl: url } },
+        ],
       });
       return;
-    } catch (e) {
-      console.warn('Kakao sendCustom 실패, 시스템 공유로 폴백:', e);
+    } catch (e2) {
+      console.warn('Kakao sendDefault 실패, 시스템 공유로 폴백:', e2);
     }
   }
 
   // 2순위: navigator.share / 클립보드
-  const shareText = [CONFIG.title, hostLine, `방 코드: ${ROOM_ID}`].filter(Boolean).join('\n');
+  const fallbackHostLine = hasHost ? `${hostStripped}님이 쏩니다!` : (CONFIG.desc || '');
+  const shareText = [CONFIG.title, fallbackHostLine, `방 코드: ${ROOM_ID}`].filter(Boolean).join('\n');
   try {
     if (navigator.share) {
       await navigator.share({ title: CONFIG.title, text: shareText, url });
