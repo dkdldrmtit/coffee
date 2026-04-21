@@ -2305,7 +2305,9 @@ async function doShare() {
         content: {
           title: CONFIG.title,
           description: `${descLine}\n${cafeName}`,
-          imageUrl: location.origin + '/og-image.png',
+          imageUrl: location.origin + '/kakao-feed.jpg',
+          imageWidth: 800,
+          imageHeight: 400,
           link: { mobileWebUrl: url, webUrl: url },
         },
         buttons: [
