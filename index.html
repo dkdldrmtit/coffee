@@ -478,6 +478,27 @@ gtag('config', 'G-9VCP0RKBY0');
     font-size: 11.5px; font-weight: 500;
     color: var(--muted); letter-spacing: 0.1px;
   }
+  /* 마감 후 '써보기' 프롬프트 — 화려하지 않은 점선 박스 + 텍스트 링크 */
+  .try-prompt {
+    margin: 14px 2px 0;
+    padding: 12px 14px;
+    background: transparent;
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px;
+    font-size: 12.5px; color: var(--muted); line-height: 1.4;
+  }
+  .try-prompt-text { flex: 1; min-width: 0; }
+  .try-prompt-btn {
+    background: transparent; border: none;
+    color: var(--sb-accent-deep); font-weight: 700;
+    cursor: pointer; font-size: 13px;
+    padding: 4px 2px; white-space: nowrap;
+    font-family: inherit;
+  }
+  .try-prompt-btn:hover { color: var(--sb-accent); }
+  .try-prompt-btn:active { opacity: 0.7; }
   /* 요약 헤더 우측 작은 복사 아이콘 버튼 — 플랫 디자인 */
   .summary-copy-icon {
     background: transparent; border: none;
@@ -1173,6 +1194,11 @@ gtag('config', 'G-9VCP0RKBY0');
         <div class="skeleton-line" style="width:80%"></div>
         <div class="skeleton-line" style="width:50%"></div>
       </div>
+    </div>
+    <!-- 마감 후 'try it yourself' 프롬프트 — 방장/비방장 문구 역할별로 -->
+    <div class="try-prompt hide" id="tryPrompt">
+      <span class="try-prompt-text" id="tryPromptText">우리 팀에도 이거 써볼래요?</span>
+      <button type="button" class="try-prompt-btn" id="tryPromptBtn">내 방 만들기 →</button>
     </div>
     <div class="new-room-wrap hide" id="retryWrap">
       <button type="button" class="icon-btn icon-btn-accent" id="retryBtn">다시 쏘기</button>
@@ -3266,7 +3292,29 @@ function lockFormIfDeadline() {
   document.getElementById('orderTab').classList.add('hide');
   document.getElementById('statusTab').classList.remove('hide');
   if (IS_OWNER) document.getElementById('retryWrap').classList.remove('hide');
+  showTryPromptIfDeadline();
 }
+
+// 마감 후 '나도 써보기' 프롬프트 노출 + 역할별 문구
+function showTryPromptIfDeadline() {
+  const prompt = document.getElementById('tryPrompt');
+  const txt    = document.getElementById('tryPromptText');
+  const btn    = document.getElementById('tryPromptBtn');
+  if (!prompt || !txt || !btn) return;
+  if (!isPastDeadline()) { prompt.classList.add('hide'); return; }
+  if (IS_OWNER) {
+    txt.textContent = '다른 이벤트로 또 쏠래요?';
+    btn.textContent = '새 방 만들기 →';
+  } else {
+    txt.textContent = '우리 팀에도 이거 써볼래요?';
+    btn.textContent = '내 방 만들기 →';
+  }
+  prompt.classList.remove('hide');
+}
+
+document.getElementById('tryPromptBtn')?.addEventListener('click', () => {
+  document.getElementById('newRoomBtn')?.click();
+});
 
 function setCountdownText(label, time) {
   const cd = document.getElementById('countdown');
