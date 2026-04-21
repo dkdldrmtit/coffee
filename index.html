@@ -453,14 +453,35 @@ gtag('config', 'G-9VCP0RKBY0');
   details.memo-details > textarea { margin-top: 10px; }
 
   /* 요약 상세 접기/펼치기 */
-  /* 컴팩트 카드 — 요약 카드에 사용 (주문 리스트 위에 작게) */
+  /* 컴팩트 카드 — 요약 카드에 사용 (주문 리스트 위에 작게)
+     좌측에 카페 브랜드 컬러 4px 바로 앱 맥락 힌트 */
   .card.card-compact {
     padding: 0; border: 1px solid var(--border);
     box-shadow: none;
+    position: relative;
+    overflow: hidden;
+  }
+  .card.card-compact::before {
+    content: ''; position: absolute;
+    left: 0; top: 0; bottom: 0; width: 4px;
+    background: var(--cafe-color, var(--sb-accent));
+  }
+  .summary-head-col {
+    display: flex; flex-direction: column; gap: 3px;
+    flex: 1; min-width: 0;
   }
   .summary-top-line { display: inline-flex; align-items: baseline; gap: 6px; }
   .summary-top-line strong {
     font-weight: 800; color: var(--ink-dark); font-size: 14px;
+  }
+  .summary-sub {
+    font-size: 11.5px; font-weight: 500;
+    color: var(--muted); letter-spacing: 0.1px;
+  }
+  .copy-hint {
+    font-size: 11.5px; color: var(--muted);
+    text-align: center; padding: 10px 0 4px;
+    line-height: 1.5;
   }
   details.summary-details {
     margin: 0;
@@ -2077,6 +2098,9 @@ function applyCafeMenus() {
     badge.style.setProperty('--cafe-color', preset.color);
     badge.classList.remove('hide');
   }
+  // 요약 카드 좌측 accent 바도 카페 브랜드 컬러로 동기화
+  const summaryCard = document.getElementById('summaryCard');
+  if (summaryCard) summaryCard.style.setProperty('--cafe-color', preset.color);
   // 드롭다운이 열려 있으면 새 카페 메뉴로 즉시 갱신
   const dd = document.getElementById('menuDropdown');
   const mi = document.getElementById('menuInput');
@@ -3674,11 +3698,14 @@ function renderSummary() {
   const total = orders.length;
   const prev = list.querySelector('details.summary-details');
   const wasOpen = prev ? prev.open : false;
-  // 컴팩트: 상단 한 줄(총 N잔)만 기본 노출. 펼치면 상세 + 복사 버튼.
+  // 컴팩트: 상단 한 줄(총 N잔) + 부제(가치 문구). 펼치면 상세 + 복사 버튼.
   let html = `
   <details class="summary-details"${wasOpen ? ' open' : ''}>
     <summary>
-      <span class="summary-top-line">주문 요약 <strong>${total}잔</strong></span>
+      <div class="summary-head-col">
+        <span class="summary-top-line">주문 요약 <strong>${total}잔</strong></span>
+        <span class="summary-sub">카페에서 이대로만 주문하면 돼요 ☕</span>
+      </div>
     </summary>
     <div class="summary-details-body">`;
 
@@ -3702,7 +3729,9 @@ function renderSummary() {
     html += `</div></div>`;
   });
 
-  html += `    <button class="copy-btn" id="copyBtn">요약 복사하기</button>
+  html += `
+    <div class="copy-hint">카운터에서 이 요약을 그대로 보여주거나 읽으면 끝이에요</div>
+    <button class="copy-btn" id="copyBtn">요약 복사하기</button>
     </div>
   </details>`;
 
@@ -3746,7 +3775,7 @@ document.getElementById('summaryList').addEventListener('click', async (ev) => {
   const text = lines.join('\n').replace(/\n+$/, '');
   try {
     await navigator.clipboard.writeText(text);
-    toast('요약을 복사했어요!');
+    toast('복사 완료 · 카운터에서 그대로 보여주세요 ☕');
   } catch (e) {
     alert(text);
   }
