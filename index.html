@@ -2,8 +2,10 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#3E3832">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#fef4f4">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔔</text></svg>">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -85,6 +87,11 @@ gtag('config', 'G-9VCP0RKBY0');
   }
   body { transition: background 0.4s ease; }
   * { box-sizing: border-box; }
+  html {
+    /* 노치/홈바 영역도 body 배경 첫 색과 동일하게 — Safari 가 그 밖으로
+       드러낼 때 끊겨 보이지 않게 */
+    background: #fef4f4;
+  }
   html, body {
     touch-action: pan-x pan-y;  /* 핀치 줌 차단 (스크롤은 허용) */
   }
@@ -103,7 +110,12 @@ gtag('config', 'G-9VCP0RKBY0');
     );
     background-attachment: fixed;
     margin: 0;
-    padding: 16px;
+    /* 노치/홈바/URL 바 안 가려지게 safe-area 반영 */
+    padding:
+      calc(16px + env(safe-area-inset-top, 0px))
+      calc(16px + env(safe-area-inset-right, 0px))
+      calc(16px + env(safe-area-inset-bottom, 0px))
+      calc(16px + env(safe-area-inset-left, 0px));
     color: var(--text);
     -webkit-tap-highlight-color: transparent;
   }
