@@ -629,6 +629,24 @@ gtag('config', 'G-9VCP0RKBY0');
     font-weight: 700; margin-top: 14px; font-size: 14px;
     font-family: inherit;
   }
+  /* 주문 내역이 길어질 때 상단 몇 개만 보여주고 아래쪽 페이드 */
+  #orderList.collapsed {
+    position: relative;
+    max-height: 300px;      /* 약 3~4명 분량 */
+    overflow: hidden;
+    mask-image: linear-gradient(to bottom, black calc(100% - 60px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 60px), transparent 100%);
+  }
+  .orders-toggle {
+    display: block; width: 100%;
+    padding: 10px 0 4px; margin: 4px 0 -4px;
+    background: transparent; border: none;
+    color: var(--sb-accent-deep); font-weight: 700;
+    cursor: pointer; font-size: 13px;
+    font-family: inherit; letter-spacing: 0.2px;
+  }
+  .orders-toggle:hover { color: var(--sb-accent); }
+  .orders-toggle:active { opacity: 0.7; }
   .order-item {
     padding: 12px 0; border-bottom: 1px solid #f0f0f0;
     transition: background 0.3s;
@@ -3671,6 +3689,9 @@ function formatOrder(o) {
   return s;
 }
 
+const ORDERS_COLLAPSE_THRESHOLD = 4;  // 이 이상이면 페이드 + '더 보기' 표시
+let _ordersExpanded = false;           // 사용자가 '더 보기' 누른 상태
+
 function renderList() {
   const list = document.getElementById('orderList');
   const currentName = nameInput.value;
@@ -3679,6 +3700,8 @@ function renderList() {
     .sort((a, b) => (a[1].ts || 0) - (b[1].ts || 0));
   if (entries.length === 0) {
     list.innerHTML = '<div class="empty">아직 첫 주문을 기다리고 있어요</div>';
+    list.classList.remove('collapsed');
+    updateOrdersToggleBtn(0, 0);
     return;
   }
   list.innerHTML = entries.map(([k, o]) => {
@@ -3689,6 +3712,33 @@ function renderList() {
       ${o.memo ? `<div class="order-memo">${escapeHtml(o.memo)}</div>` : ''}
     </div>`;
   }).join('');
+
+  const shouldCollapse = entries.length > ORDERS_COLLAPSE_THRESHOLD && !_ordersExpanded;
+  list.classList.toggle('collapsed', shouldCollapse);
+  updateOrdersToggleBtn(entries.length, ORDERS_COLLAPSE_THRESHOLD);
+}
+
+function updateOrdersToggleBtn(total, threshold) {
+  const list = document.getElementById('orderList');
+  const card = list?.closest('.card');
+  if (!card) return;
+  let btn = card.querySelector('.orders-toggle');
+  // 4개 이하면 버튼 자체가 필요 없음
+  if (total <= threshold) {
+    btn?.remove();
+    return;
+  }
+  if (!btn) {
+    btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'orders-toggle';
+    btn.addEventListener('click', () => {
+      _ordersExpanded = !_ordersExpanded;
+      renderList();
+    });
+    card.appendChild(btn);
+  }
+  btn.textContent = _ordersExpanded ? '접기' : `+ ${total - threshold}명 더 보기`;
 }
 
 // ════════════════════════════════════════════════════════════════
