@@ -478,11 +478,17 @@ gtag('config', 'G-9VCP0RKBY0');
     font-size: 11.5px; font-weight: 500;
     color: var(--muted); letter-spacing: 0.1px;
   }
-  .copy-hint {
-    font-size: 11.5px; color: var(--muted);
-    text-align: center; padding: 10px 0 4px;
-    line-height: 1.5;
+  /* 요약 헤더 우측 작은 복사 아이콘 버튼 — 플랫 디자인 */
+  .summary-copy-icon {
+    background: transparent; border: none;
+    padding: 6px; margin: 0 6px 0 0;
+    cursor: pointer; color: var(--muted);
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 6px;
+    transition: color 0.12s, background 0.12s;
   }
+  .summary-copy-icon:hover { color: var(--ink-dark); background: rgba(0,0,0,0.04); }
+  .summary-copy-icon:active { color: var(--sb-accent); }
   details.summary-details {
     margin: 0;
     border: none;
@@ -3698,7 +3704,8 @@ function renderSummary() {
   const total = orders.length;
   const prev = list.querySelector('details.summary-details');
   const wasOpen = prev ? prev.open : false;
-  // 컴팩트: 상단 한 줄(총 N잔) + 부제(가치 문구). 펼치면 상세 + 복사 버튼.
+  // 컴팩트: 상단 한 줄(총 N잔) + 부제. 우상단 작은 복사 아이콘 버튼.
+  // 펼치면 상세 메뉴 리스트만 (별도 복사 버튼 없음).
   let html = `
   <details class="summary-details"${wasOpen ? ' open' : ''}>
     <summary>
@@ -3706,6 +3713,12 @@ function renderSummary() {
         <span class="summary-top-line">주문 요약 <strong>${total}잔</strong></span>
         <span class="summary-sub">카페에서 이대로만 주문하면 돼요 ☕</span>
       </div>
+      <button type="button" id="copyBtn" class="summary-copy-icon" aria-label="요약 복사">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2"/>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+        </svg>
+      </button>
     </summary>
     <div class="summary-details-body">`;
 
@@ -3730,8 +3743,6 @@ function renderSummary() {
   });
 
   html += `
-    <div class="copy-hint">정리된 내용으로 카운터에서 간편하게 주문하세요!</div>
-    <button class="copy-btn" id="copyBtn">요약 복사하기</button>
     </div>
   </details>`;
 
@@ -3750,9 +3761,13 @@ document.getElementById('summaryList').addEventListener('change', e => {
 // ════════════════════════════════════════════════════════════════
 // 요약 복사: 새 포맷 (온도/사이즈 그룹 + 특이사항)
 // ════════════════════════════════════════════════════════════════
-// copyBtn 은 renderSummary 가 매번 다시 만들어냄 → 이벤트 위임으로 처리
+// copyBtn 은 renderSummary 가 매번 다시 만들어냄 → 이벤트 위임으로 처리.
+// 버튼이 <summary> 안쪽이라 기본 click 은 details toggle 을 일으키므로
+// preventDefault + stopPropagation 으로 차단.
 document.getElementById('summaryList').addEventListener('click', async (ev) => {
   if (!ev.target.closest('#copyBtn')) return;
+  ev.preventDefault();
+  ev.stopPropagation();
   const orders = Object.values(currentOrders);
   if (orders.length === 0) { toast('아직 주문이 없어요'); return; }
   const sortedMenus = buildGroupedOrders(orders);
